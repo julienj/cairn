@@ -209,6 +209,17 @@ final class IssueListTest extends WebTestCase
         self::assertCount(1, $crawler->filter('form#issue-selection[action="/issues/selection"]'), 'the application\'s across projects');
     }
 
+    public function testTheLastUpdateShowsItsDateAndTimeInTheLanguageOfTheInstance(): void
+    {
+        $this->signInAs('nadia.benali@cairn.test');
+        $issue = $this->scene->issue('MD-SPT-1');
+        $formatter = new \IntlDateFormatter('en', \IntlDateFormatter::SHORT, \IntlDateFormatter::SHORT, $issue->getUpdatedAt()->getTimezone());
+
+        $this->client->request('GET', '/MD/SPT/issues?q=spinner');
+
+        self::assertSelectorTextContains('tbody tr', (string) $formatter->format($issue->getUpdatedAt()));
+    }
+
     public function testAChangeOfTheListAsksForTheFrameOfItsResultsOnly(): void
     {
         $this->signInAs('nadia.benali@cairn.test');

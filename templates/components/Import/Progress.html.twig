@@ -5,7 +5,7 @@
 <section {{ attributes }} {% if import.status.inProgress %}data-poll="delay(2000)|refresh"{% endif %} class="rounded-lg border border-line bg-surface p-4 space-y-4">
     <div class="flex flex-wrap items-center gap-2">
         <h2 class="font-semibold text-strong">{{ (import.analysed ? 'admin.import.progress.running' : 'admin.import.progress.analysing')|trans }}</h2>
-        <span class="text-xs text-muted">{{ 'admin.import.progress.last_batch'|trans({ '%date%': import.updatedAt|date('H:i:s') }) }}</span>
+        <span class="text-xs text-muted">{{ 'admin.import.progress.last_batch'|trans({ '%date%': import.updatedAt|format_time('medium') }) }}</span>
     </div>
     <ol class="space-y-2">
         {% for phase in progressPhases %}

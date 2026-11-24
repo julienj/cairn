@@ -29,7 +29,7 @@
                         </td>
                         <td class="sm:px-3 sm:py-2.5 order-2 text-sm text-body"><twig:Ui:Chip>{{ import.project.issuePrefix }}</twig:Ui:Chip> {{ import.project.name }}</td>
                         <td class="sm:px-3 sm:py-2.5 order-3">{{ include('admin/import/_status.html.twig') }}</td>
-                        <td class="sm:px-4 sm:py-2.5 order-4 ml-auto sm:ml-0 text-xs text-muted">{{ import.createdAt|date('d/m/Y H:i') }} · {{ import.createdBy.fullName }}</td>
+                        <td class="sm:px-4 sm:py-2.5 order-4 ml-auto sm:ml-0 text-xs text-muted">{{ import.createdAt|format_datetime('short', 'short') }} · {{ import.createdBy.fullName }}</td>
                     </twig:Ui:Table:Row>
                 {% endfor %}
             </twig:Ui:Table>

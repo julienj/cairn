@@ -9,5 +9,5 @@
     </span>
     <twig:Ui:Criticality:Badge :criticality="issue.criticality.value" />
     <span class="hidden sm:block w-40 shrink-0"><twig:Ui:Status:Step :status="issue_status(issue)" :label="issue_place(issue)" /></span>
-    <span class="hidden md:inline w-20 shrink-0 text-right text-xs text-faint">{{ issue.updatedAt|date('d/m/Y') }}</span>
+    <span class="hidden md:inline w-20 shrink-0 text-right text-xs text-faint">{{ issue.updatedAt|format_date('short') }}</span>
 </li>

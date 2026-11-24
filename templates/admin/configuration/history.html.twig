@@ -11,7 +11,7 @@
             <ol class="divide-y divide-line-subtle rounded-lg border border-line bg-surface">
                 {% for change in changes %}
                     <li class="flex flex-wrap gap-x-4 gap-y-1 px-4 py-2.5 text-sm">
-                        <time datetime="{{ change.at|date('c') }}" class="w-32 shrink-0 tabular-nums text-muted">{{ change.at|date('d/m/Y H:i') }}</time>
+                        <time datetime="{{ change.at|date('c') }}" class="w-32 shrink-0 tabular-nums text-muted">{{ change.at|format_datetime('short', 'short') }}</time>
                         <span class="w-40 shrink-0 truncate font-medium text-strong">{{ change.author ?? 'admin.configuration.history.system'|trans }}</span>
                         <span class="min-w-0 flex-1 basis-64 text-body">{{ change.summary }}</span>
                     </li>

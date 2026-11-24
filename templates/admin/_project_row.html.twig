@@ -9,7 +9,7 @@
             <twig:Ui:Badge size="sm">{{ 'admin.workspace.archived_badge'|trans }}</twig:Ui:Badge>
         {% endif %}
     </td>
-    <td class="sm:px-3 sm:py-2.5 sm:w-32 order-3 text-xs text-faint whitespace-nowrap">{{ 'admin.created_on'|trans({ '%date%': project.createdAt|date('d/m/Y') }) }}</td>
+    <td class="sm:px-3 sm:py-2.5 sm:w-32 order-3 text-xs text-faint whitespace-nowrap">{{ 'admin.created_on'|trans({ '%date%': project.createdAt|format_date('short') }) }}</td>
     <td class="sm:px-4 sm:py-2.5 sm:w-40 order-4 ml-auto text-right whitespace-nowrap">
         <span class="hover-actions inline-flex items-center justify-end gap-1">
             {{ include('admin/_project_archive.html.twig') }}

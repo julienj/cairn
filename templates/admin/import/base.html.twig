@@ -19,7 +19,7 @@
                 <span>{{ import.project.name }}</span>
                 {{ include('admin/import/_status.html.twig') }}
             </h1>
-            <p class="mt-1 text-xs text-muted">{{ 'admin.import.created_by'|trans({ '%name%': import.createdBy.fullName, '%date%': import.createdAt|date('d/m/Y H:i') }) }}</p>
+            <p class="mt-1 text-xs text-muted">{{ 'admin.import.created_by'|trans({ '%name%': import.createdBy.fullName, '%date%': import.createdAt|format_datetime('short', 'short') }) }}</p>
         </div>
         {% if import.status.value == 'configuring' %}
             <nav class="flex flex-wrap items-center gap-1 border-b border-line">

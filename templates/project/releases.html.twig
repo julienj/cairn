@@ -23,7 +23,7 @@
                 <div class="flex flex-wrap items-center gap-3">
                     <h2 class="font-mono text-lg font-semibold text-strong">{{ release.name }}</h2>
                     {% if release.plannedOn %}
-                        <span class="inline-flex items-center gap-1 text-xs text-muted"><twig:ux:icon name="lucide:clock" class="h-3.5 w-3.5" />{{ 'release.planned_on'|trans({ '%date%': release.plannedOn|date('d/m/Y') }) }}</span>
+                        <span class="inline-flex items-center gap-1 text-xs text-muted"><twig:ux:icon name="lucide:clock" class="h-3.5 w-3.5" />{{ 'release.planned_on'|trans({ '%date%': release.plannedOn|format_date('short') }) }}</span>
                     {% endif %}
                     {% if releasesManage %}
                         <div class="ml-auto flex items-center gap-2">
@@ -57,7 +57,7 @@
                             <twig:Ui:Badge :tone="release.status.value == 'delivered' ? 'emerald' : 'gray'" size="sm">{{ ('release.status.' ~ release.status.value)|trans }}</twig:Ui:Badge>
                             <span class="flex-1 min-w-0 truncate text-muted">{{ release.description }}</span>
                             <span class="text-xs tabular-nums text-muted">{{ 'issue.list.count'|trans({ '%count%': summary.total }) }}</span>
-                            {% if release.deliveredAt %}<span class="text-xs text-muted">{{ 'release.delivered_on'|trans({ '%date%': release.deliveredAt|date('d/m/Y') }) }}</span>{% endif %}
+                            {% if release.deliveredAt %}<span class="text-xs text-muted">{{ 'release.delivered_on'|trans({ '%date%': release.deliveredAt|format_date('short') }) }}</span>{% endif %}
                             <a href="{{ path('app_project_issues', releasesRoute|merge({ releases: [release.id], closed: 1 })) }}" class="text-faint hover:text-brand" title="{{ 'release.see_issues'|trans }}"><twig:ux:icon name="lucide:list" class="h-4 w-4" /></a>
                             {% if releasesManage %}
                                 {{ include('project/_release_status.html.twig', { status: 'open', variant: 'ghost' }) }}

@@ -49,7 +49,7 @@
                             <twig:Ui:Badge :tone="rule.tracker ? 'indigo' : 'gray'">{{ rule.tracker ? rule.tracker.name : 'automation.all_trackers'|trans }}</twig:Ui:Badge>
                             <span class="w-44 text-right text-xs leading-snug text-muted">
                                 {% if lastRuns[rule.id] is defined %}
-                                    {{ 'automation.last_run'|trans }}<br><a href="{{ path('app_project_settings_automation_runs', settingsRoute|merge({ rule: rule.id })) }}" class="text-body hover:text-brand">{{ lastRuns[rule.id]|date('d/m/Y H:i') }}</a>
+                                    {{ 'automation.last_run'|trans }}<br><a href="{{ path('app_project_settings_automation_runs', settingsRoute|merge({ rule: rule.id })) }}" class="text-body hover:text-brand">{{ lastRuns[rule.id]|format_datetime('short', 'short') }}</a>
                                 {% else %}
                                     {{ 'automation.never'|trans }}
                                 {% endif %}

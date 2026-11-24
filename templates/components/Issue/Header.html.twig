@@ -10,7 +10,7 @@
             <span class="text-ghost">·</span>
             <span>{{ issue.tracker.name }}</span>
             <span class="text-ghost">·</span>
-            <span>{{ 'issue.show.created_by'|trans({ '%name%': issue.author.fullName, '%date%': issue.createdAt|date('d/m/Y') }) }}</span>
+            <span>{{ 'issue.show.created_by'|trans({ '%name%': issue.author.fullName, '%date%': issue.createdAt|format_date('short') }) }}</span>
             {% if issue.importedRef %}<span class="text-ghost">·</span><span>{{ 'issue.show.formerly'|trans({ '%ref%': issue.importedRef }) }}</span>{% endif %}
             {% if issue.private %}<twig:Ui:Badge tone="amber" size="sm" icon="lock">{{ 'issue.private'|trans }}</twig:Ui:Badge>{% endif %}
             {% if this.canDelete %}<twig:Ui:IconButton icon="trash-2" tone="danger" size="sm" :label="'issue.delete.title'|trans" class="ml-auto" data-action="live#action" data-live-action-param="confirmDelete" />{% endif %}

@@ -44,11 +44,11 @@
                                     <twig:ux:icon name="lucide:key-round" class="h-4 w-4 shrink-0 text-faint" />
                                     <span class="font-medium text-strong">{{ token.name }}</span>
                                     <twig:Ui:Badge :tone="token.scope.value == 'write' ? 'amber' : 'gray'" size="sm">{{ ('api_token.scope.' ~ token.scope.value)|trans }}</twig:Ui:Badge>
-                                    <span class="ml-auto text-xs text-muted">{{ token.expiresAt ? 'api_token.expires_on'|trans({ '%date%': token.expiresAt|date('d/m/Y') }) : 'api_token.no_expiry'|trans }}</span>
+                                    <span class="ml-auto text-xs text-muted">{{ token.expiresAt ? 'api_token.expires_on'|trans({ '%date%': token.expiresAt|format_date('short') }) : 'api_token.no_expiry'|trans }}</span>
                                 </div>
                                 <p class="mt-1 pl-6 text-xs text-muted">
-                                    {{ 'api_token.created_on'|trans({ '%date%': token.createdAt|date('d/m/Y') }) }}
-                                    · {{ token.lastUsedAt ? 'api_token.last_used'|trans({ '%date%': token.lastUsedAt|date('d/m/Y H:i') }) : 'api_token.never_used'|trans }}
+                                    {{ 'api_token.created_on'|trans({ '%date%': token.createdAt|format_date('short') }) }}
+                                    · {{ token.lastUsedAt ? 'api_token.last_used'|trans({ '%date%': token.lastUsedAt|format_datetime('short', 'short') }) : 'api_token.never_used'|trans }}
                                 </p>
                                 <twig:Ui:Disclosure :closedLabel="'api_token.revoke'|trans" :openLabel="'issue.edit.cancel'|trans" class="mt-1.5 pl-6">
                                     <twig:Ui:Callout tone="danger" size="sm" class="mt-2 flex flex-wrap items-center gap-2" role="alertdialog">
@@ -74,7 +74,7 @@
                                     <span class="font-medium line-through decoration-line-strong">{{ token.name }}</span>
                                     <twig:Ui:Badge size="sm">{{ ('api_token.scope.' ~ token.scope.value)|trans }}</twig:Ui:Badge>
                                     <span class="ml-auto text-xs">
-                                        {{ token.revoked ? 'api_token.revoked_on'|trans({ '%date%': token.revokedAt|date('d/m/Y') }) : 'api_token.expired_on'|trans({ '%date%': token.expiresAt|date('d/m/Y') }) }}
+                                        {{ token.revoked ? 'api_token.revoked_on'|trans({ '%date%': token.revokedAt|format_date('short') }) : 'api_token.expired_on'|trans({ '%date%': token.expiresAt|format_date('short') }) }}
                                     </span>
                                 </li>
                             {% endfor %}

@@ -10,7 +10,7 @@
         <span class="absolute -left-3 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-slate-700 text-white ring-2 ring-line-subtle" title="{{ ('forge.' ~ entry.text('forge'))|trans }}"><twig:ux:icon name="lucide:git-branch" class="h-3.5 w-3.5" /></span>
         <twig:Ui:CodeCard :kind="journalPush ? 'commit' : 'merge_request'"
                           :heading="journalPush ? 'issue.code.heading.commits'|trans({ '%count%': journalData.commits|length, '%branch%': entry.text('branch') }) : 'issue.code.heading.merge_request'|trans({ '%number%': entry.text('number') })"
-                          :href="entry.text('url')|default(null)" :repository="entry.text('repository')" :at="entry.at|date('d/m/Y H:i')"
+                          :href="entry.text('url')|default(null)" :repository="entry.text('repository')" :at="entry.at|format_datetime('short', 'short')"
                           :title="journalPush ? null : entry.text('title')" :state="journalPush ? null : (entry.type.value == 'merge_request_reopened' ? 'reopened' : entry.text('state'))"
                           :branch="journalPush ? null : entry.text('branch')|default(null)" :author="journalPush ? null : entry.text('author')|default(null)" :internal="entry.private">
             {% if journalPush %}
@@ -35,7 +35,7 @@
                 <span class="font-medium text-body">{{ entry.author ? entry.author.fullName : 'issue.show.system'|trans }}</span>
             {% endif %}
             {{ journalLabel }}
-            <span class="text-faint">· {{ entry.at|date('d/m/Y H:i') }}</span>
+            <span class="text-faint">· {{ entry.at|format_datetime('short', 'short') }}</span>
         </div>
         {% if entry.type.value == 'imported' and entry.data.notes is defined and entry.data.notes is not empty %}
             <ul class="mt-1 list-disc pl-5 text-xs text-muted">

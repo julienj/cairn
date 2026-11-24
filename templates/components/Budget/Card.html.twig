@@ -50,7 +50,7 @@
             <tbody class="divide-y divide-line-subtle">
                 {% for line in cardStatement.lines %}
                     <twig:Ui:Table:Row>
-                        <td class="sm:py-2 sm:pl-4 sm:pr-3 whitespace-nowrap text-xs text-muted">{{ line.createdAt|date('d/m/Y') }}</td>
+                        <td class="sm:py-2 sm:pl-4 sm:pr-3 whitespace-nowrap text-xs text-muted">{{ line.createdAt|format_date('short') }}</td>
                         <td class="sm:px-3 sm:py-2 w-full min-w-0 basis-full">
                             {% if line.issue and cardStatement.hides(line) %}
                                 <span class="text-muted">{{ 'budget.line.private_issue'|trans }}</span>

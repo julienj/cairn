@@ -12920,7 +12920,7 @@
                                 "properties": {
                                     "enabled": {
                                         "$ref": "#/$defs/types/boolean",
-                                        "default": false
+                                        "default": true
                                     }
                                 },
                                 "additionalProperties": false
@@ -12932,7 +12932,7 @@
                             }
                         ],
                         "default": {
-                            "enabled": false
+                            "enabled": true
                         }
                     },
                     "cssinliner": {

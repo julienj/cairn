@@ -28,7 +28,7 @@
         <section class="space-y-3">
             <div class="flex flex-wrap items-center gap-2">
                 <h2 class="font-semibold text-strong">{{ 'admin.import.report.title'|trans }}</h2>
-                {% if import.finishedAt %}<span class="text-xs text-muted">{{ 'admin.import.report.finished'|trans({ '%date%': import.finishedAt|date('d/m/Y H:i') }) }}</span>{% endif %}
+                {% if import.finishedAt %}<span class="text-xs text-muted">{{ 'admin.import.report.finished'|trans({ '%date%': import.finishedAt|format_datetime('short', 'short') }) }}</span>{% endif %}
                 <twig:Ui:Button href="{{ path('app_project_issues', { workspaceKey: import.project.workspace.key, projectKey: import.project.key }) }}" class="ml-auto">{{ 'admin.import.report.open_project'|trans }}</twig:Ui:Button>
             </div>
             <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">

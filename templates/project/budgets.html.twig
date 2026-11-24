@@ -34,7 +34,7 @@
                         <li class="flex flex-wrap items-center gap-3 px-4 py-2.5">
                             <a href="{{ path('app_project_budget', budgetsRoute|merge({ budget: budget.id })) }}" class="font-medium text-body hover:text-brand hover:underline">{{ budget.name }}</a>
                             <span class="min-w-0 flex-1 text-xs text-muted">{{ 'budget.closed_summary'|trans({ '%consumed%': summary.consumed|quantity(project), '%volume%': budget.volume|quantity(project) }) }}</span>
-                            {% if budget.closedAt %}<span class="text-xs text-muted">{{ 'budget.closed_on'|trans({ '%date%': budget.closedAt|date('d/m/Y') }) }}</span>{% endif %}
+                            {% if budget.closedAt %}<span class="text-xs text-muted">{{ 'budget.closed_on'|trans({ '%date%': budget.closedAt|format_date('short') }) }}</span>{% endif %}
                         </li>
                     {% endfor %}
                 </ul>

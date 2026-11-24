@@ -31,7 +31,7 @@
                                     {% if fieldValue.field.type.value == 'url' and fieldValue.value matches '#^https?://#i' %}
                                         <a href="{{ fieldValue.value }}" class="break-all text-brand hover:underline" rel="noopener noreferrer" target="_blank">{{ fieldValue.value|replace({ 'https://': '', 'http://': '' }) }}</a>
                                     {% elseif fieldValue.field.type.value == 'date' %}
-                                        {{ fieldValue.value|date('d/m/Y') }}
+                                        {{ fieldValue.value|format_date('short') }}
                                     {% elseif fieldValue.field.type.value == 'bool' %}
                                         {{ (fieldValue.value ? 'issue.show.true' : 'issue.show.false')|trans }}
                                     {% else %}

@@ -20,7 +20,7 @@
                     <twig:Ui:Badge tone="gray" size="sm">{{ repository.forge.label|trans }}</twig:Ui:Badge>
                     <code class="font-mono text-sm font-medium text-strong">{{ repository.path }}</code>
                     {% if repository.installed %}
-                        <twig:Ui:Badge tone="emerald" size="sm" icon="check">{{ 'project.settings.repository.installed'|trans({ '%date%': repository.installedAt|date('d/m/Y') }) }}</twig:Ui:Badge>
+                        <twig:Ui:Badge tone="emerald" size="sm" icon="check">{{ 'project.settings.repository.installed'|trans({ '%date%': repository.installedAt|format_date('short') }) }}</twig:Ui:Badge>
                     {% elseif instanceHook %}
                         <twig:Ui:Badge tone="emerald" size="sm" icon="check">{{ 'project.settings.repository.instance_hook'|trans }}</twig:Ui:Badge>
                     {% else %}

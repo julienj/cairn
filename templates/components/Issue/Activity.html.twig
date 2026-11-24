@@ -30,8 +30,8 @@
                             <div class="flex items-center gap-2 text-xs">
                                 <span class="font-medium text-strong">{{ entryComment.authorName }}</span>
                                 {% if not entryComment.author %}<span class="text-faint">{{ 'automation.signature'|trans }}</span>{% endif %}
-                                <span class="text-faint">{{ entryComment.createdAt|date('d/m/Y H:i') }}</span>
-                                {% if entryComment.editedAt %}<span class="text-faint italic">· {{ 'issue.comment.edited'|trans({ '%date%': entryComment.editedAt|date('d/m/Y H:i') }) }}</span>{% endif %}
+                                <span class="text-faint">{{ entryComment.createdAt|format_datetime('short', 'short') }}</span>
+                                {% if entryComment.editedAt %}<span class="text-faint italic">· {{ 'issue.comment.edited'|trans({ '%date%': entryComment.editedAt|format_datetime('short', 'short') }) }}</span>{% endif %}
                                 {% if entryComment.private %}<twig:Ui:Badge tone="amber" size="sm" icon="lock" class="ml-auto">{{ 'issue.comment.private_badge'|trans }}</twig:Ui:Badge>{% endif %}
                                 {% if commentEditable and editingCommentId != entryComment.id and deletingCommentId != entryComment.id %}
                                     <span class="hover-actions -my-1 -mr-1 flex items-center {{ entryComment.private ? '' : 'ml-auto' }}">

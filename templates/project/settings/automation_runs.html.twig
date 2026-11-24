@@ -48,7 +48,7 @@
                     {% for run in runs.items %}
                         {% set runOutcome = run.outcome.value %}
                         <tr class="align-top">
-                            <td class="whitespace-nowrap px-4 py-2.5 text-xs text-muted">{{ run.at|date('d/m/Y H:i') }}</td>
+                            <td class="whitespace-nowrap px-4 py-2.5 text-xs text-muted">{{ run.at|format_datetime('short', 'short') }}</td>
                             <td class="px-4 py-2.5">
                                 {% if run.rule %}
                                     <a href="{{ path('app_project_settings_automation', settingsRoute|merge({ rule: run.rule.id })) }}" class="text-strong hover:text-brand">{{ run.ruleName }}</a>
