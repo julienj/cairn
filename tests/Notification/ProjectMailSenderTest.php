@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Notification;
 
+use App\Entity\Comment;
 use App\Entity\Enum\Criticality;
 use App\Entity\Enum\MailGrouping;
 use App\Entity\Tracker;
@@ -108,6 +109,13 @@ final class ProjectMailSenderTest extends KernelTestCase
         $toThomas = $this->emailTo('thomas@agency.test');
         self::assertEmailHtmlBodyContains($toThomas, 'created the issue');
         self::assertEmailHtmlBodyContains($toThomas, 'I am on it.');
+
+        // Each comment links to its address on the page, the second too though its author is named once.
+        $comments = self::getContainer()->get(EntityManagerInterface::class)->getRepository(Comment::class)->findBy(['issue' => $issue], ['id' => 'ASC']);
+        self::assertCount(2, $comments);
+        foreach ($comments as $comment) {
+            self::assertEmailHtmlBodyContains($toClaire, \sprintf('href="http://localhost/MD/SPT/issues/%d#comment-%d"', $issue->getNumber(), $comment->getId()));
+        }
     }
 
     public function testTheIssuesOfAProjectShareAMailAndTwoProjectsDoNot(): void

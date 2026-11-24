@@ -49,9 +49,13 @@
                                 {% endif %}
                             </td>
                             <td valign="top" style="font-size:14px;color:#374151;">
+                                {# The time of a comment links to it on the page of the issue, as there; it is shown again for a comment of who was already named, so that each keeps its link. #}
+                                {% set changeTime %}{% if row.commentUrl %}<a href="{{ row.commentUrl }}" style="color:#9ca3af;text-decoration:underline;">{{ change.at|format_time('short', locale: app.locale) }}</a>{% else %}{{ change.at|format_time('short', locale: app.locale) }}{% endif %}{% endset %}
                                 {% if not sameActor %}
                                     <span style="font-weight:600;color:#111827;">{{ change.by }}</span>{% if not change.actor %}<span style="font-size:12px;color:#667080;">&nbsp;· {{ 'automation.signature'|trans }}</span>{% endif %}
-                                    <span style="font-size:12px;color:#9ca3af;">&nbsp;{{ change.at|format_time('short', locale: app.locale) }}</span>
+                                    <span style="font-size:12px;color:#9ca3af;">&nbsp;{{ changeTime }}</span>
+                                {% elseif row.commentUrl %}
+                                    <span style="font-size:12px;color:#9ca3af;">{{ changeTime }}</span>
                                 {% endif %}
                                 {% for entry in change.entries %}
                                     <p style="margin:2px 0 0;">{{ entry|journal_label }}</p>
