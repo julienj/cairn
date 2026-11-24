@@ -13,7 +13,7 @@
         <p class="mt-1 text-sm text-muted">{{ 'mcp.connect.hint'|trans }}</p>
         <div class="mt-3 flex items-start gap-2" data-controller="clipboard">
             <pre class="min-w-0 flex-1 overflow-x-auto rounded-md bg-slate-900 px-3 py-2 font-mono text-xs text-slate-100" data-clipboard-target="source" data-test="mcp-command">claude mcp add --transport http cairn {{ url('_mcp_endpoint_cairn') }} --header "Authorization: Bearer cairn_…"</pre>
-            <twig:Ui:IconButton icon="copy" :label="'api_token.created.copy'|trans" data-action="clipboard#copy" />
+            <twig:Ui:CopyButton :label="'mcp.connect.copy'|trans" :copiedLabel="'mcp.connect.copied'|trans" />
         </div>
         <p class="mt-3 text-xs text-muted">{{ 'mcp.connect.scope'|trans }}</p>
         <p class="mt-1 text-xs text-muted">{{ 'mcp.connect.private'|trans }}</p>

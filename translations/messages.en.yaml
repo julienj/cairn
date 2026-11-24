@@ -1395,6 +1395,8 @@ mcp:
         hint: Create a token, then run this command with it in place of cairn_…
         scope: A read token lets the assistant read only; a read and write token lets it create, change and comment issues too.
         private: A comment the assistant writes is private unless you ask it to answer the client.
+        copy: Copy command to clipboard
+        copied: "Copied!"
 
 api_token:
     title: API tokens

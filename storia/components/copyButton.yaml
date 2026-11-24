@@ -1,0 +1,4 @@
+component: Ui:CopyButton
+variants:
+    default: { args: { label: Copy command to clipboard, copiedLabel: Copied! } }
+    small: { args: { label: Copy command to clipboard, copiedLabel: Copied!, size: sm } }

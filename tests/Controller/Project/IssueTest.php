@@ -73,7 +73,8 @@ final class IssueTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('h1', 'The CSV export of orders is empty');
         self::assertSelectorTextSame('main [data-controller="clipboard"] [data-clipboard-target="source"]', 'MD-SPT-4', 'the key is what the button copies');
-        self::assertSelectorExists('main [data-controller="clipboard"] button[data-action="clipboard#copy"][aria-label="Copy the identifier"]');
+        self::assertSelectorExists('main [data-controller="clipboard"] button[data-action="clipboard#copy"] [role="tooltip"]');
+        self::assertSelectorTextContains('main [data-controller="clipboard"] [role="tooltip"] [data-clipboard-target="idle"]', 'Copy the identifier');
         self::assertSelectorTextContains('main aside', 'Environment');
         self::assertSelectorTextContains('main', 'Accept');
         self::assertSelectorTextContains('main', 'Refuse');
