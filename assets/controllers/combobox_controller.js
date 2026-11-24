@@ -5,6 +5,7 @@ import { Controller } from '@hotwired/stimulus';
  * the user types; arrows move, Enter or a click fills the field with the
  * suggestion, Escape or a click outside closes. What is typed and
  * matches nothing stays: a suggestion is a shortcut, not a constraint.
+ * The document is listened to only while the list is open.
  *
  * <div data-controller="combobox">
  *   <input data-combobox-target="input" data-action="input->combobox#filter focus->combobox#open keydown->combobox#navigate">
@@ -23,7 +24,6 @@ export default class extends Controller {
                 this.close();
             }
         };
-        document.addEventListener('click', this.onDocumentClick);
     }
 
     disconnect() {
@@ -98,9 +98,11 @@ export default class extends Controller {
     show() {
         this.listTarget.hidden = false;
         this.inputTarget.setAttribute('aria-expanded', 'true');
+        document.addEventListener('click', this.onDocumentClick);
     }
 
     close() {
+        document.removeEventListener('click', this.onDocumentClick);
         this.listTarget.hidden = true;
         this.inputTarget.setAttribute('aria-expanded', 'false');
         this.active = -1;
