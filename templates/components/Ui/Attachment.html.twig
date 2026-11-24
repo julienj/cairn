@@ -1,10 +1,14 @@
-{# A file as a pill: icon, name (a link when `href` is given), size and the initials of who sent it. `size` is in bytes. The `actions` block takes a remove button. #}
+{# A file as a pill: icon (a square thumbnail for an image with an `href`), name (a link when `href` is given), size and the initials of who sent it. `size` is in bytes. The `actions` block takes a remove button. #}
 {% props name, size = null, href = null, image = false, uploader = null %}
 {% set attachmentClasses = html_cva(base: 'inline-flex max-w-full items-center gap-2 rounded-md border border-line bg-subtle px-2.5 py-1.5 text-sm') %}
 {% set attachmentUnit = size is null ? null : (size < 1024 ? 'b' : (size < 1048576 ? 'kb' : 'mb')) %}
 {% set attachmentSize = size is null ? null : (attachmentUnit == 'b' ? size : (attachmentUnit == 'kb' ? (size / 1024)|round : (size / 1048576)|round(1))) %}
 <span class="{{ attachmentClasses.apply({}, attributes.render('class'))|tailwind_merge }}" {{ attributes }}>
-    {{ ux_icon('lucide:' ~ (image ? 'image' : 'file'), { class: 'h-4 w-4 shrink-0 text-faint' }) }}
+    {% if image and href %}
+        <img src="{{ href }}" alt="" loading="lazy" class="-my-1 -ml-1 h-7 w-7 shrink-0 rounded border border-line bg-sunken object-cover">
+    {% else %}
+        {{ ux_icon('lucide:' ~ (image ? 'image' : 'file'), { class: 'h-4 w-4 shrink-0 text-faint' }) }}
+    {% endif %}
     {% if href %}
         <a href="{{ href }}" class="truncate text-body hover:text-brand hover:underline" {{ image ? 'target="_blank"' }} data-turbo="false">{{ name }}</a>
     {% else %}
