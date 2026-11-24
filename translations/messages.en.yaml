@@ -140,6 +140,8 @@ issue:
             closed: Closed
     comment:
         placeholder: Write a comment…
+        copy_link: Copy the link to this comment
+        link_copied: Link copied
         edited: 'edited on %date%'
         edit: Edit the comment
         delete: Delete the comment

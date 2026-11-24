@@ -44,20 +44,23 @@ final class IssueMailer
         $cards = [];
         foreach ($issues as $card) {
             $issue = $card->issue;
+            $url = $this->urls->generate('app_issue_show', [
+                'workspaceKey' => $project->getWorkspace()->getKey(),
+                'projectKey' => $project->getKey(),
+                'number' => $issue->getNumber(),
+            ], UrlGeneratorInterface::ABSOLUTE_URL);
             $changes = [];
             foreach ($card->changes as $change) {
                 $changes[] = [
                     'change' => $change,
                     'commentHtml' => null === $change->comment ? null : $this->markdown->render($change->comment->getBody(), $recipient, $project, absoluteUrls: true),
+                    // The address of the comment on the page of the issue (Issue:Activity), as on GitHub.
+                    'commentUrl' => null === $change->comment ? null : \sprintf('%s#comment-%d', $url, $change->comment->getId()),
                 ];
             }
             $cards[] = [
                 'issue' => $issue,
-                'url' => $this->urls->generate('app_issue_show', [
-                    'workspaceKey' => $project->getWorkspace()->getKey(),
-                    'projectKey' => $project->getKey(),
-                    'number' => $issue->getNumber(),
-                ], UrlGeneratorInterface::ABSOLUTE_URL),
+                'url' => $url,
                 'changes' => $changes,
                 'descriptionHtml' => $card->created() && '' !== trim($issue->getDescription()) ? $this->markdown->render($issue->getDescription(), $recipient, $project, absoluteUrls: true) : null,
             ];
