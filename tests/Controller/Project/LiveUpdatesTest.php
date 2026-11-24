@@ -80,7 +80,7 @@ final class LiveUpdatesTest extends WebTestCase
         $crawler = $this->client->request('GET', '/MD/SPT/issues');
 
         self::assertResponseIsSuccessful();
-        self::assertCount(1, $crawler->filter('turbo-frame#issues[data-controller="list-view"]'));
+        self::assertCount(1, $crawler->filter('turbo-frame#issues[data-controller~="list-view"]'));
         self::assertCount(0, $crawler->filter('[data-controller~="live-updates"]'));
         self::assertCount(0, $crawler->filter('[data-live-updates-token-value]'));
         self::assertSame([], $this->hubCookies());
