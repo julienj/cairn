@@ -139,6 +139,8 @@ MAILER_DSN=smtp://user:password@smtp.example.com:587
 MAILER_FROM="Cairn <no-reply@cairn.example>"
 # Language of the instance (en or fr)
 CAIRN_LOCALE=en
+# Who must sign in with a second factor: optional, internal or all, see below
+CAIRN_TWO_FACTOR=optional
 # Where attachments are stored, outside public/
 ATTACHMENTS_DIR=/var/lib/cairn/attachments
 # Optional: how GitLab delivers to Cairn, see below
@@ -180,6 +182,24 @@ Good to know:
 - **The provider must send `email_verified: true`**: this is what links its user to the Cairn account the first time. Entra ID does not send it, so it does not work.
 - **One account, one method**: an account that uses single sign-on has no password.
 - **Remember to deactivate accounts in Cairn**: removing someone from the directory closes neither their session nor their API tokens.
+
+### Two-factor authentication
+
+Every account that signs in with a password can turn on a second factor in its account (Security > Two-factor authentication): a code from an authentication app (TOTP), asked after the password, and ten backup codes, each good once, shown a single time. `CAIRN_TWO_FACTOR` says who has to:
+
+| Value | Who must set it up |
+|---|---|
+| `optional` (default) | Nobody: each account chooses |
+| `internal` | The internal users; external users choose |
+| `all` | Everybody |
+
+Someone who must and has not yet is sent to the page that sets it up as soon as they sign in, and can do nothing else. Good to know:
+
+- **Accounts that sign in through single sign-on are never asked**: the provider has its own second factor.
+- **The API and the MCP server are not asked either**: a personal token signs their requests.
+- **Someone who lost their phone and their backup codes**: an administrator resets their second factor from their account in the administration; they sign in with the password and set it up again.
+- **"Remember me" keeps the second factor for its two weeks**: the cookie is only given once the code was typed.
+- **The TOTP secrets are stored as they are in the database**: protect it and its backups as you do for the rest.
 
 ### GitLab webhooks (optional)
 

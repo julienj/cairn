@@ -1355,6 +1355,7 @@ account:
         profile: Profile
         notifications: Notifications
         security: Security
+        two_factor: Two-factor authentication
         integrations: Integrations
         api: API
         mcp: MCP server
@@ -1401,8 +1402,48 @@ account:
         too_many_attempts: Too many attempts. Try again in a few minutes.
         sso_title: 'You sign in with %provider%'
         sso_intro: 'This account has no password here: what protects it is managed at %provider%. An administrator can change how you sign in.'
+    two_factor:
+        title: Two-factor authentication
+        intro: After your password, Cairn asks for a code from an authentication app, so that a stolen password is not enough to sign in as you.
+        code: Code from your app
+        confirm_code: A code from your app, or a backup code
+        enabled: Two-factor authentication is on.
+        disabled: Two-factor authentication is off.
+        codes_renewed: 'New backup codes drawn: the previous ones no longer work.'
+        too_many_attempts: Too many attempts. Try again in a few minutes.
+        required_notice: This instance requires two-factor authentication. Set it up to go on using Cairn.
+        sso_title: 'You sign in with %provider%'
+        sso_intro: 'The second factor of this account is managed at %provider%, not here.'
+        setup:
+            title: Set up an authentication app
+            intro: Scan the QR code with an authentication app (Google Authenticator, 1Password, Aegis…), then type the code it shows to confirm.
+            qr_alt: QR code to scan with your authentication app
+            manual: 'Cannot scan it? Type this key in your app instead:'
+            submit: Turn on
+        codes:
+            title: Your backup codes
+            hint: 'Each one works once, in place of a code from your app. They are shown only now: keep them somewhere safe.'
+            copy: Copy the codes
+            copied: Copied
+        status:
+            title: Authentication app
+            'on': 'On'
+            codes_left: '{0}No backup code left.|{1}1 backup code left.|]1,Inf[ %count% backup codes left.'
+        regenerate:
+            title: Backup codes
+            help: Draw ten new ones; the ones you have stop working.
+            submit: Draw new codes
+        disable:
+            title: Turn off
+            help: Sign in with your password alone again. Confirm with a code.
+            submit: Turn off
+            required: This instance requires two-factor authentication, so it cannot be turned off. If you lose your phone, an administrator can reset it.
     refused:
         wrong_password: The current password is incorrect.
+        wrong_code: That code is incorrect.
+        two_factor_on: Two-factor authentication is already on.
+        two_factor_off: Two-factor authentication is not on.
+        two_factor_required: 'This instance requires two-factor authentication: it cannot be turned off.'
 
 mcp:
     title: MCP server

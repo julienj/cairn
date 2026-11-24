@@ -1355,6 +1355,7 @@ account:
         profile: Profil
         notifications: Notifications
         security: Sécurité
+        two_factor: Double authentification
         integrations: Intégrations
         api: API
         mcp: Serveur MCP
@@ -1401,8 +1402,48 @@ account:
         too_many_attempts: Trop de tentatives. Réessayez dans quelques minutes.
         sso_title: 'Vous vous connectez avec %provider%'
         sso_intro: "Ce compte n'a pas de mot de passe ici : ce qui le protège se gère chez %provider%. Un administrateur peut changer votre méthode de connexion."
+    two_factor:
+        title: Double authentification
+        intro: "Après votre mot de passe, Cairn demande un code d'une application d'authentification : un mot de passe volé ne suffit plus pour se connecter à votre place."
+        code: Code de votre application
+        confirm_code: Un code de votre application, ou un code de secours
+        enabled: La double authentification est activée.
+        disabled: La double authentification est désactivée.
+        codes_renewed: "De nouveaux codes de secours ont été générés : les précédents ne fonctionnent plus."
+        too_many_attempts: Trop de tentatives. Réessayez dans quelques minutes.
+        required_notice: Cette instance impose la double authentification. Activez-la pour continuer à utiliser Cairn.
+        sso_title: 'Vous vous connectez avec %provider%'
+        sso_intro: 'Le second facteur de ce compte est géré chez %provider%, pas ici.'
+        setup:
+            title: "Configurer une application d'authentification"
+            intro: "Scannez le QR code avec une application d'authentification (Google Authenticator, 1Password, Aegis…), puis saisissez le code qu'elle affiche pour confirmer."
+            qr_alt: "QR code à scanner avec votre application d'authentification"
+            manual: "Impossible de le scanner ? Saisissez plutôt cette clé dans votre application :"
+            submit: Activer
+        codes:
+            title: Vos codes de secours
+            hint: "Chacun ne sert qu'une fois, à la place d'un code de votre application. Ils ne sont affichés que maintenant : conservez-les en lieu sûr."
+            copy: Copier les codes
+            copied: Copié
+        status:
+            title: "Application d'authentification"
+            'on': Activée
+            codes_left: "{0}Plus aucun code de secours.|{1}1 code de secours restant.|]1,Inf[ %count% codes de secours restants."
+        regenerate:
+            title: Codes de secours
+            help: "Générez-en dix nouveaux ; ceux que vous avez cessent de fonctionner."
+            submit: Générer de nouveaux codes
+        disable:
+            title: Désactiver
+            help: "Ne vous connectez de nouveau qu'avec votre mot de passe. Confirmez avec un code."
+            submit: Désactiver
+            required: "Cette instance impose la double authentification : elle ne peut pas être désactivée. Si vous perdez votre téléphone, un administrateur peut la réinitialiser."
     refused:
         wrong_password: Le mot de passe actuel est incorrect.
+        wrong_code: Ce code est incorrect.
+        two_factor_on: La double authentification est déjà activée.
+        two_factor_off: "La double authentification n'est pas activée."
+        two_factor_required: "Cette instance impose la double authentification : elle ne peut pas être désactivée."
 
 mcp:
     title: Serveur MCP

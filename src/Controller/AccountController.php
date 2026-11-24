@@ -37,7 +37,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  * The pages of the signed-in user's own account, one per subject: the
  * profile (their picture; who they are is shown, the administration
  * changes it), the notifications (how their mails are grouped) and the
- * security (their password). The API tokens are ApiTokenController's.
+ * security (their password; the second factor is TwoFactorController's). The API tokens are ApiTokenController's.
  * The pictures are served to whoever is signed in, wherever a person is
  * shown.
  */
