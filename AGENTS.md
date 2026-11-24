@@ -430,7 +430,8 @@ src/
 ### Account and administration
 
 - Who someone is stays the administration's: an account changes its own
-  `mailGrouping`, password and picture only. `<twig:User:Avatar>` is the
+  `mailGrouping`, the kinds of activity it hides from the thread of every
+  issue (`hiddenActivity`), password and picture only. `<twig:User:Avatar>` is the
   one place that draws a person.
 - Everything under `/admin` requires `ROLE_ADMIN`. Its commands carry no
   actor; those a project manager reuses take an optional `actorId`, checked

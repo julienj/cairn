@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\MessageHandler\Command\User;
 
+use App\Entity\Enum\ActivityKind;
 use App\Entity\Enum\AuthMethod;
 use App\Entity\Enum\MailGrouping;
 use App\Entity\PasswordToken;
@@ -362,8 +363,11 @@ final class UserHandlersTest extends KernelTestCase
 
         $this->commands->dispatch(new UpdateUser($claireId, mailGrouping: MailGrouping::Issue, actorId: $claireId));
         self::assertSame(MailGrouping::Issue, $claire->getMailGrouping());
+        $this->commands->dispatch(new UpdateUser($claireId, hiddenActivity: [ActivityKind::Code, ActivityKind::Code], actorId: $claireId));
+        self::assertSame([ActivityKind::Code], $claire->getHiddenActivity(), 'each kind once');
 
         foreach ([
+            'the hidden activity of someone else' => new UpdateUser((int) $paul->getId(), hiddenActivity: [ActivityKind::Comments], actorId: $claireId),
             'the account of someone else' => new UpdateUser((int) $paul->getId(), mailGrouping: MailGrouping::Issue, actorId: $claireId),
             'their name' => new UpdateUser($claireId, firstName: 'Clara', actorId: $claireId),
             'their email' => new UpdateUser($claireId, email: 'clara@client.test', actorId: $claireId),

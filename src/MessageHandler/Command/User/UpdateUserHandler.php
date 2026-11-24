@@ -20,7 +20,7 @@ use Symfony\Component\Security\Core\Exception\AccessDeniedException;
  * unique, an external user keeps no internal-only role (the change is
  * refused while they hold one, the administrator decides what to grant
  * instead), the last active administrator stays one. A person acting on
- * their own account changes their mail grouping only. An account is told
+ * their own account changes their mail grouping and the activity they hide only. An account is told
  * to sign in through the identity provider only while the instance has
  * one; going back to a password is always possible.
  */
@@ -45,7 +45,7 @@ final class UpdateUserHandler
                 && null === $command->internal && null === $command->admin && null === $command->active
                 && null === $command->authMethod;
             if (!$own) {
-                throw new AccessDeniedException('Someone changes the mail grouping of their own account only.');
+                throw new AccessDeniedException('Someone changes the mail grouping and the hidden activity of their own account only.');
             }
         }
 
@@ -81,6 +81,9 @@ final class UpdateUserHandler
         }
         if (null !== $command->mailGrouping) {
             $user->groupMails($command->mailGrouping);
+        }
+        if (null !== $command->hiddenActivity) {
+            $user->hideActivity($command->hiddenActivity);
         }
         if (AuthMethod::Sso === $method) {
             $user->signInWithSso();
