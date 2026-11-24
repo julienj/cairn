@@ -1,0 +1,17 @@
+{# An icon button that copies, inside a `data-controller="clipboard"` element: the tooltip says `label` on hover, then `copiedLabel` for a moment with a green check in place of the icon. #}
+{% props label, copiedLabel, size = 'md' %}
+{% set copyButtonClasses = html_cva(
+    base: 'group relative inline-flex shrink-0 items-center justify-center rounded-md text-faint transition-colors hover:bg-sunken hover:text-body focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-line',
+    variants: {
+        size: { sm: 'h-6 w-6', md: 'h-7 w-7' },
+    },
+) %}
+{% set copyButtonIconClasses = size == 'sm' ? 'h-3.5 w-3.5' : 'h-4 w-4' %}
+<button type="button" class="{{ copyButtonClasses.apply({ size: size }, attributes.render('class'))|tailwind_merge }}" data-action="clipboard#copy" {{ attributes }}>
+    <span data-clipboard-target="idle">{{ ux_icon('lucide:copy', { class: copyButtonIconClasses }) }}</span>
+    <span class="text-emerald" data-clipboard-target="done" hidden>{{ ux_icon('lucide:check', { class: copyButtonIconClasses }) }}</span>
+    <span role="tooltip" aria-live="polite" class="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded-md bg-inverse px-2 py-1 text-xs font-medium text-on-inverse opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+        <span data-clipboard-target="idle">{{ label }}</span>
+        <span data-clipboard-target="done" hidden>{{ copiedLabel }}</span>
+    </span>
+</button>

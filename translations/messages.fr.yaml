@@ -1392,6 +1392,8 @@ mcp:
         hint: Créez un jeton, puis lancez cette commande en le mettant à la place de cairn_…
         scope: Un jeton en lecture ne laisse l'assistant que lire ; un jeton en lecture et écriture lui permet aussi de créer, modifier et commenter des demandes.
         private: Un commentaire écrit par l'assistant est privé, sauf si vous lui demandez de répondre au client.
+        copy: Copier la commande dans le presse-papiers
+        copied: "Copié !"
 
 api_token:
     title: Jetons d'API
