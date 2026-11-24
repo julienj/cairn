@@ -13,6 +13,7 @@ use App\Entity\Membership;
 use App\Entity\PasswordToken;
 use App\Entity\PendingNotification;
 use App\Entity\TeamMember;
+use App\Entity\WidgetToken;
 use App\Message\Command\User\DeleteUser;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -28,7 +29,7 @@ use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 final class DeleteUserHandler
 {
     /** What is the account's own, beside the notifications waiting for it. */
-    private const array BELONGINGS = [Membership::class, TeamMember::class, IssueSubscription::class, ApiToken::class, PasswordToken::class, ListView::class];
+    private const array BELONGINGS = [Membership::class, TeamMember::class, IssueSubscription::class, ApiToken::class, WidgetToken::class, PasswordToken::class, ListView::class];
 
     public function __construct(
         private readonly UserRepository $users,

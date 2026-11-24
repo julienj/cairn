@@ -231,6 +231,29 @@ Linking a repository in Cairn is then all there is to do: nothing is installed i
 
 In return, Cairn holds no access token to GitLab. Prefer a secret per repository when people outside your team may configure projects, or when GitLab hosts repositories whose activity must not leave it.
 
+### Widget (optional)
+
+The widget lets the people of a project report a problem from the site being reviewed, without leaving it: a button, a panel with a short form, a screenshot, and a technical report (page, browser, console errors, failed Ajax requests, pages seen). Everyone signs in with their own Cairn account, password or single sign-on, and creates the issue with their own rights. There is nothing to enable on the instance.
+
+1. In the project, open **Configuration → Widget** and declare the site by its address (`https://staging.example.com`).
+2. Copy the line of script shown there into the `<head>` of every page of the site, as early as possible:
+
+   ```html
+   <script src="https://cairn.example.com/widget.js" data-project="MD-SPT" async></script>
+   ```
+
+   `data-version="…"` is optional: the version of the site, added to the report.
+
+Good to know:
+
+- **The button can be moved** by dragging it to another corner of the window, when it hides what is being reviewed; the site remembers the corner, per browser.
+- **The button only shows on the sites declared on the project.** Leaving the script in production shows nothing there, but it still loads: keep it out.
+- **The screenshot needs HTTPS** on the site, as browsers require. Without it the widget works and offers to attach a file instead.
+- **A Content-Security-Policy on the site** must allow Cairn in `script-src`, `frame-src` and `connect-src`. A `Permissions-Policy` that names `display-capture` must allow Cairn there too, or the screenshot is refused.
+- **Behind a proxy**, let the answers under `/widget/` keep their own `Content-Security-Policy` (it names the sites allowed to frame the widget) and do not add an `X-Frame-Options` to them; pass the `Authorization` header through.
+- **What the script notes** stays in the page until someone reports a problem, and is shown to them before it is sent: the errors of the page, its failed Ajax requests (method, address, status: never what they carried) and the pages seen in the tab, all addresses without their parameters.
+- Someone who linked their account on a site stays linked for 30 days in that browser. Removing the site from the project, or deactivating the account, ends it at once.
+
 ### Real time (optional)
 
 With a [Mercure](https://mercure.rocks) hub, lists and kanbans update when someone else changes an issue, without reloading the page. With the Docker image, it is already on thanks to the hub built into FrankenPHP: there is nothing to do.
@@ -334,12 +357,14 @@ To let another account sign in through Authelia: switch it to single sign-on in 
 | `php` | the application (FrankenPHP), with the Mercure hub | <http://localhost:8000> |
 | `messenger` | the worker: emails, real time, scheduled tasks | |
 | `vite` | the assets, with hot reload | port 5173 |
+| `widget` | the script of the widget, built again when it changes | <http://localhost:8000/widget.js> |
 | `storia` | the component catalogue | <http://localhost:8000/storia> |
 | `database` | PostgreSQL 18 | `castor db:psql` |
 | `mailer` | Mailpit, which catches every email | <http://localhost:8025> |
 | `authelia` | the identity provider | <https://authelia.localhost:9443> |
+| (in `php`) | a site being reviewed, to try the widget on | <http://staging.localhost:8001> |
 
-A port already taken? Change it with `HTTP_PORT`, `VITE_PORT` or `MAILPIT_PORT` before `castor start`. Your other local settings go in `.env.local`.
+A port already taken? Change it with `HTTP_PORT`, `VITE_PORT` or `MAILPIT_PORT` before `castor start`. The port of the widget's site, 8001, is the one the development data declare: it does not change. Your other local settings go in `.env.local`.
 
 ### Everyday commands
 

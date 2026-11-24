@@ -14,6 +14,7 @@ compose*.yaml
 /vendor/
 /node_modules/
 /public/build/
+/public/widget.js
 /public/bundles/
 
 .env.local
@@ -25,6 +26,7 @@ compose*.yaml
 /tests/
 /storia/
 /docker/authelia/
+/docker/demo-site/
 .php-cs-fixer*
 .phpunit.cache/
 phpunit.dist.xml

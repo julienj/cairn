@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pendant lamps · Atelier Brume</title>
+    <link rel="stylesheet" href="/site.css">
+    <script src="/cairn.js"></script>
+    <script src="/loader.js"></script>
+</head>
+<body>
+    <div class="banner">Staging · the demonstration site of the Cairn widget (docker/demo-site)</div>
+    <header>
+        <strong>Atelier Brume</strong>
+        <nav>
+            <a href="/" aria-current="page">Pendant lamps</a>
+            <a href="/halo.html">Halo</a>
+            <a href="/csp.html">A strict page</a>
+        </nav>
+    </header>
+    <main>
+        <h1>Pendant lamps</h1>
+        <p class="lead">Blown glass and brass, made to order.</p>
+        <div class="filters">
+            <a href="/" data-material="" aria-current="page">All</a>
+            <a href="/glass" data-material="glass">Glass</a>
+            <a href="/brass" data-material="brass">Brass</a>
+        </div>
+        <div class="grid">
+            <a class="card" href="/halo.html" data-material="glass"><span></span><b>Halo</b><small data-price="halo">…</small></a>
+            <a class="card" href="#" data-material="glass"><span></span><b>Brume</b><small>420 €</small></a>
+            <a class="card" href="#" data-material="brass"><span></span><b>Galet</b><small>365 €</small></a>
+            <a class="card" href="#" data-material="glass"><span></span><b>Rosée</b><small>510 €</small></a>
+            <a class="card" href="#" data-material="brass"><span></span><b>Écume</b><small>290 €</small></a>
+            <a class="card" href="#" data-material="brass"><span></span><b>Lichen</b><small>445 €</small></a>
+            <a class="card" href="#" data-material="glass"><span></span><b>Givre</b><small>380 €</small></a>
+            <a class="card" href="#" data-material="brass"><span></span><b>Aube</b><small>335 €</small></a>
+        </div>
+        <div class="tools">
+            <p>Break something, then report it with the button at the bottom right.</p>
+            <button type="button" data-break="error">Throw a JavaScript error</button>
+            <button type="button" data-break="rejection">Reject a promise</button>
+            <button type="button" data-break="request">Send a request that fails</button>
+        </div>
+    </main>
+    <script src="/site.js"></script>
+</body>
+</html>

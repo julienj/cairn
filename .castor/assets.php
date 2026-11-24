@@ -3,7 +3,8 @@
 declare(strict_types=1);
 
 /*
- * In dev the "vite" service serves the assets with hot reload: nothing to build.
+ * In dev the "vite" service serves the assets with hot reload, and the "widget" service builds
+ * the script of the widget again when it changes: nothing to build.
  */
 
 namespace assets;

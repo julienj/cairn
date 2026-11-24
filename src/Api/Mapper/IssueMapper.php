@@ -9,6 +9,7 @@ use App\Api\Resource\Value\IssueField;
 use App\Api\Resource\Value\NamedRef;
 use App\Api\Resource\Value\OfferedTransition;
 use App\Api\Resource\Value\PlaceRef;
+use App\Api\Resource\Value\SiteReport;
 use App\Api\Resource\Value\TagRef;
 use App\Config\ConfigRegistry;
 use App\Entity\Enum\PlaceStatus;
@@ -19,6 +20,7 @@ use App\Repository\IssueFieldValueRepository;
 use App\Repository\IssueTagRepository;
 use App\Security\AccessControl;
 use App\Security\Viewer;
+use App\Widget\TechnicalReport;
 use App\Workflow\WorkflowProvider;
 
 /**
@@ -80,7 +82,9 @@ final class IssueMapper
             );
         }
 
-        return $this->map($issue, $this->issueTags->tagsOf($issue), $issue->getDescription(), $fields, array_map($this->refs->file(...), $detail->issueAttachments()), $transitions);
+        $report = TechnicalReport::from($issue->getReport());
+
+        return $this->map($issue, $this->issueTags->tagsOf($issue), $issue->getDescription(), $fields, array_map($this->refs->file(...), $detail->issueAttachments()), $transitions, null === $report ? null : SiteReport::of($report));
     }
 
     /**
@@ -89,7 +93,7 @@ final class IssueMapper
      * @param list<\App\Api\Resource\Value\FileRef>|null $attachments
      * @param list<OfferedTransition>|null               $transitions
      */
-    private function map(Issue $issue, array $tags, ?string $description = null, ?array $fields = null, ?array $attachments = null, ?array $transitions = null): IssueResource
+    private function map(Issue $issue, array $tags, ?string $description = null, ?array $fields = null, ?array $attachments = null, ?array $transitions = null, ?SiteReport $report = null): IssueResource
     {
         $release = $issue->getRelease();
 
@@ -119,6 +123,7 @@ final class IssueMapper
             fields: $fields,
             attachments: $attachments,
             transitions: $transitions,
+            technicalReport: $report,
         );
     }
 }

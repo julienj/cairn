@@ -16,6 +16,7 @@ use App\Repository\TagRepository;
 use App\Repository\TrackerRepository;
 use App\Security\AccessControl;
 use App\Security\Permission;
+use App\Widget\TechnicalReport;
 use App\Workflow\WorkflowProvider;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
@@ -82,6 +83,9 @@ final class CreateIssueHandler
         null !== $assigneeTeam ? $issue->assignToTeam($assigneeTeam) : $issue->assignTo($assignee);
         if ($command->private || $tracker->isPrivate()) {
             $issue->makePrivate();
+        }
+        if (null !== $report = TechnicalReport::from($command->report)) {
+            $issue->attachReport($report->toArray());
         }
 
         $this->support->arrive($issue);

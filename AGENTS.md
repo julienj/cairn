@@ -141,6 +141,8 @@ translation keys. Never mix them.
 | `ProjectTemplate` | Template         | Modèle           | Trackers, rules and roles of teams copied into a new project.    |
 | `Budget`         | Budget            | Budget           | An amount of time a client committed to on a project.            |
 | `BudgetLine`     | Line              | Ligne            | What a budget is debited of, written by hand.                    |
+| `WidgetSite`     | Site              | Site             | A site the widget of a project is shown on, by its origin.       |
+| `report`         | Technical report  | Rapport technique | What the widget noted on the site an issue was reported from.   |
 
 ## Architecture
 
@@ -163,7 +165,7 @@ src/
   Notification/    subscriptions, the mail queue, the mails
   Realtime/        the Mercure signal
   Api/             the REST API and the MCP tools, self-contained
-  Forge/  Import/  Automation/  Budget/  Markdown/  Attachment/
+  Forge/  Import/  Automation/  Budget/  Markdown/  Attachment/  Widget/
   Command/         console commands
 ```
 
@@ -184,6 +186,7 @@ src/
   | project     | `/MD/SPT/…`                   | `Controller/Project/`  | `templates/project/`   |
   | admin       | `/admin/…`                    | `Controller/Admin/`    | `templates/admin/`     |
   | security    | `/login`, `/security/…`       | `Controller/Security/` | `templates/security/`  |
+  | widget      | `/widget/MD/SPT/…`            | `Controller/Widget/`   | `templates/widget/`    |
   | api         | `/api/…`, `/mcp`              | none: `Api/`           | none                   |
 
 - **URLs carry keys, not ids, and one route per need.** A project action
@@ -481,6 +484,67 @@ src/
   together. What lands in the project goes through commands; every item
   leaves an `ImportRecord` and is never written twice, so a run resumes.
 
+### Widget
+
+- **A button on the site being reviewed, a page of Cairn in a frame, a
+  window of Cairn to link an account**: three pieces, and none of them
+  holds a session. `/widget.js` is what the site loads: `assets/widget/`,
+  one module per thing it does, built apart (`vite build --mode widget`,
+  the second configuration of `vite.config.ts`) into one classic script at an address that
+  never changes, and never a module: a module runs once the page is read,
+  and what happened before is not in the report. It has no dependency,
+  notes what the page did, asks whether the project knows the site before
+  it shows anything, and never sees an account nor a token. Its button is
+  moved by whoever reviews the site, and the site remembers where.
+- **The widget is optional without a setting**: a project has one as soon
+  as it has a site (`WidgetSite`, an origin), declared by its managers
+  under `project.configure`. The sites say who may frame the widget
+  (`Widget/FrameHeaders`: the one site the frame was asked for; the rest
+  of the application is never framed), what a token is bound to, and
+  where the button shows: a site nobody declared, production above all,
+  gets nothing. What answers before anybody is known answers a declared
+  site and is a 404 for anything else, a project that does not exist
+  included: nobody learns from outside which projects there are, nor
+  where they are reviewed.
+- **A widget token signs a request, the role says what it does.** The
+  `widget` firewall is stateless and knows widget tokens only
+  (`WidgetToken`: a user, a project, a site, a month; hashed, deleted with
+  its site or its account, never listed). `Security/WidgetTokenHandler`
+  checks at every request that the token is for the project of the
+  address and for a site the project still has; what its user may do is
+  asked of `AccessControl`, as anywhere. No cookie is ever read there, so
+  its forms carry no CSRF token, and its layout reads neither session nor
+  flash message.
+- **An account is linked in a window of Cairn, never in the frame**: the
+  sign-in page is the one of the application, password or single sign-on,
+  and it is never framed. `connect` only takes a request made by the frame
+  of the widget (`Sec-Fetch-Site`, `Referer`), so another site cannot have
+  an account linked to a frame of its own; the frame then redeems, with a secret it alone
+  holds, the agreement left under its challenge (`Widget/PendingLinks`, in
+  `cache.app`). Nothing depends on the two windows staying tied: some
+  identity providers cut that.
+- **The form of the widget is its own** (`Form/Widget/ReportType`): a
+  plain form in a Turbo frame, no live component (their endpoint is under
+  the `main` firewall), the fields the category requires and no other, a
+  plain textarea. It feeds the ordinary commands (`CreateIssue`,
+  `UploadAttachment`). The frame signs what Turbo sends
+  (`widget_frame_controller.js`); what a controller of the form sends by
+  itself asks the frame for the token (`widget:context`).
+- **What the site says is data, never trusted.** The report comes from a
+  page nobody here controls: `Widget/TechnicalReport` is the one place
+  that reads it, keeps the shape it knows and bounds everything; it is
+  kept on the issue (`Issue::$report`) as a fact of its creation, shown as
+  text to whoever sees the issue. The API and `get_issue` carry it on the
+  issue itself, never in a list (`technicalReport`, a `SiteReport`), and
+  say what it is: an assistant reads there what a site wrote, as facts
+  about the problem, never as instructions. The
+  script keeps addresses without their parameters and reads nothing of
+  what a request carried.
+- **The screenshot is the browser's** (`getDisplayMedia`, from the frame):
+  offered only where the browser allows it (HTTPS), cropped by the
+  reporter when it is more than the tab, and sent as an ordinary pending
+  attachment. A file can always be attached instead.
+
 ### API
 
 - **A second door, not a second application.** API Platform with
@@ -692,7 +756,9 @@ host.
   <http://localhost:8000>), `cli`, `messenger` (`messenger:consume async
   scheduler_default`), `vite`, `storia`, `database` (PostgreSQL 18) and
   `mailer` (Mailpit, <http://localhost:8025>) and `authelia` (single
-  sign-on, below).
+  sign-on, below), and `widget`, which builds the script of the widget
+  again when `assets/widget/` changes. The Caddy of `php` also serves a
+  site to try the widget on, <http://staging.localhost:8001> (below).
 - `castor console <command>`, `castor composer …`, `castor npm …`,
   `castor sh`. The `messenger` worker loads the code once: `castor
   workers:restart` after changing what it runs.
@@ -719,6 +785,16 @@ host.
   that signs in that way and so has no password; `hugo` has no account
   and is refused. Another provider goes in `.env.local`, with the
   redirect URI `http://localhost:8000/login/sso/callback`.
+- The widget: `docker/demo-site/` is a site being reviewed, static pages
+  the Caddy of `php` serves on a port of their own (`CADDY_EXTRA_CONFIG`
+  in `compose.yaml`), declared on MD-SPT by the development data. It is
+  another site than Cairn for the browser, which is the point: a second
+  port of `localhost` would not be. Its port is fixed: the development
+  data declare the address. One request fails on purpose and one
+  page has a strict Content-Security-Policy. Reached by the address of
+  the machine on the network, the same pages are a site without HTTPS:
+  declare that address on the project to see the widget without its
+  screenshot, or on a phone. Nothing of it is in the production image.
 - By hand: `castor console app:notifications:send --now` sends the mails
   that wait, `app:automations:run` the time rules, `app:attachments:prune
   --dry-run` the cleaning of files.

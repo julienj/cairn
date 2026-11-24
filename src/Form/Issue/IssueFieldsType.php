@@ -47,6 +47,9 @@ final class IssueFieldsType extends AbstractType
             if ($field->internalOnly && !$options['internal']) {
                 continue;
             }
+            if ($options['required_only'] && !$usage->required) {
+                continue;
+            }
             [$type, $typeOptions] = $this->control($field);
             $builder->add($field->id, $type, $typeOptions + [
                 // Configuration labels are content, never translated.
@@ -67,12 +70,14 @@ final class IssueFieldsType extends AbstractType
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver
-            ->setDefaults(['label' => false, 'internal' => false])
+            ->setDefaults(['label' => false, 'internal' => false, 'required_only' => false])
             ->setRequired(['workflow', 'definition'])
             ->setAllowedTypes('workflow', WorkflowDefinition::class)
             ->setAllowedTypes('definition', InstanceDefinition::class)
             ->setAllowedTypes('internal', 'bool')
-            ->setInfo('internal', 'whether internal-only fields are shown');
+            ->setAllowedTypes('required_only', 'bool')
+            ->setInfo('internal', 'whether internal-only fields are shown')
+            ->setInfo('required_only', 'whether only the fields the workflow requires are asked (the widget)');
     }
 
     /**

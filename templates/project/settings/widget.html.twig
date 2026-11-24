@@ -1,0 +1,61 @@
+{% extends 'project/settings/base.html.twig' %}
+
+{# The widget of the project: the sites it is shown on, each removed in place, and the line of script their pages load; `form`, at its own address, is the dialog declaring a site. Without a site there is no widget, and no line to copy. #}
+{% block settings_title %}{{ 'nav.project.configuration.widget'|trans }}{% endblock %}
+
+{% block settings_count %}{{ sites|length }}{% endblock %}
+
+{% block settings_intro %}{{ 'widget.intro'|trans }}{% endblock %}
+
+{% block settings_actions %}
+    <twig:Ui:Button variant="primary" icon="plus" href="{{ path('app_project_settings_widget_site_new', settingsRoute) }}" data-turbo-frame="modal">{{ 'widget.site.new'|trans }}</twig:Ui:Button>
+{% endblock %}
+
+{% block settings_content %}
+    <div class="max-w-3xl space-y-6">
+        {% if sites is empty %}
+            <twig:Ui:EmptyState :title="'widget.site.empty'|trans" icon="message-square" bordered>{{ 'widget.site.empty_hint'|trans }}</twig:Ui:EmptyState>
+        {% else %}
+            <ul class="divide-y divide-line-subtle rounded-lg border border-line bg-surface text-sm">
+                {% for site in sites %}
+                    <li class="flex flex-wrap items-center gap-3 px-4 py-2.5">
+                        <span class="font-mono text-strong">{{ site.origin }}</span>
+                        {% if not site.secure %}
+                            <twig:Ui:Badge tone="amber" size="sm">{{ 'widget.site.insecure'|trans }}</twig:Ui:Badge>
+                        {% endif %}
+                        <form method="post" action="{{ path('app_project_settings_widget_site_delete', settingsRoute|merge({ site: site.id })) }}" class="ml-auto">
+                            <input type="hidden" name="_token" value="{{ csrf_token('submit') }}" data-controller="csrf-protection">
+                            <twig:Ui:Disclosure :closedLabel="'widget.site.remove'|trans" :openLabel="'issue.edit.cancel'|trans">
+                                <div class="mt-2 flex flex-wrap items-center gap-3" role="alertdialog">
+                                    <span class="flex-1 basis-48 text-xs text-muted">{{ 'widget.site.remove_confirm'|trans }}</span>
+                                    <twig:Ui:Button type="submit" variant="danger" size="sm" icon="trash-2">{{ 'widget.site.remove'|trans }}</twig:Ui:Button>
+                                </div>
+                            </twig:Ui:Disclosure>
+                        </form>
+                    </li>
+                {% endfor %}
+            </ul>
+
+            <section class="rounded-lg border border-line bg-surface p-4 space-y-2" data-controller="clipboard">
+                <div class="flex flex-wrap items-center gap-2">
+                    <h2 class="text-sm font-semibold text-strong">{{ 'widget.install.title'|trans }}</h2>
+                    <twig:Ui:Button size="sm" icon="copy" class="ml-auto" data-action="clipboard#copy">
+                        <span data-clipboard-target="idle">{{ 'widget.install.copy'|trans }}</span>
+                        <span data-clipboard-target="done" hidden>{{ 'widget.install.copied'|trans }}</span>
+                    </twig:Ui:Button>
+                </div>
+                <p class="text-xs text-muted">{{ 'widget.install.help'|trans }}</p>
+                <pre class="overflow-x-auto rounded-md bg-slate-900 px-3 py-2 font-mono text-xs text-slate-100" data-clipboard-target="source" data-test="widget-snippet">&lt;script src="{{ app.request.schemeAndHttpHost }}/widget.js" data-project="{{ project.issuePrefix }}" async&gt;&lt;/script&gt;</pre>
+            </section>
+        {% endif %}
+    </div>
+{% endblock %}
+
+{# Answered alone to a request made for the frame: it reads only `project` and `form`. #}
+{% block modal %}
+    {{ include('project/_form_dialog.html.twig', {
+        title: 'widget.site.new'|trans,
+        closeHref: path('app_project_settings_widget', { workspaceKey: project.workspace.key, projectKey: project.key }),
+        submitLabel: 'widget.site.add'|trans,
+    }) }}
+{% endblock %}

@@ -17,12 +17,15 @@
     </head>
     <body class="min-h-screen bg-canvas text-body text-sm antialiased">
         {% block body %}{% endblock %}
-        <twig:Ui:Toaster>
-            {% for messages in app.flashes %}
-                {% for message in messages %}
-                    <twig:Ui:Toast>{{ message }}</twig:Ui:Toast>
+        {# The flash messages of the session, as toasts; a layout without a session (the widget) draws the toaster alone. #}
+        {% block toasts %}
+            <twig:Ui:Toaster>
+                {% for messages in app.flashes %}
+                    {% for message in messages %}
+                        <twig:Ui:Toast>{{ message }}</twig:Ui:Toast>
+                    {% endfor %}
                 {% endfor %}
-            {% endfor %}
-        </twig:Ui:Toaster>
+            </twig:Ui:Toaster>
+        {% endblock %}
     </body>
 </html>

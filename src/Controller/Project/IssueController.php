@@ -11,6 +11,7 @@ use App\Entity\Workspace;
 use App\Message\Query\Issue\IssueDetail;
 use App\Message\Query\Issue\ShowIssue;
 use App\Message\QueryBus;
+use App\Widget\TechnicalReport;
 use App\Workflow\WorkflowProvider;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -47,7 +48,26 @@ final class IssueController extends AbstractController
         User $viewer,
         int $number,
     ): Response {
-        return $this->renderWithDialog($request, 'project/issue.html.twig', ['project' => $project, 'detail' => $this->detail($project, $viewer, $number), 'workflow' => null], static fn (): array => []);
+        return $this->renderWithDialog($request, 'project/issue.html.twig', ['project' => $project, 'detail' => $this->detail($project, $viewer, $number), 'workflow' => null, 'report' => null], static fn (): array => []);
+    }
+
+    /**
+     * What the widget noted on the site the issue was reported from, for
+     * whoever sees the issue: a 404 for an issue that has no report.
+     */
+    #[Route('/{workspaceKey}/{projectKey}/issues/{number}/report', name: 'app_issue_report', requirements: self::REQUIREMENTS, methods: ['GET'])]
+    public function report(
+        Request $request,
+        #[CurrentProject]
+        Project $project,
+        #[CurrentUser]
+        User $viewer,
+        int $number,
+    ): Response {
+        $detail = $this->detail($project, $viewer, $number);
+        $report = TechnicalReport::from($detail->issue->getReport()) ?? throw $this->createNotFoundException(\sprintf('%s has no technical report.', $detail->issue->getKey()));
+
+        return $this->renderWithDialog($request, 'project/issue.html.twig', ['project' => $project, 'detail' => $detail, 'workflow' => null, 'report' => $report], static fn (): array => []);
     }
 
     #[Route('/{workspaceKey}/{projectKey}/issues/{number}/workflow', name: 'app_issue_workflow', requirements: self::REQUIREMENTS, methods: ['GET'])]
@@ -66,6 +86,7 @@ final class IssueController extends AbstractController
             'project' => $project,
             'detail' => $detail,
             'workflow' => $workflows->definition($detail->issue->getTracker()->getWorkflowId()),
+            'report' => null,
         ], static fn (): array => []);
     }
 

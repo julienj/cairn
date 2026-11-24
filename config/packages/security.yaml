@@ -38,6 +38,19 @@ security:
             user_checker: App\Security\UserChecker
             access_token:
                 token_handler: App\Security\ApiTokenHandler
+        widget:
+            # The pages of the widget, framed by the sites of a project: a
+            # widget token in the Authorization header
+            # (Security/WidgetTokenHandler), no session, so no cookie signs
+            # a request in and no CSRF token is needed. Its first page, what
+            # tells a site it is known and the exchange that gives the token
+            # are public (access_control below).
+            pattern: ^/widget/
+            stateless: true
+            provider: app_user_provider
+            user_checker: App\Security\UserChecker
+            access_token:
+                token_handler: App\Security\WidgetTokenHandler
         main:
             lazy: true
             provider: app_user_provider
@@ -95,6 +108,11 @@ security:
         - { path: ^/password, roles: PUBLIC_ACCESS } # forgot password, set the password from a link
         - { path: ^/storia, roles: PUBLIC_ACCESS } # dev only: the bundle is disabled in prod
         - { path: ^/security/2fa(/check)?$, roles: IS_AUTHENTICATED_2FA_IN_PROGRESS } # the code, between the password and the application
+        # The widget: its frame holds nothing before its token is there, and
+        # the way into linking an account only notes who asks before the
+        # sign-in page (Controller/Project/WidgetLinkController).
+        - { path: '^/widget/[^/]+/[^/]+(/(site|token))?$', roles: PUBLIC_ACCESS }
+        - { path: '^/[^/]+/[^/]+/widget/connect$', roles: PUBLIC_ACCESS }
         # The API: its documentation is read signed in, by those who may use
         # it (AccessControl::canUseApi(): the internal users); reading the API
         # needs a token with the `read` scope, anything else `write`
