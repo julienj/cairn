@@ -11,6 +11,13 @@ criticality:
     blocking: Bloquante
 
 issue:
+    activity:
+        filter: Afficher
+        kind:
+            changes: Changements
+            code: Activité Git
+            comments: Commentaires
+        filtered_empty: Rien à afficher avec ces filtres.
     follow:
         follow: Suivre
         unfollow: Ne plus suivre

@@ -1,6 +1,8 @@
 {# Thread of the issue page, then what the viewer may do: the actions of the workflow, one line each, and the comment box. The comment being written is the `body` prop, kept across every redraw, including those `issue:changed` triggers.
    The controls are plain HTML: a data-model attribute on a nested component would bind that component instead. #}
 {% set activityDetail = this.detail %}
+{% set activityTimeline = this.timeline %}
+{% set activityHidden = this.hiddenKinds %}
 {% set activityTransitions = this.transitions %}
 {% set activityAwaiting = this.awaitingTransition %}
 {% set activityCanComment = this.canComment %}
@@ -10,9 +12,17 @@
 <div {{ attributes }}>
 
     <section class="mt-8">
-        <h2 class="font-semibold text-strong mb-3">{{ 'issue.show.activity'|trans }}</h2>
+        <div class="mb-3 flex items-center gap-2">
+            <h2 class="font-semibold text-strong">{{ 'issue.show.activity'|trans }}</h2>
+            {# Who reads chooses what to read, for every issue: the choice is kept on the account. #}
+            <twig:Ui:Filter:Menu class="ml-auto" align="right" :label="'issue.activity.filter'|trans" :count="activityHidden|length">
+                {% for kind in enum_cases('App\\Entity\\Enum\\ActivityKind') %}
+                    <twig:Ui:Filter:Option :checked="kind not in activityHidden" data-action="change->live#action" data-live-action-param="toggleActivity" data-live-kind-param="{{ kind.value }}">{{ ('issue.activity.kind.' ~ kind.value)|trans }}</twig:Ui:Filter:Option>
+                {% endfor %}
+            </twig:Ui:Filter:Menu>
+        </div>
         <ol class="relative border-l border-line ml-3 space-y-4">
-            {% for entry in activityDetail.timeline %}
+            {% for entry in activityTimeline %}
                 {% set entryComment = entry.comment %}
                 {% if entry.event %}
                     <twig:Issue:JournalEntry :entry="entry.event" />
@@ -104,6 +114,8 @@
                         </div>
                     </li>
                 {% endif %}
+            {% else %}
+                <li class="pl-6 text-sm text-muted">{{ 'issue.activity.filtered_empty'|trans }}</li>
             {% endfor %}
         </ol>
         {# The decision and the comment are two boxes. The decision keeps its slot even when empty, so that the comment editor, whose inside the morph ignores, stays the same sibling and is not recreated. #}
