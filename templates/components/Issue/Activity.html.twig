@@ -15,7 +15,7 @@
         <div class="mb-3 flex items-center gap-2">
             <h2 class="font-semibold text-strong">{{ 'issue.show.activity'|trans }}</h2>
             {# Who reads chooses what to read, for every issue: the choice is kept on the account. #}
-            <twig:Ui:Filter:Menu class="ml-auto" align="right" :label="'issue.activity.filter'|trans" :count="activityHidden|length">
+            <twig:Ui:Filter:Menu class="ml-auto" align="right" :label="this.filterLabel" :active="activityHidden is not empty">
                 {% for kind in enum_cases('App\\Entity\\Enum\\ActivityKind') %}
                     <twig:Ui:Filter:Option :checked="kind not in activityHidden" data-action="change->live#action" data-live-action-param="toggleActivity" data-live-kind-param="{{ kind.value }}">{{ ('issue.activity.kind.' ~ kind.value)|trans }}</twig:Ui:Filter:Option>
                 {% endfor %}

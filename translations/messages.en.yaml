@@ -12,7 +12,13 @@ criticality:
 
 issue:
     activity:
-        filter: Show
+        show_all: Show all
+        show: 'Show %kinds%'
+        none: nothing
+        short:
+            changes: Changes
+            code: Git
+            comments: Comments
         kind:
             changes: Changes
             code: Git activity

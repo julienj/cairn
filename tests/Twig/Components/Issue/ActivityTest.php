@@ -338,16 +338,19 @@ final class ActivityTest extends KernelTestCase
         self::assertStringContainsString('a1b2c3d4', $render);
         self::assertStringContainsString('A comment of the manager.', $render);
         self::assertStringContainsString('data-live-kind-param="code"', $render);
+        self::assertStringContainsString('Show all', $render);
 
         $component->call('toggleActivity', ['kind' => 'code']);
         $render = (string) $component->render();
         self::assertStringNotContainsString('a1b2c3d4', $render, 'the commits are hidden');
         self::assertStringContainsString('created the issue', $render);
         self::assertSame([ActivityKind::Code], $this->hiddenBy($manager));
+        self::assertStringContainsString('Show Changes, Comments', $render, 'the menu says what is shown, not what is hidden');
 
         $component->call('toggleActivity', ['kind' => 'comments'])->call('toggleActivity', ['kind' => 'changes']);
         $render = (string) $component->render();
         self::assertStringContainsString('Nothing to show with these filters.', $render);
+        self::assertStringContainsString('Show nothing', $render);
         self::assertStringContainsString('data-live-action-param="submit"', $render, 'the comment box stays');
 
         // The choice follows the person to the other issues, and a kind can be shown again.

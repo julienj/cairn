@@ -170,6 +170,19 @@ final class Activity
         return $this->viewer->get()->getHiddenActivity();
     }
 
+    /** What the filter shows, in a few words: everything, or the kinds kept. */
+    public function getFilterLabel(): string
+    {
+        $shown = array_filter(ActivityKind::cases(), fn (ActivityKind $kind): bool => !\in_array($kind, $this->getHiddenKinds(), true));
+        if (\count($shown) === \count(ActivityKind::cases())) {
+            return $this->translator->trans('issue.activity.show_all');
+        }
+
+        return $this->translator->trans('issue.activity.show', [
+            '%kinds%' => [] === $shown ? $this->translator->trans('issue.activity.none') : implode(', ', array_map(fn (ActivityKind $kind): string => $this->translator->trans('issue.activity.short.'.$kind->value), $shown)),
+        ]);
+    }
+
     /**
      * Shows or hides a kind of activity, for this person on every issue.
      * Filtering is reading, not an activity: no toast, and no other
