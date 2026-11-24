@@ -389,6 +389,7 @@ home:
 my_issues:
     heading: My issues
     title:
+        all: My issues · all
         assigned: My issues · assigned to me
         created: My issues · created by me
 

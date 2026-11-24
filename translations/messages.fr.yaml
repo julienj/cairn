@@ -389,6 +389,7 @@ home:
 my_issues:
     heading: Mes demandes
     title:
+        all: Mes demandes · toutes
         assigned: Mes demandes · assignées à moi
         created: Mes demandes · créées par moi
 

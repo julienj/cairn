@@ -9,6 +9,7 @@
         <div class="flex flex-wrap items-center gap-3">
             <h1 class="font-semibold text-strong text-base">{{ 'my_issues.heading'|trans }}</h1>
             <nav class="ml-auto flex items-center gap-1 border-b border-line" aria-label="{{ 'my_issues.heading'|trans }}">
+                <twig:Ui:Tab href="{{ path('app_my_issues_all') }}" :active="list == 'all'">{{ 'nav.issues.all'|trans }}</twig:Ui:Tab>
                 <twig:Ui:Tab href="{{ path('app_my_issues_assigned') }}" :active="list == 'assigned'">{{ 'nav.issues.assigned'|trans }}</twig:Ui:Tab>
                 <twig:Ui:Tab href="{{ path('app_my_issues_created') }}" :active="list == 'created'">{{ 'nav.issues.created'|trans }}</twig:Ui:Tab>
             </nav>
