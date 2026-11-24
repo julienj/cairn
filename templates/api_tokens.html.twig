@@ -29,7 +29,7 @@
                 <p class="mt-3 text-xs text-emerald/80">{{ 'api_token.created.usage'|trans }}</p>
                 <div class="mt-1 flex items-start gap-2" data-controller="clipboard">
                     <pre class="min-w-0 flex-1 overflow-x-auto rounded-md bg-slate-900 px-3 py-2 font-mono text-xs text-slate-100" data-clipboard-target="source">curl -H "Authorization: Bearer {{ tokenSecret }}" {{ url('app_home') }}api/me</pre>
-                    <twig:Ui:IconButton icon="copy" :label="'api_token.created.copy'|trans" data-action="clipboard#copy" />
+                    <twig:Ui:CopyButton :label="'api_token.created.copy'|trans" :copiedLabel="'api_token.created.copied'|trans" />
                 </div>
             </section>
         {% endfor %}
