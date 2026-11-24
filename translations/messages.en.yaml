@@ -1357,15 +1357,18 @@ account:
             company: Company
             managed: These details are managed by an administrator. Contact them to have them changed.
     notifications:
-        intro: You get an email when someone else changes an issue you follow.
+        intro: Choose the emails you get when someone else changes an issue you follow.
         grouping:
-            label: Email grouping
+            label: Notification emails
             project:
                 title: One email per project
                 description: All the changes of a project together in a single email.
             issue:
                 title: One email per issue
                 description: A separate email for each issue that changed.
+            none:
+                title: No email
+                description: You get no notification email. You still follow the issues.
         save: Save
         saved: Preferences saved.
     security:

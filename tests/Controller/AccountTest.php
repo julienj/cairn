@@ -76,6 +76,19 @@ final class AccountTest extends WebTestCase
         self::assertSelectorExists('input[name="mail_settings[mailGrouping]"][value="issue"][checked]');
     }
 
+    public function testNoMailCanBeChosen(): void
+    {
+        $this->client->loginUser($this->claire);
+
+        $crawler = $this->client->request('GET', '/account/notifications');
+        self::assertSelectorTextContains('form', 'No email');
+
+        $this->client->submit($crawler->selectButton('Save')->form(), ['mail_settings[mailGrouping]' => 'none']);
+        self::assertResponseRedirects('/account/notifications');
+
+        self::assertSame(MailGrouping::None, $this->account()->getMailGrouping());
+    }
+
     public function testAPictureIsChosenShownAndRemoved(): void
     {
         $this->client->loginUser($this->claire);

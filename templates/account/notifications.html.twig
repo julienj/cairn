@@ -4,12 +4,12 @@
 
 {% block page_intro %}{{ 'account.notifications.intro'|trans }}{% endblock %}
 
-{# How the notification mails of the signed-in user are grouped: `form` holds one choice, drawn as a card per grouping. #}
+{# How the notification mails of the signed-in user are grouped: `form` holds one choice, drawn as a card per grouping, the last sending none. #}
 {% block content %}
     {{ form_start(form, { attr: { class: 'space-y-5' } }) }}
         <fieldset class="rounded-lg border border-line bg-surface p-4 sm:p-5">
             <legend class="contents"><span class="font-semibold text-strong">{{ 'account.notifications.grouping.label'|trans }}</span></legend>
-            <div class="mt-3 grid gap-3 sm:grid-cols-2">
+            <div class="mt-3 grid gap-3 lg:grid-cols-3">
                 {% for notificationsChoice in form.mailGrouping %}
                     <twig:Ui:Form:RadioCard
                         :title="notificationsChoice.vars.label|trans"

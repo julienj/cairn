@@ -1357,15 +1357,18 @@ account:
             company: Société
             managed: Ces informations sont gérées par un administrateur. Contactez-le pour les faire modifier.
     notifications:
-        intro: Vous recevez un e-mail quand quelqu'un d'autre modifie une demande que vous suivez.
+        intro: Choisissez les e-mails que vous recevez quand quelqu'un d'autre modifie une demande que vous suivez.
         grouping:
-            label: Regroupement des e-mails
+            label: E-mails de notification
             project:
                 title: Un e-mail par projet
                 description: Tous les changements d'un projet réunis dans un seul e-mail.
             issue:
                 title: Un e-mail par demande
                 description: Un e-mail distinct pour chaque demande modifiée.
+            none:
+                title: Aucun e-mail
+                description: Vous ne recevez aucun e-mail de notification. Les demandes restent suivies.
         save: Enregistrer
         saved: Préférences enregistrées.
     security:

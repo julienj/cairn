@@ -33,7 +33,7 @@ use Symfony\Component\Scheduler\Attribute\AsPeriodicTask;
  * waited for more than a day is dropped, since the issue keeps its
  * history and a mail is only worth sending while it is news. What the recipient
  * may read is decided again here (ChangeFilter), and an issue they
- * stopped following is left out.
+ * stopped following, or whoever wants no mail any more, is left out.
  */
 final class ProjectMailSender
 {
@@ -176,7 +176,7 @@ final class ProjectMailSender
         foreach ($rows as $row) {
             $issue = $row->getIssue();
             $issueId = (int) $issue->getId();
-            $followed[$issueId] ??= $recipient->isActive() && null !== $this->subscriptions->findOne($issue, $recipient);
+            $followed[$issueId] ??= $recipient->isActive() && $recipient->getMailGrouping()->sendsMails() && null !== $this->subscriptions->findOne($issue, $recipient);
             if (!$followed[$issueId]) {
                 continue;
             }

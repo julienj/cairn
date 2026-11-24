@@ -12,6 +12,7 @@ use App\Message\Command\Issue\AddComment;
 use App\Message\Command\Issue\ApplyTransition;
 use App\Message\Command\Issue\UnfollowIssue;
 use App\Message\Command\Issue\UpdateIssue;
+use App\Message\Command\User\UpdateUser;
 use App\Message\CommandBus;
 use App\Message\Notification\NotifyIssueChange;
 use App\MessageHandler\Notification\NotifyIssueChangeHandler;
@@ -154,6 +155,33 @@ final class ProjectMailSenderTest extends KernelTestCase
         self::assertSame(1, $this->sender->sendDue());
         $subjects = array_map(static fn (Email $email): ?string => $email->getSubject(), $this->emails());
         self::assertContains(\sprintf('[Maison Dupont / Online shop] %s Blurry logo', $second->getKey()), $subjects);
+    }
+
+    public function testWhoeverChoseNoMailGetsNoneAndNothingWaitsForThem(): void
+    {
+        $this->fixtures->manager->groupMails(MailGrouping::None);
+        $this->fixtures->createIssue($this->fixtures->client);
+        $this->queue();
+        self::assertSame([], $this->waiting(), 'nothing was queued for Thomas');
+        $this->clock->sleep(ProjectMailSender::CALM);
+
+        self::assertSame(0, $this->sender->sendDue());
+        self::assertEmailCount(0);
+    }
+
+    public function testWhatWaitedIsLeftOutOnceNoMailIsChosen(): void
+    {
+        $this->fixtures->createIssue($this->fixtures->client);
+        $this->queue();
+        $manager = (int) $this->fixtures->manager->getId();
+        $this->commands->dispatch(new UpdateUser($manager, mailGrouping: MailGrouping::None, actorId: $manager));
+        // The sender reads the stored choice, as a worker would.
+        self::getContainer()->get(EntityManagerInterface::class)->clear();
+        $this->clock->sleep(ProjectMailSender::CALM);
+        self::assertNotSame([], $this->waiting());
+        self::assertSame(0, $this->sender->sendDue());
+        self::assertEmailCount(0);
+        self::assertSame([], $this->waiting(), 'what waited is gone without a mail');
     }
 
     public function testAProjectThatNeverCalmsDownLeavesAfterTheLongestWait(): void

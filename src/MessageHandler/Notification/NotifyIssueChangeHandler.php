@@ -16,7 +16,7 @@ use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 /**
  * Queues the change for every subscriber of the issue, except the one who
- * acted (an automation rule tells everyone), with what each may read of it (Notification/ChangeFilter): an
+ * acted (an automation rule tells everyone) and those who want no mail, with what each may read of it (Notification/ChangeFilter): an
  * external user waits for nothing when the change is private. No mail
  * leaves here: Notification/ProjectMailSender sends what waits, grouped
  * by person and project, once things calmed down.
@@ -43,7 +43,7 @@ final class NotifyIssueChangeHandler
         [$entries, $comment] = $this->filter->load($message->entryIds, $message->commentId);
 
         foreach ($this->subscriptions->findSubscribers($issue) as $recipient) {
-            if ($recipient->getId() === $actor?->getId()) {
+            if ($recipient->getId() === $actor?->getId() || !$recipient->getMailGrouping()->sendsMails()) {
                 continue;
             }
             $visible = $this->filter->visible($recipient, $issue, $entries, $comment);
