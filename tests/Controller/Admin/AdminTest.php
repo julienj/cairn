@@ -9,6 +9,7 @@ use App\Entity\User;
 use App\Entity\Workspace;
 use App\Tests\KernelHelpers;
 use App\Tests\Scene\ShopScene;
+use App\Tests\Security\TwoFactorHelpers;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\MailerAssertionsTrait;
@@ -23,6 +24,7 @@ final class AdminTest extends WebTestCase
 {
     use KernelHelpers;
     use MailerAssertionsTrait;
+    use TwoFactorHelpers;
 
     private KernelBrowser $client;
     private ShopScene $scene;
@@ -283,6 +285,42 @@ final class AdminTest extends WebTestCase
         $visitor->request('GET', $secondLink);
         $visitor->followRedirect();
         self::assertSelectorTextContains('h1', 'Choose your password');
+    }
+
+    public function testTheSecondFactorOfAnAccountIsResetByAnAdministrator(): void
+    {
+        $thomas = $this->entity(User::class, ['email' => 'thomas.girard@cairn.test']) ?? self::fail('no Thomas');
+        $this->signInAsAdmin();
+
+        $this->client->request('GET', '/admin/users/'.$thomas->getId());
+        self::assertSelectorNotExists('form[action$="/two-factor/reset"]', 'nothing to reset yet');
+
+        $this->enableTwoFactorOn($thomas, self::totpSecret());
+        $this->client->request('GET', '/admin/users');
+        self::assertSelectorTextContains('tbody [data-test="two-factor-badge"]', '2FA');
+        $this->client->request('GET', '/admin/users/'.$thomas->getId());
+        self::assertSelectorTextContains('[data-test="two-factor-badge"]', '2FA');
+        $this->client->submitForm('Reset');
+
+        self::assertResponseRedirects('/admin/users/'.$thomas->getId());
+        $this->client->followRedirect();
+        self::assertSelectorTextContains('body', 'The second factor of Thomas Girard was reset.');
+        self::assertSelectorNotExists('form[action$="/two-factor/reset"]');
+        $thomas = $this->entity(User::class, ['email' => 'thomas.girard@cairn.test']) ?? self::fail('no Thomas');
+        self::assertFalse($thomas->hasTotp());
+    }
+
+    public function testOnlyAnAdministratorResetsASecondFactor(): void
+    {
+        $nadia = $this->entity(User::class, ['email' => 'nadia.benali@cairn.test']) ?? self::fail('no Nadia');
+        $this->enableTwoFactorOn($nadia, self::totpSecret());
+        $this->client->loginUser($this->scene->user('thomas.girard@cairn.test'));
+
+        $this->client->request('POST', '/admin/users/'.$nadia->getId().'/two-factor/reset');
+
+        self::assertResponseStatusCodeSame(403);
+        $nadia = $this->entity(User::class, ['email' => 'nadia.benali@cairn.test']) ?? self::fail('no Nadia');
+        self::assertTrue($nadia->hasTotp());
     }
 
     public function testMakingAManagerExternalIsRefusedWithTheReason(): void

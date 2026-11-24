@@ -610,6 +610,13 @@ admin:
         create: Create the account
         created_sso: 'Account of %name% created. Nothing was mailed: they sign in with %provider%.'
         sso_pending: 'This account has not signed in with %provider% yet: it will be found there by its address, %email%.'
+        two_factor:
+            badge: 2FA
+            title: Two-factor authentication
+            help: 'This account uses an authentication app. If the person lost their phone and their backup codes, reset it: they sign in with their password and set it up again.'
+            reset: Reset
+            reset_confirm: 'Reset the second factor of %name%?'
+            reset_done: 'The second factor of %name% was reset.'
         auth_method:
             label: Sign-in method
             password: Password

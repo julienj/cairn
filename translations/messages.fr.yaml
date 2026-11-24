@@ -610,6 +610,13 @@ admin:
         create: Créer le compte
         created_sso: "Compte de %name% créé. Aucun mail n'est parti : la connexion se fait avec %provider%."
         sso_pending: "Ce compte ne s'est pas encore connecté avec %provider% : il y sera retrouvé par son adresse, %email%."
+        two_factor:
+            badge: 2FA
+            title: Double authentification
+            help: "Ce compte utilise une application d'authentification. Si la personne a perdu son téléphone et ses codes de secours, réinitialisez-la : elle se connecte avec son mot de passe et la configure de nouveau."
+            reset: Réinitialiser
+            reset_confirm: "Réinitialiser le second facteur de %name% ?"
+            reset_done: "Le second facteur de %name% a été réinitialisé."
         auth_method:
             label: Méthode de connexion
             password: Mot de passe

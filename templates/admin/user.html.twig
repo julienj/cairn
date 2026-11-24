@@ -24,6 +24,7 @@
                     {% endif %}
                     {% if user.usesSso %}<twig:Ui:Badge tone="blue">{{ ssoName }}</twig:Ui:Badge>{% endif %}
                     {% if user.admin %}<twig:Ui:Badge tone="indigo">{{ 'admin.user.type.admin'|trans }}</twig:Ui:Badge>{% endif %}
+                    {% if user.hasTotp %}<twig:Ui:Badge tone="emerald" icon="shield-check" data-test="two-factor-badge">{{ 'admin.user.two_factor.badge'|trans }}</twig:Ui:Badge>{% endif %}
                 </div>
                 <p class="mt-0.5 text-sm text-muted">{{ user.email }}{% if user.company %} · {{ user.company }}{% endif %} · {{ (user.internal ? 'admin.user.type.internal' : 'admin.user.type.external')|trans }}</p>
             </div>
@@ -64,6 +65,22 @@
             <p class="text-xs text-muted">{{ 'admin.access.user_intro'|trans }}</p>
             <twig:Membership:Grants :user="user" />
         </section>
+
+        {% if user.hasTotp %}
+            <section class="rounded-lg border border-line bg-surface p-4 sm:p-5">
+                <h2 class="font-semibold text-strong">{{ 'admin.user.two_factor.title'|trans }}</h2>
+                <p class="text-xs text-muted">{{ 'admin.user.two_factor.help'|trans }}</p>
+                <twig:Ui:Disclosure :closedLabel="'admin.user.two_factor.reset'|trans" :openLabel="'issue.edit.cancel'|trans" class="mt-2">
+                    <div class="mt-2 flex flex-wrap items-center gap-2" role="alertdialog">
+                        <span class="flex-1 text-sm">{{ 'admin.user.two_factor.reset_confirm'|trans({ '%name%': user.fullName }) }}</span>
+                        <form method="post" action="{{ path('app_admin_user_two_factor_reset', { id: user.id }) }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('submit') }}" data-controller="csrf-protection">
+                            <twig:Ui:Button type="submit" size="sm" variant="danger" icon="shield-alert">{{ 'admin.user.two_factor.reset'|trans }}</twig:Ui:Button>
+                        </form>
+                    </div>
+                </twig:Ui:Disclosure>
+            </section>
+        {% endif %}
 
         {% if user.id != app.user.id %}
             <twig:Ui:Callout tone="danger">

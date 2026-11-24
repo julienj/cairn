@@ -63,6 +63,23 @@ without its Doctrine bridge), `symfony/mcp-bundle`, Mercure
   tokens until their account is deactivated here. Several providers
   would be a provider chosen on the account and an authenticator of our
   own: `oidc_login` knows one per firewall, from the configuration.
+- **Second factor**: optional, TOTP only, by `scheb/2fa-bundle`, on the
+  `main` firewall alone (the `api` firewall has its tokens). An account
+  that signs in with a password turns it on from `/account/two-factor`
+  (`EnableTwoFactor`: the code of the scanned secret proves it works, ten
+  backup codes follow, shown once and kept as digests, `Security/BackupCodes`);
+  `CAIRN_TWO_FACTOR` (`optional`, `internal`, `all`) says who must, and
+  `Security/TwoFactorPolicy` is the one place that answers: whoever must and
+  has none is held on that page by `Security/TwoFactorEnrolment`, and cannot
+  turn it off. The accounts of the identity provider hold none and are never
+  asked: the provider has its own, and `User::signInWithSso()` drops the
+  secret. Lost phone and codes: the administration resets it
+  (`ResetTwoFactor`). The code is guessed at five tries per account
+  (`Security/TwoFactorThrottling`, `two_factor` limiter), on the sign-in and
+  on the page alike. A caller that signs a person in again on the session
+  that went through the code sets `TwoFactorCondition::SKIP` on the
+  request (the password change does). Scheb reads the system clock, not
+  `ClockInterface`: tests compute codes with OTPHP (`TwoFactorHelpers`).
 - **API**: REST under `/api` and an MCP server on `/mcp`, for internal
   users, over the same commands and queries as the pages (see [API](#api)).
 - **Configuration**: roles, permissions, steps, workflows, fields and link
