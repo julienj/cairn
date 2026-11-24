@@ -1,7 +1,7 @@
 <div data-controller="dialog" data-action="keydown.esc@document->dialog#close" >
-            <div class="fixed inset-0 z-40 bg-black/20" ></div>
+            <div class="fixed inset-0 z-50 bg-black/40 transition-opacity duration-150 starting:opacity-0" ></div>
         <div class="pointer-events-none fixed inset-0 z-50 overflow-y-auto px-4 pb-8 pt-24">
-    <div class="pointer-events-auto mx-auto w-full rounded-lg border border-line bg-overlay p-4 shadow-2xl space-y-3 max-w-md" role="dialog" aria-modal="true" aria-label="Refuse">
+    <div class="pointer-events-auto mx-auto w-full rounded-lg border border-line bg-overlay p-4 shadow-2xl space-y-3 transition duration-150 ease-out starting:opacity-0 motion-safe:starting:scale-95 max-w-md" role="dialog" aria-modal="true" aria-label="Refuse">
         <div class="flex items-start gap-2">
             <div class="min-w-0 flex-1">
                 <h2 class="font-semibold text-strong">Refuse</h2>

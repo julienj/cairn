@@ -2,14 +2,14 @@
 {% props title, closeAction = null, closeHref = null, size = 'md' %}
 {# The panel sits in a layer that scrolls when the dialog is taller than the screen; the layer lets the clicks through to the backdrop, and the panel clips nothing, so a list a field opens may reach past its edge. #}
 {% set dialogPanelClasses = html_cva(
-    base: 'pointer-events-auto mx-auto w-full rounded-lg border border-line bg-overlay p-4 shadow-2xl space-y-3',
+    base: 'pointer-events-auto mx-auto w-full rounded-lg border border-line bg-overlay p-4 shadow-2xl space-y-3 transition duration-150 ease-out starting:opacity-0 motion-safe:starting:scale-95',
     variants: { size: { md: 'max-w-md', lg: 'max-w-xl', xl: 'max-w-3xl' } },
 ) %}
 <div data-controller="dialog" data-action="keydown.esc@document->dialog#close" {{ attributes.without('class') }}>
     {% if closeHref %}
-        <a href="{{ closeHref }}" class="fixed inset-0 z-40 bg-black/20" tabindex="-1" aria-hidden="true" data-turbo-frame="_top" data-action="dialog#dismiss"></a>
+        <a href="{{ closeHref }}" class="fixed inset-0 z-50 bg-black/40 transition-opacity duration-150 starting:opacity-0" tabindex="-1" aria-hidden="true" data-turbo-frame="_top" data-action="dialog#dismiss"></a>
     {% else %}
-        <div class="fixed inset-0 z-40 bg-black/20" {% if closeAction %}data-action="click->live#action" data-live-action-param="{{ closeAction }}"{% endif %}></div>
+        <div class="fixed inset-0 z-50 bg-black/40 transition-opacity duration-150 starting:opacity-0" {% if closeAction %}data-action="click->live#action" data-live-action-param="{{ closeAction }}"{% endif %}></div>
     {% endif %}
     <div class="pointer-events-none fixed inset-0 z-50 overflow-y-auto px-4 pb-8 pt-24">
     <div class="{{ dialogPanelClasses.apply({ size: size }, attributes.render('class'))|tailwind_merge }}" role="dialog" aria-modal="true" aria-label="{{ title }}">
