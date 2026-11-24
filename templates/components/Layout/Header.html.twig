@@ -67,7 +67,7 @@
                                 {% set headerOther = summary.project %}
                                 <a href="{{ path('app_project_issues', { workspaceKey: headerWorkspace.key, projectKey: headerOther.key }) }}"
                                    data-list-filter-target="item" data-text="{{ headerOther.name }} {{ headerOther.issuePrefix }} {{ headerWorkspace.name }}"
-                                   class="flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-subtle {{ headerOther.id == project.id ? 'text-brand font-medium' : 'text-body' }}"
+                                   class="flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-subtle focus-visible:bg-subtle focus-visible:outline-none {{ headerOther.id == project.id ? 'text-brand font-medium' : 'text-body' }}"
                                    {% if headerOther.id == project.id %}aria-current="page"{% endif %}>
                                     <twig:Ui:Chip class="shrink-0">{{ headerOther.issuePrefix }}</twig:Ui:Chip>
                                     <span class="truncate">{{ headerOther.name }}</span>

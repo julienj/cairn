@@ -1,6 +1,6 @@
 {# A checkbox line of a Filter:Menu, a radio one with `single` (one choice among the options, such as a grouping); `name`, `value`, `id`, `required` and `disabled` go to the checkbox (name="criticality[]"); `model` becomes its `data-model` in a live component. The content is the label, preceded by a dot, an avatar or a chip when relevant. #}
 {% props checked = false, count = null, model = null, single = false %}
-{% set filterOptionClasses = html_cva(base: 'flex items-center gap-2 px-2.5 py-1.5 text-sm hover:bg-subtle cursor-pointer') %}
+{% set filterOptionClasses = html_cva(base: 'flex items-center gap-2 px-2.5 py-1.5 text-sm hover:bg-subtle has-[:focus-visible]:bg-subtle cursor-pointer') %}
 {% set filterOptionInputClasses = html_cva(
     base: 'h-3.5 w-3.5 border-line-strong text-brand',
     variants: { single: { true: 'rounded-full', false: 'rounded' } },
