@@ -1,4 +1,4 @@
-{# The issues of a list: the count, the bar of the checked rows, the table and the pager. Headers and pager are links to the same list arranged otherwise, followed inside the `issues` frame; every other link leaves it (the frame's `target`). Nothing here asks the server for what only the screen knows: rows are checked and groups folded in the browser (`selection`, `fold`), and the checked rows go to the selection page as a GET form.
+{# The issues of a list: the count, the table, the pager and the bar of the checked rows, which floats at the bottom of the screen so that showing it moves no row. Headers and pager are links to the same list arranged otherwise, followed inside the `issues` frame; every other link leaves it (the frame's `target`). Nothing here asks the server for what only the screen knows: rows are checked and groups folded in the browser (`selection`, `fold`), and the checked rows go to the selection page as a GET form.
    The sentence that counts the checked rows is given to the browser in its two forms, one and several, with `%count%` left in for it to fill. #}
 {# Inside the blocks of nested components `this` is that component: they read these. #}
 {% set tableComponent = this %}
@@ -11,13 +11,6 @@
     data-selection-one-value="{{ 'issue.bulk.selected.one'|trans }}"
     data-selection-other-value="{{ 'issue.bulk.selected.other'|trans }}">
     <p class="text-xs text-faint">{{ 'issue.list.count'|trans({ '%count%': tableIssues.total }) }}</p>
-    <form id="issue-selection" method="get" action="{{ this.selectionUrl }}" data-selection-target="bar" hidden
-        class="flex flex-wrap items-center gap-3 rounded-lg border border-brand-line bg-brand-soft/60 px-3 py-2 text-sm">
-        <input type="hidden" name="from" value="{{ this.listUrl }}">
-        <span class="font-medium text-brand" data-selection-target="count"></span>
-        <button type="button" class="text-xs text-brand hover:underline" data-action="selection#clear">{{ 'issue.bulk.clear'|trans }}</button>
-        <twig:Ui:Button variant="primary" size="sm" icon="list-checks" type="submit" class="ml-auto">{{ 'issue.bulk.open'|trans }}</twig:Ui:Button>
-    </form>
     {% if tableIssues.items is empty %}
         <twig:Ui:EmptyState :title="'issue.list.empty'|trans" bordered>{{ 'issue.list.empty_hint'|trans }}</twig:Ui:EmptyState>
     {% else %}
@@ -76,4 +69,12 @@
             </div>
         </nav>
     {% endif %}
+
+    <form id="issue-selection" method="get" action="{{ this.selectionUrl }}" data-selection-target="bar" hidden
+        class="sticky bottom-4 z-30 mx-auto flex w-fit max-w-full items-center gap-3 rounded-lg border border-line bg-overlay/80 py-2 pl-4 pr-2 text-sm shadow-sm backdrop-blur-md transition duration-150 ease-out starting:opacity-0 motion-safe:starting:translate-y-2">
+        <input type="hidden" name="from" value="{{ this.listUrl }}">
+        <span class="font-medium text-brand" data-selection-target="count" aria-live="polite"></span>
+        <button type="button" class="text-xs text-muted hover:text-body hover:underline" data-action="selection#clear">{{ 'issue.bulk.clear'|trans }}</button>
+        <twig:Ui:Button variant="primary" size="sm" icon="list-checks" type="submit" class="ml-6">{{ 'issue.bulk.open'|trans }}</twig:Ui:Button>
+    </form>
 </div>
