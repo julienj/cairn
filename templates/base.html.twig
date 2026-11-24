@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 {% set themeChoice = theme_choice() %}
-<html lang="{{ app.locale }}"{% if themeChoice != 'system' %} data-theme="{{ themeChoice }}"{% endif %}>
+<html lang="{{ app.locale }}"{% if themeChoice != 'system' %} data-theme="{{ themeChoice }}"{% endif %}{% if sidebar_collapsed() %} data-sidebar="collapsed"{% endif %}>
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">

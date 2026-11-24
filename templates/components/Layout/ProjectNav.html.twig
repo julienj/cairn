@@ -1,11 +1,11 @@
-{# Project level: the issue lists and the releases, the trackers the viewer may see (archived ones at their place, under the archive icon), each list with its count of open issues, then the configuration of the project, one item per subject, for those who manage it (the access under `project.manage_members`, the rest under `project.configure`). #}
+{# Project level: the issue lists and the releases, the trackers the viewer may see (archived ones at their place, under the archive icon), each list with its count of open issues, then the configuration of the project, one item per subject, for those who manage it (the access under `project.manage_members`, the rest under `project.configure`). On a wide screen it folds away (`sidebar-collapsed`), from the button of the breadcrumb (`layout/project.html.twig`). #}
 {% set route = { workspaceKey: project.workspace.key, projectKey: project.key } %}
 {% set navTrackers = this.trackers %}
 {% set navCounts = this.counts %}
 {% set navRoute = app.current_route %}
 {% set navReleases = this.hasReleases or is_granted('release.manage', project) %}
 {% set navBudgets = this.readsBudgets %}
-<twig:Ui:Layout:Sidebar :title="project.name">
+<twig:Ui:Layout:Sidebar :title="project.name" class="md:sidebar-collapsed:hidden">
     <twig:Ui:Layout:Sidebar:Section :label="'nav.project.issues'|trans">
         <twig:Ui:Layout:Sidebar:Item href="{{ path('app_project_issues', route) }}" icon="list" :count="navCounts.all" :active="app.current_route == 'app_project_issues'">{{ 'nav.issues.all'|trans }}</twig:Ui:Layout:Sidebar:Item>
         <twig:Ui:Layout:Sidebar:Item href="{{ path('app_project_issues_assigned', route) }}" icon="user" :count="navCounts.assigned" :active="app.current_route == 'app_project_issues_assigned'">{{ 'nav.issues.assigned'|trans }}</twig:Ui:Layout:Sidebar:Item>

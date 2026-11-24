@@ -1,4 +1,5 @@
 {# Base of every page of a project (`/MD/SPT/…`): the shell with the header and the project navigation, a breadcrumb ending with the page title, then a banner when the project is read-only (archived, or its workspace).
+   A button at the head of the breadcrumb folds the project navigation away on a wide screen, and the next pages keep it so (`sidebar_collapsed()`).
    Pages extend it with `project` in their context and fill `page_title` and `content`; `page_section` names, in the breadcrumb, the part of the project a page belongs to (Configuration). `modal` is the `modal` Turbo frame every page has, empty unless the page fills it with its dialog (`project/_form_dialog.html.twig`): a request made for the frame is answered with this block alone (`Controller/OpensDialog`), so it reads nothing the rest of the page sets. The blocks are captured before the shell component, whose own blocks would otherwise hide them. #}
 {% extends 'base.html.twig' %}
 
@@ -15,6 +16,14 @@
         <twig:block name="sidebar"><twig:Layout:ProjectNav :project="project" /></twig:block>
         <twig:block name="breadcrumb">
             <nav class="flex items-center gap-1.5 px-4 sm:px-6 h-10 text-xs text-muted border-b border-line bg-surface/60" aria-label="{{ 'nav.breadcrumb'|trans }}">
+                {% set layoutSidebarCollapsed = sidebar_collapsed() %}
+                {% set layoutSidebarLabel = (layoutSidebarCollapsed ? 'nav.expand' : 'nav.collapse')|trans %}
+                <button type="button" class="hidden md:inline-flex h-6 w-6 -ml-1.5 mr-1 shrink-0 items-center justify-center rounded-md text-faint hover:bg-sunken hover:text-body focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-line"
+                    title="{{ layoutSidebarLabel }}" aria-label="{{ layoutSidebarLabel }}" aria-expanded="{{ layoutSidebarCollapsed ? 'false' : 'true' }}"
+                    data-collapse-label="{{ 'nav.collapse'|trans }}" data-expand-label="{{ 'nav.expand'|trans }}" data-sidebar-target="toggle" data-action="sidebar#toggle">
+                    <twig:ux:icon name="lucide:panel-left-close" class="h-4 w-4 sidebar-collapsed:hidden" />
+                    <twig:ux:icon name="lucide:panel-left-open" class="hidden h-4 w-4 sidebar-collapsed:block" />
+                </button>
                 <span>{{ project.workspace.name }}</span>
                 <twig:ux:icon name="lucide:chevron-right" class="h-3 w-3 text-ghost shrink-0" />
                 <a href="{{ path('app_project_issues', layoutRoute) }}" class="hover:text-strong">{{ project.name }}</a>

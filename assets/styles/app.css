@@ -6,6 +6,10 @@
 @source "../../templates";
 @source "../controllers";
 
+/* The project navigation folded away on a wide screen (`data-sidebar` on <html>, written by the server
+   from the `cairn_sidebar` cookie and by the `sidebar` controller). */
+@custom-variant sidebar-collapsed (&:where([data-sidebar="collapsed"], [data-sidebar="collapsed"] *));
+
 /* Inter and JetBrains Mono (SIL Open Font License), served from here: no third party learns who reads what. */
 @font-face {
     font-family: "Inter";

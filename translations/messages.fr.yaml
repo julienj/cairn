@@ -297,6 +297,8 @@ nav:
     switch_project: Changer de projet…
     open: Ouvrir la navigation
     breadcrumb: Fil d'Ariane
+    collapse: Masquer la navigation
+    expand: Afficher la navigation
     project:
         issues: Demandes
         trackers: Catégories

@@ -297,6 +297,8 @@ nav:
     switch_project: Switch project…
     open: Open the navigation
     breadcrumb: Breadcrumb
+    collapse: Hide the navigation
+    expand: Show the navigation
     project:
         issues: Issues
         trackers: Categories
