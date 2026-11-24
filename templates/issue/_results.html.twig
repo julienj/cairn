@@ -1,4 +1,4 @@
-{# What an issue list shows under its filters: the table, or the kanban of a tracker. It is the frame every change of the address reloads alone, the page around it being drawn once; a frame request is answered with this template only. Expects `scope` and `filters`.
+{# What an issue list shows under its filters: the table, or the kanban of a tracker. It is the frame every change of the address reloads alone, the page around it being drawn once; a frame request is answered with this template only. Expects `scope`, `filters` and `frame` (whether only the frame is asked for).
    Links leave the frame (`target`) unless they say they arrange the list (the headers that sort it, the pager). The hidden fields repeat the sort to the filter form, which is outside the frame: a filter, or the other view, then keeps the order. #}
 {% set resultsSort = scope.sort(filters) %}
 {# With a Mercure hub, the list of a project hears that one of its issues changed (`live-updates`) and reads itself again; `mercure()` gives the address to listen at, `realtime_token()` the token that allows this page to. #}
@@ -14,7 +14,7 @@
     <input type="hidden" form="issue-filters" name="sort" value="{{ resultsSort ? resultsSort.value }}">
     <input type="hidden" form="issue-filters" name="order" value="{{ resultsSort and filters.order.name == 'Descending' ? 'desc' }}">
     {% if scope.view(filters) == 'board' %}
-        <twig:Board:Columns :scope="scope" :filters="filters" />
+        <twig:Board:Columns :scope="scope" :filters="filters" :eager="frame" />
     {% else %}
         {% if resultsTopics %}
             <p hidden data-live-updates-target="stale" class="mx-4 sm:mx-6 mt-4 flex items-center gap-3 rounded-lg border border-line bg-sunken px-3 py-2 text-sm text-body">

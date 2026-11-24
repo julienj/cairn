@@ -21,7 +21,9 @@ use Symfony\Component\Messenger\Exception\ValidationFailedException;
  * as the user arranged it is an address to share; the address alone means
  * "my view of this list". The page is drawn once: a change of filter,
  * sort, page or view asks for the `issues` frame only and gets the results
- * alone. The browser then tells the list, with a PUT at the same address,
+ * alone, the columns of a kanban already drawn: the frame then swaps the
+ * board it shows for the next one at once, never for placeholders that
+ * fill one by one. The browser then tells the list, with a PUT at the same address,
  * to remember the arrangement; a GET never writes, so opening the address
  * someone shared changes nothing of one's own view. PUT is not a method a
  * form or another site can send without the browser asking first.
@@ -61,7 +63,7 @@ trait ShowsIssueList
             }
         }
 
-        $response = $this->render($frame ? 'issue/_results.html.twig' : $template, [...$context, 'scope' => $scope, 'filters' => IssueListFilters::fromQuery($request->query->all())]);
+        $response = $this->render($frame ? 'issue/_results.html.twig' : $template, [...$context, 'scope' => $scope, 'filters' => IssueListFilters::fromQuery($request->query->all()), 'frame' => $frame]);
         $response->setVary('Turbo-Frame', false);
 
         return $response;
