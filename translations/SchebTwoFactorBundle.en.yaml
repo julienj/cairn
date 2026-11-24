@@ -1,0 +1,2 @@
+# What the form of the second factor says about a refusal of our own (Security/TwoFactorThrottling).
+auth.too_many_attempts: 'Too many attempts. Try again in %minutes% minute(s).'

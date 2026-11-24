@@ -11,3 +11,8 @@ framework:
             policy: fixed_window
             limit: 5
             interval: '15 minutes'
+        # The codes one account may try as a second factor (Security/TwoFactorThrottling).
+        two_factor:
+            policy: fixed_window
+            limit: 5
+            interval: '15 minutes'

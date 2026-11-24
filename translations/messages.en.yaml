@@ -352,6 +352,13 @@ auth:
         forgot: Forgot password?
         or: or
         sso: Sign in with %name%
+    two_factor:
+        title: Two-factor authentication
+        intro: Enter the code shown by your authentication app.
+        code: Code
+        backup_hint: Lost your phone? Type one of your backup codes instead.
+        submit: Verify
+        cancel: Cancel and sign out
     logout: Log out
     password:
         back_to_login: Back to sign in

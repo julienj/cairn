@@ -352,6 +352,13 @@ auth:
         forgot: Mot de passe oublié ?
         or: ou
         sso: Se connecter avec %name%
+    two_factor:
+        title: Double authentification
+        intro: Saisissez le code affiché par votre application d'authentification.
+        code: Code
+        backup_hint: Téléphone perdu ? Saisissez plutôt un de vos codes de secours.
+        submit: Vérifier
+        cancel: Annuler et se déconnecter
     logout: Se déconnecter
     password:
         back_to_login: Retour à la connexion

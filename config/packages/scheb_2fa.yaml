@@ -1,0 +1,14 @@
+# https://symfony.com/bundles/SchebTwoFactorBundle/current/configuration.html
+scheb_two_factor:
+    security_tokens:
+        - Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken
+        - Symfony\Component\Security\Http\Authenticator\Token\PostAuthenticationToken
+    # A code is good once: the same one typed again, even within its window, is refused.
+    code_reuse_cache: cache.app
+    two_factor_condition: App\Security\TwoFactorCondition
+    totp:
+        enabled: true
+        issuer: Cairn
+        template: security/two_factor.html.twig
+    backup_codes:
+        enabled: true
