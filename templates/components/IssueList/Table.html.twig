@@ -17,7 +17,9 @@
         <twig:Ui:Table stickyHead data-controller="fold" data-fold-key-value="{{ scope.path }}#{{ tableGrouping ? tableGrouping.value }}">
             <twig:block name="head">
                 <th class="px-3 py-2 w-8">
-                    <input type="checkbox" aria-label="{{ 'issue.bulk.select_page'|trans }}" data-selection-target="all" data-action="selection#togglePage" class="h-3.5 w-3.5 rounded border-line-strong text-brand">
+                    <label class="-m-2 inline-flex p-2 align-middle">
+                        <input type="checkbox" aria-label="{{ 'issue.bulk.select_page'|trans }}" data-selection-target="all" data-action="selection#togglePage" class="h-3.5 w-3.5 rounded border-line-strong text-brand">
+                    </label>
                 </th>
                 {% for tableColumn in tableColumns %}
                     <twig:Ui:Table:SortHeader
@@ -74,7 +76,7 @@
         class="sticky bottom-4 z-30 mx-auto flex w-fit max-w-full items-center gap-3 rounded-lg border border-line bg-overlay/80 py-2 pl-4 pr-2 text-sm shadow-sm backdrop-blur-md transition duration-150 ease-out starting:opacity-0 motion-safe:starting:translate-y-2">
         <input type="hidden" name="from" value="{{ this.listUrl }}">
         <span class="font-medium text-brand" data-selection-target="count" aria-live="polite"></span>
-        <button type="button" class="text-xs text-muted hover:text-body hover:underline" data-action="selection#clear">{{ 'issue.bulk.clear'|trans }}</button>
+        <button type="button" class="text-xs text-muted hover:text-body hover:underline cursor-pointer" data-action="selection#clear">{{ 'issue.bulk.clear'|trans }}</button>
         <twig:Ui:Button variant="primary" size="sm" icon="list-checks" type="submit" class="ml-6">{{ 'issue.bulk.open'|trans }}</twig:Ui:Button>
     </form>
 </div>

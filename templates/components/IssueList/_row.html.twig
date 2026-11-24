@@ -4,7 +4,9 @@
 {% set issueHref = path('app_issue_show', issueRoute|merge({ number: issue.number })) %}
 <twig:Ui:Table:Row :closed="rowClosed" class="has-[:checked]:bg-brand-soft/60" data-fold-target="row" data-fold-group="{{ group }}">
     <td class="sm:px-3 sm:py-2.5 order-1">
-        <input type="checkbox" form="issue-selection" name="ids[]" value="{{ issue.id }}" aria-label="{{ issue.key }}" data-selection-target="box" data-action="selection#refresh" class="h-3.5 w-3.5 rounded border-line-strong text-brand">
+        <label class="-m-2 inline-flex select-none p-2 align-middle">
+            <input type="checkbox" form="issue-selection" name="ids[]" value="{{ issue.id }}" aria-label="{{ issue.key }}" data-selection-target="box" data-action="click->selection#toggle" class="h-3.5 w-3.5 rounded border-line-strong text-brand">
+        </label>
     </td>
     <td class="sm:px-3 sm:py-2.5 order-1 whitespace-nowrap"><twig:Ui:IssueKey :key="issue.key" href="{{ issueHref }}" /></td>
     {% if showProject %}
