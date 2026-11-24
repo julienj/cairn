@@ -14,7 +14,7 @@
     {% if tableIssues.items is empty %}
         <twig:Ui:EmptyState :title="'issue.list.empty'|trans" bordered>{{ 'issue.list.empty_hint'|trans }}</twig:Ui:EmptyState>
     {% else %}
-        <twig:Ui:Table data-controller="fold" data-fold-key-value="{{ scope.path }}#{{ tableGrouping ? tableGrouping.value }}">
+        <twig:Ui:Table stickyHead data-controller="fold" data-fold-key-value="{{ scope.path }}#{{ tableGrouping ? tableGrouping.value }}">
             <twig:block name="head">
                 <th class="px-3 py-2 w-8">
                     <input type="checkbox" aria-label="{{ 'issue.bulk.select_page'|trans }}" data-selection-target="all" data-action="selection#togglePage" class="h-3.5 w-3.5 rounded border-line-strong text-brand">
