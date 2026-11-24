@@ -1,0 +1,100 @@
+{# The form of the widget, in the `widget-report` Turbo frame of its panel: the category (changing it draws the form again for the other one), the title, the description, the fields the category requires, what the reporter may qualify, then the screenshot and the files, and the report of the site, read in a second view of the same form before it is sent. `files` are those sent so far (uuid => name): the form carries them, the issue claims them. `private` says the category is: its issues are, whatever the form says. #}
+{% set reportRoute = { workspaceKey: project.workspace.key, projectKey: project.key } %}
+<turbo-frame id="widget-report">
+    {{ form_start(form, { attr: {
+        'data-controller': 'widget-report',
+        'data-widget-report-attachment-url-value': path('app_widget_attachment', reportRoute),
+        'data-widget-report-preview-url-value': path('app_widget_report_preview', reportRoute),
+        'data-widget-report-failed-value': 'widget.form.upload_failed'|trans,
+        'data-action': 'widget:context-changed@window->widget-report#noted widget-capture:taken->widget-report#captured turbo:submit-end->widget-report#settled',
+    } }) }}
+        <div class="flex min-h-full flex-col" data-widget-report-target="main">
+            <div class="flex-1 space-y-4 p-4">
+                {{ form_errors(form) }}
+                {{ form_row(form.tracker, { attr: { 'data-action': 'change->widget-report#refresh' } }) }}
+                {{ form_row(form.title) }}
+                {{ form_row(form.description) }}
+                {% for field in form.fields %}
+                    {{ form_row(field) }}
+                {% endfor %}
+                {% if form.criticality is defined %}
+                    {{ form_row(form.criticality) }}
+                {% endif %}
+                {% if form.tags is defined %}
+                    {# Each tag is a checkbox drawn as the tag itself. #}
+                    <fieldset>
+                        <legend class="float-left w-full text-sm font-medium text-body">{{ form.tags.vars.label|trans }} <span class="font-normal text-faint">{{ 'form.optional'|trans }}</span></legend>
+                        <div class="clear-both flex flex-wrap gap-1.5 pt-1.5">
+                            {% for choice in form.tags %}
+                                <label class="cursor-pointer">
+                                    <input type="checkbox" id="{{ choice.vars.id }}" name="{{ choice.vars.full_name }}" value="{{ choice.vars.value }}" class="peer sr-only" {{ choice.vars.checked ? 'checked' }}>
+                                    <twig:Ui:Tag :colour="choice.vars.attr['data-colour']" class="peer-checked:bg-brand-soft peer-checked:ring-2 peer-checked:ring-brand peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-focus">{{ choice.vars.label }}</twig:Ui:Tag>
+                                </label>
+                                {% do choice.setRendered %}
+                            {% endfor %}
+                        </div>
+                        {% do form.tags.setRendered %}
+                    </fieldset>
+                {% endif %}
+                {% if form.private is defined %}
+                    {{ form_row(form.private) }}
+                {% endif %}
+
+                <section class="space-y-2">
+                    <div class="flex items-center justify-between gap-2">
+                        <h2 class="text-sm font-medium text-body">{{ 'widget.capture.title'|trans }}</h2>
+                        <label class="cursor-pointer text-xs font-medium text-brand hover:underline">
+                            {{ 'widget.form.attach'|trans }}
+                            <input type="file" multiple class="sr-only" data-action="change->widget-report#chosen">
+                        </label>
+                    </div>
+                    <div data-controller="widget-capture" data-widget-capture-failed-value="{{ 'widget.capture.failed'|trans }}">
+                        <twig:Ui:Button icon="camera" data-action="widget-capture#take" data-widget-capture-target="take" hidden>{{ 'widget.capture.take'|trans }}</twig:Ui:Button>
+                        <div class="space-y-2" data-widget-capture-target="cropper" hidden>
+                            <p class="text-xs text-muted">{{ 'widget.capture.crop_help'|trans }}</p>
+                            <canvas class="w-full cursor-crosshair touch-none rounded-md border border-line" data-widget-capture-target="canvas" data-action="pointerdown->widget-capture#press pointermove->widget-capture#drag pointerup->widget-capture#release"></canvas>
+                            <div class="flex gap-2">
+                                <twig:Ui:Button variant="primary" size="sm" data-action="widget-capture#keep">{{ 'widget.capture.apply'|trans }}</twig:Ui:Button>
+                                <twig:Ui:Button variant="ghost" size="sm" data-action="widget-capture#cancel">{{ 'widget.capture.cancel'|trans }}</twig:Ui:Button>
+                            </div>
+                        </div>
+                    </div>
+                    <ul class="space-y-1.5" data-widget-report-target="files">
+                        {% for uuid, name in files %}
+                            {{ include('widget/_file.html.twig', { uuid: uuid, name: name }) }}
+                        {% endfor %}
+                    </ul>
+                    <template data-widget-report-target="template">
+                        {{ include('widget/_file.html.twig', { uuid: '__uuid__', name: '__name__' }) }}
+                    </template>
+                </section>
+
+                <section class="flex items-center gap-3 rounded-md border border-line bg-subtle px-3 py-2.5" data-widget-report-target="box" hidden>
+                    <twig:ux:icon name="lucide:file" class="h-4 w-4 shrink-0 text-faint" />
+                    <div class="min-w-0 flex-1">
+                        <div class="text-sm font-medium text-strong">{{ 'widget.report.attached'|trans }}</div>
+                        <div class="text-xs text-muted">{{ 'widget.report.summary'|trans }}</div>
+                    </div>
+                    <twig:Ui:Button variant="ghost" size="sm" data-action="widget-report#view">{{ 'widget.report.view'|trans }}</twig:Ui:Button>
+                </section>
+            </div>
+            <footer class="sticky bottom-0 flex items-center justify-between gap-3 border-t border-line bg-surface px-4 py-3">
+                <span class="text-xs text-muted">{{ private ? 'widget.form.private_tracker'|trans : (form.private is defined ? '' : 'widget.form.visible'|trans) }}</span>
+                <twig:Ui:Button type="submit" variant="primary" size="lg" data-widget-report-target="submit">{{ 'widget.form.submit'|trans }}</twig:Ui:Button>
+            </footer>
+        </div>
+
+        <div class="flex min-h-full flex-col" data-widget-report-target="detail" hidden>
+            <div class="flex-1 space-y-4 p-4">
+                <h2 class="font-semibold text-strong">{{ 'widget.report.title'|trans }}</h2>
+                <div data-widget-report-target="body"></div>
+            </div>
+            <footer class="sticky bottom-0 flex items-center justify-between gap-3 border-t border-line bg-surface px-4 py-3">
+                {{ form_widget(form.includeReport) }}
+                <twig:Ui:Button data-action="widget-report#back">{{ 'widget.report.back'|trans }}</twig:Ui:Button>
+            </footer>
+        </div>
+        {# What a change of category submits the form with. After the button that sends the issue: the first one of a form is the one Enter presses. #}
+        <button type="submit" name="refresh" value="1" formnovalidate hidden data-widget-report-target="refresher"></button>
+    {{ form_end(form) }}
+</turbo-frame>

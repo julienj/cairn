@@ -21,6 +21,7 @@ function start(): void
         'Components: '.app_url().'/storia',
         'Emails: '.mailpit_url(),
         'Single sign-on: https://authelia.localhost:9443 ("lea" has an account, "hugo" has none, password "cairn")',
+        'Widget: http://staging.localhost:8001, a site to report problems from (claire.martin@maison-dupont.test, or "lea")',
     ]);
 }
 

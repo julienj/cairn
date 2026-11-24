@@ -39,6 +39,7 @@
             {% if navConfigures %}
                 <twig:Ui:Layout:Sidebar:Item href="{{ path('app_project_settings_automations', route) }}" icon="zap" :active="navRoute starts with 'app_project_settings_automation'">{{ 'nav.project.configuration.automations'|trans }}</twig:Ui:Layout:Sidebar:Item>
                 <twig:Ui:Layout:Sidebar:Item href="{{ path('app_project_settings_repositories', route) }}" icon="git-branch" :active="navRoute starts with 'app_project_settings_repositor'">{{ 'nav.project.configuration.repositories'|trans }}</twig:Ui:Layout:Sidebar:Item>
+                <twig:Ui:Layout:Sidebar:Item href="{{ path('app_project_settings_widget', route) }}" icon="message-square" :active="navRoute starts with 'app_project_settings_widget'">{{ 'nav.project.configuration.widget'|trans }}</twig:Ui:Layout:Sidebar:Item>
             {% endif %}
         </twig:Ui:Layout:Sidebar:Section>
     {% endif %}

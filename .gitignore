@@ -31,4 +31,6 @@ phpstan.neon
 /node_modules/
 /public/build/
 ###< symfony/reprise ###
+# The script of the widget, built from assets/widget/ (vite.config.ts, mode "widget").
+/public/widget.js
 /.automate.yml

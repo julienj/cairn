@@ -98,6 +98,8 @@ COPY --from=vendor /usr/bin/composer /usr/bin/composer
 COPY --from=vendor /app/vendor vendor
 COPY . .
 COPY --from=assets /app/public/build public/build
+# The script of the widget, which the sites being reviewed load at an address of its own.
+COPY --from=assets /app/public/widget.js public/widget.js
 
 # .env is compiled, so nothing reads it at runtime; real environment variables still win.
 RUN <<-EOF

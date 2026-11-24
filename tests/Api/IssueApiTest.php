@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Tests\Api;
 
 use App\Entity\Issue;
+use App\Message\Command\Issue\CreateIssue;
+use App\Message\CommandBus;
 use Doctrine\ORM\EntityManagerInterface;
 
 final class IssueApiTest extends ApiTestCase
@@ -66,6 +68,40 @@ final class IssueApiTest extends ApiTestCase
         self::assertSame(['@type' => 'PlaceRef', 'id' => 'qualified', 'label' => 'Qualified'], $issue['transitions'][1]['to']);
         self::assertSame($this->issue('MD-SPT-1')->getDescription(), $issue['description']);
         self::assertArrayNotHasKey('importedRef', $issue);
+    }
+
+    public function testAnIssueReportedFromASiteComesWithWhatTheSiteNoted(): void
+    {
+        $secret = $this->tokenFor(self::DEVELOPER)->secret;
+        $reported = self::getContainer()->get(CommandBus::class)->dispatch(new CreateIssue(
+            actorId: (int) $this->scene->user(self::CLIENT)->getId(),
+            projectId: (int) $this->scene->bugs->getProject()->getId(),
+            trackerId: (int) $this->scene->bugs->getId(),
+            title: 'The price of Halo shows NaN',
+            fields: ['environment' => 'preprod'],
+            report: [
+                'page' => ['url' => 'https://staging.maison-dupont.test/lamps', 'title' => 'Pendant lamps'],
+                'environment' => ['userAgent' => 'Mozilla/5.0 (X11; Linux x86_64; rv:145.0) Gecko/20100101 Firefox/145.0', 'viewport' => ['width' => 1280, 'height' => 800], 'version' => '2026.11.3'],
+                'errors' => [['kind' => 'console', 'message' => 'Price not found', 'at' => '2026-11-24T10:14:07.000Z']],
+                'requests' => [['method' => 'GET', 'url' => 'https://staging.maison-dupont.test/api/prices/halo', 'status' => 500]],
+                'pages' => [['url' => 'https://staging.maison-dupont.test/'], ['url' => 'https://staging.maison-dupont.test/lamps']],
+            ],
+        ));
+        \assert($reported instanceof Issue);
+
+        $report = $this->api('GET', '/api/issues/'.$reported->getKey(), $secret)['technicalReport'];
+        self::assertSame(['https://staging.maison-dupont.test/lamps', 'Pendant lamps'], [$report['page']['url'], $report['page']['title']]);
+        self::assertSame(['Firefox 145 · Linux', '2026.11.3'], [$report['browser'], $report['siteVersion']]);
+        self::assertSame(['width' => 1280, 'height' => 800], array_intersect_key($report['viewport'], ['width' => 0, 'height' => 0]));
+        self::assertSame([['console', 'Price not found', '2026-11-24T10:14:07.000Z']], array_map(static fn (array $error): array => [$error['kind'], $error['message'], $error['at']], $report['errors']));
+        self::assertSame([['GET', 'https://staging.maison-dupont.test/api/prices/halo', 500]], array_map(static fn (array $request): array => [$request['method'], $request['url'], $request['status']], $report['requests']));
+        self::assertSame(['https://staging.maison-dupont.test/lamps', 'https://staging.maison-dupont.test/'], array_column($report['pages'], 'url'), 'the last page seen first');
+
+        // an issue written in Cairn has none, and a list carries none
+        self::assertArrayNotHasKey('technicalReport', $this->api('GET', '/api/issues/MD-SPT-1', $secret));
+        $list = $this->api('GET', '/api/issues?project=MD-SPT&q='.urlencode('Halo shows NaN'), $secret)['member'];
+        self::assertSame([$reported->getKey()], array_column($list, 'key'));
+        self::assertArrayNotHasKey('technicalReport', $list[0]);
     }
 
     public function testAnImportedIssueSaysWhatNamedItBefore(): void

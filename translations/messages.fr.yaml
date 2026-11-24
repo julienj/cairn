@@ -314,6 +314,7 @@ nav:
             access: Accès
             automations: Automatisations
             repositories: Dépôts
+            widget: Widget
     issues:
         all: Toutes
         assigned: Assignées à moi
@@ -1291,6 +1292,105 @@ tag:
         brown: Brun
         slate: Ardoise
         gray: Gris
+
+widget:
+    title: Signaler un problème
+    close: Fermer le panneau
+    intro: Le widget permet aux personnes du projet de signaler un problème depuis le site en recette, sans le quitter. Il s'affiche sur les sites déclarés ici et nulle part ailleurs ; chacun se connecte avec son propre compte Cairn.
+    alone: Cette page est affichée par le widget, sur un site du projet.
+    site:
+        new: Nouveau site
+        add: Ajouter le site
+        added: 'Site %origin% ajouté.'
+        removed: 'Site %origin% retiré.'
+        remove: Retirer
+        remove_confirm: Le widget quitte ce site, et ceux qui y avaient lié leur compte devront le lier à nouveau.
+        empty: Aucun site pour le moment
+        empty_hint: Déclarez le site de recette du projet pour obtenir la ligne de script à y placer.
+        insecure: Pas de capture (pas de HTTPS)
+        form:
+            address: Adresse du site
+            address_help: 'Le protocole et le domaine, sans chemin : https://recette.exemple.fr'
+    install:
+        title: Sur les pages du site
+        help: 'Placez cette ligne dans le <head> de chaque page, le plus tôt possible : ce qui s''est passé avant son chargement n''est pas dans le rapport. Ne la mettez pas en production.'
+        copy: Copier
+        copied: Copié
+    refused:
+        not_an_origin: 'Ce n''est pas l''adresse d''un site : le protocole et le domaine, sans chemin.'
+        site_taken: 'Le projet a déjà le site %origin%.'
+        unknown_site: '%origin% n''est plus un site du projet.'
+    refused_here:
+        title: Vous ne pouvez pas signaler de problème ici
+        text: Ce compte ne peut pas créer de demande sur ce projet.
+        action: Utiliser un autre compte
+    connect:
+        title: Connectez-vous à Cairn
+        text: Connectez-vous pour signaler un problème sur ce site.
+        action: Se connecter
+        kept: Votre connexion est gardée 30 jours.
+    link:
+        title: Lier votre compte Cairn à ce site ?
+        text: Vous pourrez signaler des problèmes depuis ce site sans vous reconnecter, pendant 30 jours.
+        confirm: Lier mon compte
+        done: Votre compte est lié
+        done_hint: Vous pouvez fermer cette fenêtre et revenir au site.
+        expired: Ce lien a expiré
+        expired_hint: Fermez cette fenêtre et recommencez depuis le bouton du site.
+    form:
+        tracker: Catégorie
+        title: Titre
+        description: Description
+        criticality: Criticité
+        tags: Étiquettes
+        private: Privé
+        private_help: Masqué aux utilisateurs externes.
+        private_tracker: 'Catégorie privée : masquée aux utilisateurs externes.'
+        files: Fichiers
+        attach: Joindre un fichier
+        remove_file: 'Retirer %name%'
+        upload_failed: Ce fichier n'a pas pu être envoyé.
+        submit: Envoyer la demande
+        visible: Toutes les personnes du projet verront cette demande.
+    capture:
+        title: Capture d'écran
+        take: Capturer l'écran
+        retake: Refaire
+        remove: Retirer
+        crop: Recadrer
+        crop_help: Faites glisser sur la partie à garder.
+        apply: Garder cette partie
+        cancel: Annuler
+        failed: La capture n'a pas pu être prise. Vous pouvez joindre un fichier à la place.
+    report:
+        title: Rapport technique
+        attached: Rapport technique joint
+        row: Rapport
+        open: Voir le rapport
+        view: Voir
+        include: Joindre ce rapport
+        back: Retour au formulaire
+        intro: Relevé par le site pendant la visite et joint à la demande, pour aider à reproduire le problème.
+        page: Page
+        environment: Environnement
+        browser: Navigateur
+        language: Langue
+        viewport: Fenêtre
+        screen: Écran
+        version: Version du site
+        errors: '{0}Console|{1}Console · 1 erreur|]1,Inf[ Console · %count% erreurs'
+        requests: '{0}Requêtes Ajax en échec|{1}Requêtes Ajax en échec · 1|]1,Inf[ Requêtes Ajax en échec · %count%'
+        requests_help: Les appels faits par la page (fetch, XHR), sans leur contenu.
+        network: réseau
+        pages: '{0}Pages vues|{1}Pages vues · 1|]1,Inf[ Pages vues · %count%'
+        pages_help: Dans cet onglet, sans les paramètres des adresses.
+        none: Rien de relevé.
+        summary: Page, navigateur, écran, erreurs, requêtes Ajax, pages vues
+    sent:
+        title: 'Demande %key% créée'
+        text: L'équipe du projet est prévenue.
+        open: L'ouvrir dans Cairn
+        another: Signaler un autre problème
 
 release:
     title: Versions

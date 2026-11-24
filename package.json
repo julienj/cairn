@@ -3,7 +3,8 @@
     "type": "module",
     "scripts": {
         "dev": "vite",
-        "build": "vite build"
+        "build": "vite build && vite build --mode widget",
+        "widget": "vite build --mode widget --watch"
     },
     "dependencies": {
         "@hotwired/stimulus": "^3.2.2",

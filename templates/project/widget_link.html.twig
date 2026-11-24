@@ -1,0 +1,36 @@
+{# The window the widget of a project opens to link an account to it on one site (`origin`): who links what, and the button that agrees. Once `linked`, the window tells the frame that opened it and closes; without an `origin` the link was not started from a site, or was already used. Drawn as the pages before signing in: one card, no navigation. #}
+{% extends 'security/layout.html.twig' %}
+
+{% block title %}{{ 'widget.link.title'|trans }} · Cairn{% endblock %}
+
+{% block card %}
+    <div class="rounded-lg border border-line bg-surface p-6 space-y-4">
+        {% if linked %}
+            <div class="space-y-2 text-center" data-controller="widget-linked">
+                <h1 class="text-lg font-semibold text-strong">{{ 'widget.link.done'|trans }}</h1>
+                <p class="text-muted">{{ 'widget.link.done_hint'|trans }}</p>
+            </div>
+        {% elseif origin is null %}
+            <div class="space-y-2 text-center">
+                <h1 class="text-lg font-semibold text-strong">{{ 'widget.link.expired'|trans }}</h1>
+                <p class="text-muted">{{ 'widget.link.expired_hint'|trans }}</p>
+            </div>
+        {% else %}
+            <h1 class="text-lg font-semibold text-strong">{{ 'widget.link.title'|trans }}</h1>
+            <div class="rounded-md border border-line bg-subtle px-3 py-2.5 space-y-1">
+                <div class="break-all font-mono text-sm text-strong">{{ origin|replace({ 'https://': '', 'http://': '' }) }}</div>
+                <div class="text-xs text-muted">{{ project.workspace.name }} · {{ project.name }}</div>
+            </div>
+            <p class="text-body">{{ 'widget.link.text'|trans }}</p>
+            <div class="flex items-center gap-2.5 text-xs text-muted">
+                <twig:User:Avatar :user="app.user" size="sm" />
+                <span class="min-w-0 truncate">{{ app.user.fullName }} · {{ app.user.email }}</span>
+            </div>
+            <form method="post" action="{{ path('app_widget_link_confirm', { workspaceKey: project.workspace.key, projectKey: project.key }) }}" class="flex justify-end gap-2" data-turbo="false">
+                <input type="hidden" name="_token" value="{{ csrf_token('submit') }}" data-controller="csrf-protection">
+                <twig:Ui:Button variant="ghost" data-controller="widget-linked" data-widget-linked-silent-value="true" data-action="widget-linked#leave">{{ 'admin.cancel'|trans }}</twig:Ui:Button>
+                <twig:Ui:Button type="submit" variant="primary">{{ 'widget.link.confirm'|trans }}</twig:Ui:Button>
+            </form>
+        {% endif %}
+    </div>
+{% endblock %}

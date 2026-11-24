@@ -105,6 +105,16 @@ class Issue implements HasPlace
     private ?string $importedRef = null;
 
     /**
+     * What the widget noted on the site the issue was reported from (the
+     * page, the browser, the errors): a fact of the creation, as
+     * Widget/TechnicalReport tamed it, never changed afterwards.
+     *
+     * @var array<string, mixed>|null
+     */
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    private ?array $report = null;
+
+    /**
      * @param Place $place where the issue starts, the initial place of the tracker's workflow
      */
     public function __construct(Project $project, Tracker $tracker, Place $place, int $number, User $author, string $title, string $description)
@@ -293,6 +303,22 @@ class Issue implements HasPlace
     {
         $this->release = $release;
         $this->touch();
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function getReport(): ?array
+    {
+        return $this->report;
+    }
+
+    /**
+     * @param array<string, mixed> $report what TechnicalReport::toArray() gives
+     */
+    public function attachReport(array $report): void
+    {
+        $this->report = $report;
     }
 
     public function isPrivate(): bool

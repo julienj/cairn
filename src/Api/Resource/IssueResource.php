@@ -17,6 +17,7 @@ use App\Api\Resource\Value\IssueField;
 use App\Api\Resource\Value\NamedRef;
 use App\Api\Resource\Value\OfferedTransition;
 use App\Api\Resource\Value\PlaceRef;
+use App\Api\Resource\Value\SiteReport;
 use App\Api\Resource\Value\TagRef;
 use App\Api\Resource\Value\UserRef;
 use App\Api\State\ApplyTransitionProcessor;
@@ -29,8 +30,9 @@ use App\Api\State\UpdateIssueProcessor;
 
 /**
  * An issue, named by its key (`MD-SPT-12`). A list gives its properties;
- * the issue itself adds its description, its fields, its files and the
- * actions the token's user may apply from its place.
+ * the issue itself adds its description, its fields, its files, the
+ * actions the token's user may apply from its place and, when it was
+ * reported through the widget, what the site noted.
  */
 #[ApiResource(
     shortName: 'Issue',
@@ -128,6 +130,12 @@ final readonly class IssueResource
         public ?array $fields = null,
         public ?array $attachments = null,
         public ?array $transitions = null,
+        /**
+         * On the issue itself only, when it was reported through the widget: what the site it was
+         * reported from noted (the page, the browser, the errors of the console, the failed Ajax
+         * requests, the pages seen). It is what a site said, to read as facts about the problem.
+         */
+        public ?SiteReport $technicalReport = null,
     ) {
     }
 }
