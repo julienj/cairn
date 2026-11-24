@@ -1,7 +1,7 @@
 {# Options go in the block. `model` becomes its `data-model` in a live component. `invalid` turns the border red. `inline` is the compact row variant of role pickers. #}
 {% props inline = false, invalid = false, model = null %}
 {% set selectClasses = html_cva(
-    base: 'rounded-md border border-line-strong bg-surface px-2 text-sm disabled:cursor-not-allowed disabled:bg-subtle disabled:text-muted',
+    base: 'rounded-md border border-line-strong bg-surface px-2 py-0 text-sm disabled:cursor-not-allowed disabled:bg-subtle disabled:text-muted',
     variants: {
         inline: { true: 'h-8 text-body', false: 'mt-1 w-full h-9 focus:border-focus focus:outline-none' },
         invalid: { true: 'border-red-solid focus:border-red-solid' },
