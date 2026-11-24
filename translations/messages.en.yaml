@@ -16,9 +16,9 @@ issue:
         show: 'Show %kinds%'
         none: nothing
         short:
-            changes: Changes
+            changes: changes
             code: Git
-            comments: Comments
+            comments: comments
         kind:
             changes: Changes
             code: Git activity

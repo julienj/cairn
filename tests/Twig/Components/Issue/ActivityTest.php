@@ -345,7 +345,7 @@ final class ActivityTest extends KernelTestCase
         self::assertStringNotContainsString('a1b2c3d4', $render, 'the commits are hidden');
         self::assertStringContainsString('created the issue', $render);
         self::assertSame([ActivityKind::Code], $this->hiddenBy($manager));
-        self::assertStringContainsString('Show Changes, Comments', $render, 'the menu says what is shown, not what is hidden');
+        self::assertStringContainsString('Show changes, comments', $render, 'the menu says what is shown, not what is hidden');
 
         $component->call('toggleActivity', ['kind' => 'comments'])->call('toggleActivity', ['kind' => 'changes']);
         $render = (string) $component->render();
