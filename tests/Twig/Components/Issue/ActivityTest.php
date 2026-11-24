@@ -307,6 +307,20 @@ final class ActivityTest extends KernelTestCase
         self::assertStringNotContainsString('data-live-action-param="confirmDelete"', $paul);
     }
 
+    public function testEachCommentHasItsOwnAddressThatItsDateLinksTo(): void
+    {
+        $comment = self::getContainer()->get(EntityManagerInterface::class)->getRepository(Comment::class)
+            ->findOneBy(['issue' => $this->issue, 'author' => $this->scene->user('claire.martin@maison-dupont.test')]) ?? self::fail('no comment of Claire');
+        $anchor = 'comment-'.$comment->getId();
+
+        // Paul only reads the issue: the address is for whoever sees the comment, not for who may edit it.
+        $render = (string) $this->activity('paul.roussel@maison-dupont.test')->render();
+
+        self::assertStringContainsString(\sprintf('id="%s"', $anchor), $render);
+        self::assertStringContainsString(\sprintf('<a href="#%s"', $anchor), $render, 'the date is the link');
+        self::assertStringContainsString(\sprintf('data-controller="clipboard" data-clipboard-text-value="#%s"', $anchor), $render, 'and its link is copied in one click');
+    }
+
     /** Posts a comment from the composer and returns its id. */
     private function postedComment(TestLiveComponent $component, string $body): int
     {

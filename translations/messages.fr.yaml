@@ -140,6 +140,8 @@ issue:
             closed: Fermée
     comment:
         placeholder: Écrire un commentaire…
+        copy_link: Copier le lien du commentaire
+        link_copied: Lien copié
         edited: 'modifié le %date%'
         edit: Modifier le commentaire
         delete: Supprimer le commentaire

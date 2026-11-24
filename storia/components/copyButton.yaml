@@ -2,3 +2,4 @@ component: Ui:CopyButton
 variants:
     default: { args: { label: Copy command to clipboard, copiedLabel: Copied! } }
     small: { args: { label: Copy command to clipboard, copiedLabel: Copied!, size: sm } }
+    link: { args: { label: Copy the link to this comment, copiedLabel: Link copied, size: sm, icon: link } }

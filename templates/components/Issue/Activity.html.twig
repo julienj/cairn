@@ -26,17 +26,22 @@
                             <span class="absolute -left-3 top-1 flex h-6 w-6 items-center justify-center rounded-md bg-sunken text-muted ring-2 ring-line-subtle" title="{{ 'automation.signature'|trans }}"><twig:ux:icon name="lucide:zap" class="h-3.5 w-3.5" /></span>
                         {% endif %}
                         {% set commentEditable = entryComment.id in activityEditable %}
-                        <div class="group rounded-lg border p-3 {{ entryComment.private ? 'border-amber-line border-l-4 border-l-amber-solid bg-amber-soft/70 private-hatching' : 'border-line bg-surface' }}">
+                        {# Each comment has its own address, as on GitHub: its date is the link, the comment the address names is outlined, below the sticky header. #}
+                        {% set commentAnchor = 'comment-' ~ entryComment.id %}
+                        <div id="{{ commentAnchor }}" class="group scroll-mt-16 rounded-lg border p-3 target:ring-2 target:ring-focus {{ entryComment.private ? 'border-amber-line border-l-4 border-l-amber-solid bg-amber-soft/70 private-hatching' : 'border-line bg-surface' }}">
                             <div class="flex items-center gap-2 text-xs">
                                 <span class="font-medium text-strong">{{ entryComment.authorName }}</span>
                                 {% if not entryComment.author %}<span class="text-faint">{{ 'automation.signature'|trans }}</span>{% endif %}
-                                <span class="text-faint">{{ entryComment.createdAt|format_datetime('short', 'short') }}</span>
+                                <a href="#{{ commentAnchor }}" class="text-faint hover:text-body hover:underline" data-turbo="false" data-test="comment-permalink">{{ entryComment.createdAt|format_datetime('short', 'short') }}</a>
                                 {% if entryComment.editedAt %}<span class="text-faint italic">· {{ 'issue.comment.edited'|trans({ '%date%': entryComment.editedAt|format_datetime('short', 'short') }) }}</span>{% endif %}
                                 {% if entryComment.private %}<twig:Ui:Badge tone="amber" size="sm" icon="lock" class="ml-auto">{{ 'issue.comment.private_badge'|trans }}</twig:Ui:Badge>{% endif %}
-                                {% if commentEditable and editingCommentId != entryComment.id and deletingCommentId != entryComment.id %}
-                                    <span class="hover-actions -my-1 -mr-1 flex items-center {{ entryComment.private ? '' : 'ml-auto' }}">
-                                        <twig:Ui:IconButton icon="pencil" size="sm" :label="'issue.comment.edit'|trans" data-action="live#action" data-live-action-param="editComment" data-live-id-param="{{ entryComment.id }}" />
-                                        <twig:Ui:IconButton icon="trash-2" size="sm" tone="danger" :label="'issue.comment.delete'|trans" data-action="live#action" data-live-action-param="confirmDelete" data-live-id-param="{{ entryComment.id }}" />
+                                {% if editingCommentId != entryComment.id and deletingCommentId != entryComment.id %}
+                                    <span class="hover-actions -my-1 -mr-1 flex items-center {{ entryComment.private ? '' : 'ml-auto' }}" data-controller="clipboard" data-clipboard-text-value="#{{ commentAnchor }}">
+                                        <twig:Ui:CopyButton icon="link" size="sm" :label="'issue.comment.copy_link'|trans" :copiedLabel="'issue.comment.link_copied'|trans" />
+                                        {% if commentEditable %}
+                                            <twig:Ui:IconButton icon="pencil" size="sm" :label="'issue.comment.edit'|trans" data-action="live#action" data-live-action-param="editComment" data-live-id-param="{{ entryComment.id }}" />
+                                            <twig:Ui:IconButton icon="trash-2" size="sm" tone="danger" :label="'issue.comment.delete'|trans" data-action="live#action" data-live-action-param="confirmDelete" data-live-id-param="{{ entryComment.id }}" />
+                                        {% endif %}
                                     </span>
                                 {% endif %}
                             </div>
