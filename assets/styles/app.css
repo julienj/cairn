@@ -48,6 +48,10 @@
     --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
     --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
+    /* The height of the application header (`h-header`), which what sticks to the top of the
+       page sits under (`top-header`). */
+    --spacing-header: 3rem;
+
     /* Colours are roles, each with its light and its dark value: templates write `bg-surface`,
        `text-muted`, `border-line`, `bg-red-soft`, never a step of the palette. `color-scheme`
        on <html> picks the side (see below). ColourRolesTest reads these lines: keep one

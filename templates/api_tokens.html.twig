@@ -83,7 +83,7 @@
                 {% endif %}
             </div>
 
-            {{ form_start(form, { attr: { class: 'rounded-lg border border-line bg-surface p-4 space-y-4 lg:sticky lg:top-16' } }) }}
+            {{ form_start(form, { attr: { class: 'rounded-lg border border-line bg-surface p-4 space-y-4 lg:sticky lg:top-[calc(var(--spacing-header)+1rem)]' } }) }}
                 <h2 class="font-semibold text-strong">{{ 'api_token.new'|trans }}</h2>
                 {{ form_errors(form) }}
                 {{ form_row(form.name) }}

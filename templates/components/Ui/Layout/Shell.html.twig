@@ -3,7 +3,7 @@
 {% set layoutShellClasses = html_cva(base: 'min-h-screen') %}
 <div class="{{ layoutShellClasses.apply({}, attributes.render('class'))|tailwind_merge }}" data-controller="sidebar" {{ attributes }}>
     {% block header %}{% endblock %}
-    <div class="flex min-h-[calc(100vh-3rem)]">
+    <div class="flex min-h-[calc(100vh-var(--spacing-header))]">
         {% if block('sidebar') is not empty %}
             <div data-sidebar-target="backdrop" data-action="click->sidebar#close" class="hidden fixed inset-0 z-30 bg-black/30 md:hidden"></div>
             {% block sidebar %}{% endblock %}
