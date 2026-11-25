@@ -9,6 +9,7 @@ const port = Number(process.env.VITE_PORT ?? 5173);
 export default defineConfig({
     input: {
         app: './assets/app.js',
+        styles: './assets/styles/app.css',
     },
     server: {
         host: true,
