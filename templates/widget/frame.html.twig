@@ -12,7 +12,7 @@
          data-widget-frame-token-url-value="{{ path('app_widget_token', frameRoute) }}"
          data-widget-frame-report-url-value="{{ path('app_widget_report', frameRoute) }}"
          data-widget-frame-connect-url-value="{{ path('app_widget_connect', frameRoute) }}"
-         data-action="message@window->widget-frame#received turbo:before-fetch-request@document->widget-frame#sign turbo:before-fetch-response@document->widget-frame#answered widget:collapse@window->widget-frame#collapse widget:expand@window->widget-frame#expand widget:context@window->widget-frame#provide">
+         data-action="message@window->widget-frame#received turbo:before-fetch-request@document->widget-frame#sign turbo:before-fetch-response@document->widget-frame#answered widget:collapse@window->widget-frame#collapse widget:expand@window->widget-frame#expand widget:widen@window->widget-frame#widen widget:narrow@window->widget-frame#narrow widget:context@window->widget-frame#provide">
         <header class="flex h-14 shrink-0 items-center gap-2 border-b border-line pl-4 pr-2">
             <twig:Ui:Logo size="sm" />
             <h1 class="font-semibold text-strong">{{ 'widget.title'|trans }}</h1>
@@ -37,7 +37,7 @@
                 <p class="text-muted">{{ 'widget.refused_here.text'|trans }}</p>
                 <twig:Ui:Button data-action="widget-frame#unlink">{{ 'widget.refused_here.action'|trans }}</twig:Ui:Button>
             </section>
-            <turbo-frame id="widget-report" data-widget-frame-target="frame" hidden></turbo-frame>
+            <turbo-frame id="widget-report" class="flex min-h-full flex-col" data-widget-frame-target="frame" hidden></turbo-frame>
         </div>
     </div>
 {% endblock %}

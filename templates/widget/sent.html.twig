@@ -1,7 +1,7 @@
 {# What the `widget-report` frame shows once the issue was created: its key, the way to it in Cairn (another tab: the site stays where it is) and the way back to an empty form. #}
 {% set sentRoute = { workspaceKey: project.workspace.key, projectKey: project.key } %}
 <turbo-frame id="widget-report">
-    <div class="flex min-h-full flex-col items-center justify-center gap-4 px-8 py-10 text-center">
+    <div class="flex flex-1 flex-col items-center justify-center gap-4 px-8 py-10 text-center">
         <span class="grid h-14 w-14 place-items-center rounded-full bg-emerald-soft text-emerald">
             <twig:ux:icon name="lucide:check" class="h-6 w-6" />
         </span>

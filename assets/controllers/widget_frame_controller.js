@@ -20,7 +20,9 @@ const POLL_FOR = 5 * 60 * 1000;
  * What the form needs of the parent goes through events on the window:
  * `widget:context` (what the site noted, the token, and where the form
  * keeps its draft), `widget:collapse` and
- * `widget:expand` (the panel out of the way while a screenshot is taken).
+ * `widget:expand` (the panel out of the way while a screenshot is taken),
+ * `widget:widen` and `widget:narrow` (the panel a dialog over the page
+ * while the screenshot is edited).
  */
 export default class extends Controller {
     static targets = ['connect', 'alone', 'refused', 'frame', 'link'];
@@ -227,6 +229,18 @@ export default class extends Controller {
     expand() {
         if (this.linked) {
             window.parent.postMessage({ type: 'cairn:expand' }, this.siteValue);
+        }
+    }
+
+    widen() {
+        if (this.linked) {
+            window.parent.postMessage({ type: 'cairn:widen' }, this.siteValue);
+        }
+    }
+
+    narrow() {
+        if (this.linked) {
+            window.parent.postMessage({ type: 'cairn:narrow' }, this.siteValue);
         }
     }
 

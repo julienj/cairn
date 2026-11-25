@@ -290,6 +290,7 @@ final class WidgetTest extends WebTestCase
         self::assertSelectorExists(\sprintf('input[name="report[tags][]"][value="%d"]', $tag->getId()));
         self::assertSelectorNotExists('[name="report[private]"]', 'privacy is not a client\'s to set');
         self::assertSelectorTextContains('form[name="report"]', 'Everyone on the project will see this issue.');
+        self::assertSelectorExists('[data-controller="widget-capture"] [role="dialog"] canvas', 'the screenshot is drawn on and cropped before it is attached');
 
         // another category: the form is drawn again for it with what was typed, and nothing is created
         $before = self::getContainer()->get(IssueRepository::class)->count([]);

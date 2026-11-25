@@ -2,8 +2,16 @@ import { Controller } from '@hotwired/stimulus';
 
 /* The pictures of the files sent, by uuid: they outlive the form, which is drawn again when the category changes. */
 const previews = new Map();
+/* The files those pictures are drawn from, kept with the draft. */
+const pictures = new Map();
 /* The screenshot among them: taking another one replaces it. */
 let capture = null;
+/* What the screenshot was made of (the image as it was taken, what is drawn on it, its crop), to annotate it again. */
+let edit = null;
+/* Whether the pictures kept with the draft were read again, once per page. */
+let recalled = false;
+/* The writes of the pictures, one after the other: the last one says what is kept. */
+let writing = Promise.resolve();
 /* The files on their way: the form is not sent before they are in. */
 let sending = 0;
 /* The form on the page: another one each time the category changes. */
@@ -12,6 +20,33 @@ let current = null;
 const arrived = [];
 /* The shape of a draft: one kept in another shape is not read. */
 const DRAFT_VERSION = 1;
+/* Where the pictures of a draft are kept, by the key of the draft: files are too heavy for the sessionStorage. */
+const PICTURES = { database: 'cairn-widget', store: 'pictures', version: 1 };
+
+/* One request on the store of the pictures, in a transaction of its own; what it read, or null when there is no such storage. */
+async function pictureStore(mode, request) {
+    let database = null;
+    try {
+        database = await new Promise((resolve, reject) => {
+            const opening = indexedDB.open(PICTURES.database, PICTURES.version);
+            opening.onupgradeneeded = () => opening.result.createObjectStore(PICTURES.store);
+            opening.onsuccess = () => resolve(opening.result);
+            opening.onerror = () => reject(opening.error);
+        });
+
+        return await new Promise((resolve, reject) => {
+            const transaction = database.transaction(PICTURES.store, mode);
+            const asked = request(transaction.objectStore(PICTURES.store));
+            transaction.oncomplete = () => resolve(asked.result ?? null);
+            transaction.onerror = () => reject(transaction.error);
+            transaction.onabort = () => reject(transaction.error);
+        });
+    } catch {
+        return null;
+    } finally {
+        database?.close();
+    }
+}
 
 /*
  * The form of the widget. It asks the frame for what the site noted of
@@ -32,7 +67,10 @@ const DRAFT_VERSION = 1;
  * the name, none included; and the files sent. It is given back to the
  * controls of the same name, and a draft of another category draws the
  * form again for it first. The report of the site is not kept: the page
- * the form is on gives its own.
+ * the form is on gives its own. The pictures of the files, and what the
+ * screenshot was made of, are kept beside it in the IndexedDB of the
+ * frame, so that the page drawn again still shows them and the
+ * screenshot can still be annotated.
  */
 export default class extends Controller {
     static targets = ['main', 'detail', 'body', 'box', 'files', 'template', 'submit', 'refresher', 'actions', 'discard', 'confirm'];
@@ -51,6 +89,7 @@ export default class extends Controller {
         this.restore();
         this.hold();
         this.take();
+        this.recall();
     }
 
     disconnect() {
@@ -97,10 +136,11 @@ export default class extends Controller {
     }
 
     captured(event) {
-        this.send(new File([event.detail.blob], event.detail.name, { type: event.detail.blob.type }), true);
+        this.send(new File([event.detail.blob], event.detail.name, { type: event.detail.blob.type }), event.detail.edit);
     }
 
-    async send(file, isCapture) {
+    /* `made`: what the screenshot was made of, when the file is one; null for a file chosen. */
+    async send(file, made = null) {
         const body = new FormData();
         body.append('file', file);
         let answer = null;
@@ -122,13 +162,16 @@ export default class extends Controller {
         }
         if (file.type.startsWith('image/')) {
             previews.set(answer.uuid, URL.createObjectURL(file));
+            pictures.set(answer.uuid, file);
         }
-        if (isCapture) {
+        if (null !== made) {
             (current ?? this).forget(capture);
             capture = answer.uuid;
+            edit = made;
         }
         arrived.push(answer);
         current?.take();
+        this.remember();
     }
 
     /* The form is not sent while a file is on its way: it would leave without it. */
@@ -156,6 +199,12 @@ export default class extends Controller {
         this.forget(event.target.closest('li').dataset.uuid);
     }
 
+    annotate() {
+        if (null !== edit) {
+            window.dispatchEvent(new CustomEvent('widget:annotate', { detail: { edit } }));
+        }
+    }
+
     forget(uuid) {
         if (null === uuid) {
             return;
@@ -169,10 +218,13 @@ export default class extends Controller {
             URL.revokeObjectURL(previews.get(uuid));
             previews.delete(uuid);
         }
+        pictures.delete(uuid);
         if (capture === uuid) {
             capture = null;
+            edit = null;
         }
         this.save();
+        this.remember();
     }
 
     picture(item) {
@@ -298,7 +350,9 @@ export default class extends Controller {
         arrived.splice(0);
         previews.forEach((url) => URL.revokeObjectURL(url));
         previews.clear();
+        pictures.clear();
         capture = null;
+        edit = null;
     }
 
     drop() {
@@ -308,6 +362,57 @@ export default class extends Controller {
         try {
             window.sessionStorage.removeItem(this.draft);
         } catch { /* no storage, no draft */ }
+        const key = this.draft;
+        writing = writing.then(() => pictureStore('readwrite', (store) => store.delete(key)));
+    }
+
+    // --- the pictures, kept beside the draft
+
+    /* Writes what is now held, after what was being written: the original of the screenshot as a file, once. */
+    remember() {
+        if (null === this.draft) {
+            return;
+        }
+        const key = this.draft;
+        writing = writing.then(async () => {
+            if (null !== edit && !edit.original) {
+                edit.original = await new Promise((done) => { edit.image.toBlob(done, 'image/png'); });
+            }
+            const record = {
+                version: DRAFT_VERSION,
+                pictures: new Map(pictures),
+                capture,
+                edit: null === edit || !edit.original ? null : { original: edit.original, shapes: edit.shapes, crop: edit.crop, history: edit.history },
+            };
+            await pictureStore('readwrite', (store) => store.put(record, key));
+        });
+    }
+
+    /* Reads the pictures of the files of the draft again, once per page, without taking the place of those sent meanwhile. */
+    async recall() {
+        const draft = this.read();
+        if (recalled || null === draft) {
+            return;
+        }
+        recalled = true;
+        const record = await pictureStore('readonly', (store) => store.get(this.draft));
+        if (record?.version !== DRAFT_VERSION || !(record.pictures instanceof Map)) {
+            return;
+        }
+        const held = new Set(draft.files.map(([uuid]) => uuid));
+        for (const [uuid, file] of record.pictures) {
+            if (held.has(uuid) && !previews.has(uuid) && file instanceof Blob) {
+                previews.set(uuid, URL.createObjectURL(file));
+                pictures.set(uuid, file);
+            }
+        }
+        if (null === capture && held.has(record.capture) && record.edit?.original instanceof Blob) {
+            try {
+                edit = { ...record.edit, image: await createImageBitmap(record.edit.original) };
+                capture = record.capture;
+            } catch { /* an image the browser no longer reads: the screenshot stays, without its annotations */ }
+        }
+        current?.filesTarget.querySelectorAll('li').forEach((item) => current.picture(item));
     }
 
     // --- the report, read before it is sent
