@@ -44,6 +44,10 @@ export default class extends Controller {
         };
         this.onKeydown = (event) => this.navigate(event);
         this.element.addEventListener('keydown', this.onKeydown);
+        // a page restored from the cache of Turbo may come back with its menu open
+        if (this.isOpen) {
+            this.listen();
+        }
     }
 
     disconnect() {
