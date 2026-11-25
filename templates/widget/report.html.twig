@@ -6,7 +6,7 @@
         'data-widget-report-attachment-url-value': path('app_widget_attachment', reportRoute),
         'data-widget-report-preview-url-value': path('app_widget_report_preview', reportRoute),
         'data-widget-report-failed-value': 'widget.form.upload_failed'|trans,
-        'data-action': 'widget:context-changed@window->widget-report#noted widget-capture:taken->widget-report#captured turbo:submit-end->widget-report#settled',
+        'data-action': 'widget:context-changed@window->widget-report#noted widget-capture:taken->widget-report#captured turbo:submit-end->widget-report#settled input->widget-report#save change->widget-report#save',
     } }) }}
         <div class="flex min-h-full flex-col" data-widget-report-target="main">
             <div class="flex-1 space-y-4 p-4">

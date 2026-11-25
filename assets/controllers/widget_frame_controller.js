@@ -18,7 +18,8 @@ const POLL_FOR = 5 * 60 * 1000;
  * providers cut.
  *
  * What the form needs of the parent goes through events on the window:
- * `widget:context` (what the site noted), `widget:collapse` and
+ * `widget:context` (what the site noted, the token, and where the form
+ * keeps its draft), `widget:collapse` and
  * `widget:expand` (the panel out of the way while a screenshot is taken).
  */
 export default class extends Controller {
@@ -209,6 +210,7 @@ export default class extends Controller {
     provide(event) {
         event.detail.report = this.report;
         event.detail.token = this.token;
+        event.detail.draft = `cairn-widget-draft:${this.projectValue}:${this.siteValue}`;
     }
 
     collapse(event) {
