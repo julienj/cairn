@@ -90,7 +90,7 @@ final class ApiTokenTest extends WebTestCase
         $crawler = $this->client->request('GET', '/account/mcp');
         self::assertResponseIsSuccessful();
         self::assertSelectorExists('a[href="/account/mcp"]');
-        self::assertStringContainsString('claude mcp add --transport http cairn http://localhost/mcp --header "Authorization: Bearer', $crawler->filter('[data-test="mcp-command"]')->text());
+        self::assertStringContainsString('claude mcp add --scope user --transport http cairn http://localhost/mcp --header "Authorization: Bearer', $crawler->filter('[data-test="mcp-command"]')->text());
         self::assertCount(1, $crawler->filter('[data-controller="clipboard"] button[data-action="clipboard#copy"]'));
         self::assertSame('Copy command to clipboard', trim($crawler->filter('[role="tooltip"] [data-clipboard-target="idle"]')->text()));
         self::assertSame('Copied!', trim($crawler->filter('[role="tooltip"] [data-clipboard-target="done"][hidden]')->text()));
