@@ -1479,7 +1479,7 @@ widget:
         language: Language
         viewport: Window
         screen: Screen
-        version: Version of the site
+        context: Said by the site
         errors: '{0}Console|{1}Console · 1 error|]1,Inf[ Console · %count% errors'
         requests: '{0}Failed Ajax requests|{1}Failed Ajax requests · 1|]1,Inf[ Failed Ajax requests · %count%'
         requests_help: The calls made by the page (fetch, XHR), without what they carried.

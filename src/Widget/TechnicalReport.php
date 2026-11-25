@@ -6,8 +6,9 @@ namespace App\Widget;
 
 /**
  * What the script of the widget noted on the site a problem is reported
- * from: the page, the browser, the errors of the page, its Ajax requests
- * that failed and the pages seen in the tab. It comes from a page nobody
+ * from: the page, the browser, what the site says of itself (its
+ * context: names and texts its pages chose), the errors of the page, its
+ * Ajax requests that failed and the pages seen in the tab. It comes from a page nobody
  * here controls, through the browser of the reporter: only the shape
  * known here is kept, every text cut and every list bounded, and it is
  * shown as what the site said, never trusted for anything.
@@ -17,13 +18,15 @@ final readonly class TechnicalReport
     private const int MAX_ENTRIES = 30;
     private const int MAX_TEXT = 600;
     private const int MAX_ADDRESS = 400;
+    private const int MAX_NAME = 60;
 
     private const array ERROR_KINDS = ['console', 'error', 'rejection'];
 
     /**
      * @param array{
      *     page: array{url: string, title: ?string},
-     *     environment: array{userAgent: ?string, language: ?string, viewport: ?array{width: int, height: int}, screen: ?array{width: int, height: int}, pixelRatio: ?float, version: ?string},
+     *     environment: array{userAgent: ?string, language: ?string, viewport: ?array{width: int, height: int}, screen: ?array{width: int, height: int}, pixelRatio: ?float},
+     *     context: array<string, string>,
      *     errors: list<array{kind: string, message: string, source: ?string, at: ?string}>,
      *     requests: list<array{method: string, url: string, status: int, at: ?string}>,
      *     pages: list<array{url: string, title: ?string, at: ?string}>,
@@ -85,8 +88,8 @@ final readonly class TechnicalReport
                 'viewport' => self::size($environment['viewport'] ?? null),
                 'screen' => self::size($environment['screen'] ?? null),
                 'pixelRatio' => (\is_int($pixelRatio) || \is_float($pixelRatio)) && $pixelRatio > 0 && $pixelRatio <= 10 ? round((float) $pixelRatio, 2) : null,
-                'version' => self::text($environment['version'] ?? null, 60),
             ],
+            'context' => self::pairs($raw['context'] ?? null),
             'errors' => $errors,
             'requests' => $requests,
             'pages' => $pages,
@@ -113,11 +116,21 @@ final readonly class TechnicalReport
     }
 
     /**
-     * @return array{userAgent: ?string, language: ?string, viewport: ?array{width: int, height: int}, screen: ?array{width: int, height: int}, pixelRatio: ?float, version: ?string}
+     * @return array{userAgent: ?string, language: ?string, viewport: ?array{width: int, height: int}, screen: ?array{width: int, height: int}, pixelRatio: ?float}
      */
     public function environment(): array
     {
         return $this->data['environment'];
+    }
+
+    /**
+     * What the site says of itself, name => text, in the order its pages said it.
+     *
+     * @return array<string, string>
+     */
+    public function context(): array
+    {
+        return $this->data['context'];
     }
 
     /**
@@ -204,6 +217,29 @@ final readonly class TechnicalReport
         $value = trim((string) preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $value));
 
         return '' === $value ? null : mb_substr($value, 0, $max);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private static function pairs(mixed $value): array
+    {
+        if (!\is_array($value)) {
+            return [];
+        }
+        $context = [];
+        foreach ($value as $name => $text) {
+            $name = self::text((string) $name, self::MAX_NAME);
+            $text = self::text($text, self::MAX_TEXT);
+            if (null !== $name && null !== $text) {
+                $context[$name] = $text;
+            }
+            if (self::MAX_ENTRIES === \count($context)) {
+                break;
+            }
+        }
+
+        return $context;
     }
 
     private static function number(mixed $value, int $min, int $max): ?int
