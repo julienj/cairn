@@ -10,6 +10,8 @@ let sending = 0;
 let current = null;
 /* The files that are in and that no form holds yet: the one on the page takes them, or the next one while it is drawn again. */
 const arrived = [];
+/* The shape of a draft: one kept in another shape is not read. */
+const DRAFT_VERSION = 1;
 
 /*
  * The form of the widget. It asks the frame for what the site noted of
@@ -22,6 +24,15 @@ const arrived = [];
  * nothing of it stays in the form when the request fails. A file takes
  * its time to be sent: the form cannot be sent meanwhile, and a file
  * that arrives while the form is drawn again goes to the next one.
+ *
+ * What is written is kept as a draft in the sessionStorage of the frame,
+ * which the site cannot read, so that the issue begun follows from page
+ * to page of the site in this tab, until it is sent. A draft holds each
+ * control by its name: its text, or the values checked among those of
+ * the name, none included; and the files sent. It is given back to the
+ * controls of the same name, and a draft of another category draws the
+ * form again for it first. The report of the site is not kept: the page
+ * the form is on gives its own.
  */
 export default class extends Controller {
     static targets = ['main', 'detail', 'body', 'box', 'files', 'template', 'submit', 'refresher'];
@@ -34,8 +45,10 @@ export default class extends Controller {
         const context = { report: null, token: null };
         window.dispatchEvent(new CustomEvent('widget:context', { detail: context }));
         this.token = context.token;
+        this.draft = context.draft ?? null;
         this.note(context.report);
         this.filesTarget.querySelectorAll('li').forEach((item) => this.picture(item));
+        this.restore();
         this.hold();
         this.take();
     }
@@ -71,6 +84,8 @@ export default class extends Controller {
         if (!event.detail.success) {
             this.refreshing = false;
             this.take();
+        } else if (!this.refreshing) {
+            this.drop();
         }
     }
 
@@ -134,6 +149,7 @@ export default class extends Controller {
             this.filesTarget.appendChild(item);
             this.picture(item);
         }
+        this.save();
     }
 
     discard(event) {
@@ -156,6 +172,7 @@ export default class extends Controller {
         if (capture === uuid) {
             capture = null;
         }
+        this.save();
     }
 
     picture(item) {
@@ -174,6 +191,99 @@ export default class extends Controller {
         holder.textContent = text;
 
         return holder.innerHTML.replaceAll('"', '&quot;');
+    }
+
+    // --- the draft
+
+    /* The controls a draft holds: not the files, kept apart, nor the report of the site. */
+    controls() {
+        return Array.from(this.element.elements).filter((control) => control.name
+            && !['file', 'submit', 'button'].includes(control.type)
+            && !control.name.startsWith('attachments[')
+            && !control.name.endsWith('[technical]'));
+    }
+
+    save() {
+        if (null === this.draft || this.refreshing) {
+            return;
+        }
+        const fields = {};
+        for (const control of this.controls()) {
+            if ('checkbox' === control.type || 'radio' === control.type) {
+                fields[control.name] ??= [];
+                if (control.checked) {
+                    fields[control.name].push(control.value);
+                }
+            } else if ('select-multiple' === control.type) {
+                fields[control.name] = Array.from(control.selectedOptions, (option) => option.value);
+            } else {
+                fields[control.name] = control.value;
+            }
+        }
+        const files = Array.from(this.filesTarget.querySelectorAll('li[data-uuid]'), (item) => [item.dataset.uuid, item.querySelector('input[type="hidden"]').value]);
+        try {
+            window.sessionStorage.setItem(this.draft, JSON.stringify({ version: DRAFT_VERSION, fields, files }));
+        } catch { /* no storage: the draft lasts as long as the page */ }
+    }
+
+    restore() {
+        const draft = this.read();
+        if (null === draft) {
+            return;
+        }
+        const tracker = this.element.querySelector('select[name$="[tracker]"]');
+        const shown = tracker?.value;
+        for (const control of this.controls()) {
+            const value = draft.fields[control.name];
+            if (Array.isArray(value)) {
+                if ('checkbox' === control.type || 'radio' === control.type) {
+                    control.checked = value.includes(control.value);
+                } else if ('select-multiple' === control.type) {
+                    Array.from(control.options).forEach((option) => { option.selected = value.includes(option.value); });
+                }
+            } else if ('string' === typeof value && !['checkbox', 'radio', 'select-multiple'].includes(control.type)) {
+                control.value = value;
+            }
+        }
+        const held = new Set(Array.from(this.filesTarget.querySelectorAll('li[data-uuid]'), (item) => item.dataset.uuid));
+        for (const [uuid, name] of draft.files) {
+            if (!held.has(uuid) && !arrived.some((file) => file.uuid === uuid)) {
+                arrived.push({ uuid, name });
+            }
+        }
+        if (tracker && tracker.value !== shown) {
+            if ('' === tracker.value) {
+                tracker.value = shown;
+            } else {
+                this.refresh();
+            }
+        }
+    }
+
+    read() {
+        if (null === this.draft) {
+            return null;
+        }
+        try {
+            const draft = JSON.parse(window.sessionStorage.getItem(this.draft) ?? 'null');
+            const valid = draft?.version === DRAFT_VERSION
+                && 'object' === typeof draft.fields && null !== draft.fields
+                && Array.isArray(draft.files)
+                && draft.files.every((file) => Array.isArray(file) && 'string' === typeof file[0] && 'string' === typeof file[1]);
+
+            return valid ? draft : null;
+        } catch {
+            return null;
+        }
+    }
+
+    drop() {
+        if (null === this.draft) {
+            return;
+        }
+        try {
+            window.sessionStorage.removeItem(this.draft);
+        } catch { /* no storage, no draft */ }
     }
 
     // --- the report, read before it is sent
