@@ -1294,6 +1294,7 @@ tag:
         gray: Grey
 
 widget:
+    open_project: Open the project in Cairn
     title: Report a problem
     close: Close the panel
     intro: The widget lets the people of the project report a problem from the site being reviewed, without leaving it. It only shows on the sites declared here, to everybody or to whoever asks for it; everyone signs in with their own Cairn account.

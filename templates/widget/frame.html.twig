@@ -1,4 +1,4 @@
-{# The frame of the widget, as the site shows it in its panel: the band (what it is, the project, the way to close the panel), then either the invitation to link an account or the `widget-report` Turbo frame, which holds the form once the frame has its token. It is drawn for one `site` of the project, the only one that may show it, and holds no data of the project: nobody is known yet. When the form is refused to the account that is linked (no right to create, no category for it), the frame says so and offers to link another one. #}
+{# The frame of the widget, as the site shows it in its panel: the band (what it is, the key of the project, a link to it in another tab, the way to close the panel), then either the invitation to link an account or the `widget-report` Turbo frame, which holds the form once the frame has its token. It is drawn for one `site` of the project, the only one that may show it, and holds no data of the project: nobody is known yet. When the form is refused to the account that is linked (no right to create, no category for it), the frame says so and offers to link another one. #}
 {% extends 'layout/widget.html.twig' %}
 
 {% block page_title %}{{ 'widget.title'|trans }}{% endblock %}
@@ -16,7 +16,7 @@
         <header class="flex h-14 shrink-0 items-center gap-2 border-b border-line pl-4 pr-2">
             <twig:Ui:Logo size="sm" />
             <h1 class="font-semibold text-strong">{{ 'widget.title'|trans }}</h1>
-            <span class="rounded bg-sunken px-1.5 py-0.5 font-mono text-xs text-body">{{ project.issuePrefix }}</span>
+            <a href="{{ path('app_project_issues', frameRoute) }}" target="_blank" rel="noopener" title="{{ 'widget.open_project'|trans }}" class="rounded bg-sunken px-1.5 py-0.5 font-mono text-xs text-body hover:underline">{{ project.issuePrefix }}</a>
             <twig:Ui:IconButton icon="x" :label="'widget.close'|trans" class="ml-auto" data-action="widget-frame#close" />
         </header>
         <div class="min-h-0 flex-1 overflow-y-auto">
