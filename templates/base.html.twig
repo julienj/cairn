@@ -8,7 +8,7 @@
         <title>{% block title %}Cairn{% endblock %}</title>
         <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
         {% block stylesheets %}
-            {{ reprise_entry_link_tags('app', attributes={'data-turbo-track': 'reload'}) }}
+            {{ reprise_entry_link_tags('styles', attributes={'data-turbo-track': 'reload'}) }}
         {% endblock %}
 
         {% block javascripts %}

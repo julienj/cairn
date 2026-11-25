@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@import "@symfony/ux-live-component/dist/live.min.css";
+
 @plugin "@tailwindcss/forms";
 @plugin "@tailwindcss/typography";
 
