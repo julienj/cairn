@@ -1,4 +1,4 @@
-{# The form of the widget, in the `widget-report` Turbo frame of its panel: the category (changing it draws the form again for the other one), the title, the description, the fields the category requires, what the reporter may qualify, then the screenshot and the files, and the report of the site, read in a second view of the same form before it is sent. `files` are those sent so far (uuid => name): the form carries them, the issue claims them. `private` says the category is: its issues are, whatever the form says. #}
+{# The form of the widget, in the `widget-report` Turbo frame of its panel: the category (changing it draws the form again for the other one), the title, the description, the fields the category requires, what the reporter may qualify, then the screenshot and the files, and the report of the site, read in a second view of the same form before it is sent. Discarding, confirmed in place, forgets the draft and draws the form again empty. `files` are those sent so far (uuid => name): the form carries them, the issue claims them. `private` says the category is: its issues are, whatever the form says. #}
 {% set reportRoute = { workspaceKey: project.workspace.key, projectKey: project.key } %}
 <turbo-frame id="widget-report">
     {{ form_start(form, { attr: {
@@ -78,9 +78,22 @@
                     <twig:Ui:Button variant="ghost" size="sm" data-action="widget-report#view">{{ 'widget.report.view'|trans }}</twig:Ui:Button>
                 </section>
             </div>
-            <footer class="sticky bottom-0 flex items-center justify-between gap-3 border-t border-line bg-surface px-4 py-3">
-                <span class="text-xs text-muted">{{ private ? 'widget.form.private_tracker'|trans : (form.private is defined ? '' : 'widget.form.visible'|trans) }}</span>
-                <twig:Ui:Button type="submit" variant="primary" size="lg" data-widget-report-target="submit">{{ 'widget.form.submit'|trans }}</twig:Ui:Button>
+            <footer class="sticky bottom-0 flex flex-col gap-2 border-t border-line bg-surface px-4 py-3">
+                {% set reportVisibility = private ? 'widget.form.private_tracker'|trans : (form.private is defined ? '' : 'widget.form.visible'|trans) %}
+                {% if reportVisibility %}
+                    <p class="text-xs text-muted">{{ reportVisibility }}</p>
+                {% endif %}
+                <div class="flex items-center justify-between gap-3" data-widget-report-target="actions">
+                    <twig:Ui:Button variant="ghost" size="lg" data-action="widget-report#ask" data-widget-report-target="discard">{{ 'widget.form.discard'|trans }}</twig:Ui:Button>
+                    <twig:Ui:Button type="submit" variant="primary" size="lg" data-widget-report-target="submit">{{ 'widget.form.submit'|trans }}</twig:Ui:Button>
+                </div>
+                <div class="flex items-center justify-between gap-3" role="alertdialog" aria-labelledby="widget-discard-question" data-widget-report-target="confirm" data-action="keydown.esc@window->widget-report#dismiss" hidden>
+                    <span id="widget-discard-question" class="min-w-0 text-sm text-strong">{{ 'widget.form.discard_confirm'|trans }}</span>
+                    <span class="flex shrink-0 items-center gap-1">
+                        <twig:Ui:Button variant="ghost" size="lg" data-action="widget-report#dismiss">{{ 'widget.form.discard_no'|trans }}</twig:Ui:Button>
+                        <twig:Ui:Button variant="danger" size="lg" href="{{ path('app_widget_report', reportRoute) }}" data-action="widget-report#clear">{{ 'widget.form.discard_yes'|trans }}</twig:Ui:Button>
+                    </span>
+                </div>
             </footer>
         </div>
 

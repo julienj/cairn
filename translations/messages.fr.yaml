@@ -1448,6 +1448,10 @@ widget:
         remove_file: 'Retirer %name%'
         upload_failed: Ce fichier n'a pas pu être envoyé.
         submit: Envoyer la demande
+        discard: Abandonner
+        discard_confirm: 'Abandonner cette demande ?'
+        discard_yes: Abandonner
+        discard_no: Continuer
         visible: Toutes les personnes du projet verront cette demande.
     capture:
         title: Capture d'écran

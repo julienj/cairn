@@ -1448,6 +1448,10 @@ widget:
         remove_file: 'Remove %name%'
         upload_failed: This file could not be sent.
         submit: Send the issue
+        discard: Discard
+        discard_confirm: 'Discard this issue?'
+        discard_yes: Discard
+        discard_no: Keep writing
         visible: Everyone on the project will see this issue.
     capture:
         title: Screenshot

@@ -35,7 +35,7 @@ const DRAFT_VERSION = 1;
  * the form is on gives its own.
  */
 export default class extends Controller {
-    static targets = ['main', 'detail', 'body', 'box', 'files', 'template', 'submit', 'refresher'];
+    static targets = ['main', 'detail', 'body', 'box', 'files', 'template', 'submit', 'refresher', 'actions', 'discard', 'confirm'];
 
     static values = { attachmentUrl: String, previewUrl: String, failed: String };
 
@@ -275,6 +275,30 @@ export default class extends Controller {
         } catch {
             return null;
         }
+    }
+
+    ask() {
+        this.actionsTarget.hidden = true;
+        this.confirmTarget.hidden = false;
+        this.confirmTarget.querySelector('button')?.focus();
+    }
+
+    dismiss() {
+        if (this.confirmTarget.hidden) {
+            return;
+        }
+        this.confirmTarget.hidden = true;
+        this.actionsTarget.hidden = false;
+        this.discardTarget.focus();
+    }
+
+    /* The link it is on draws the form again: what this one held is forgotten first. */
+    clear() {
+        this.drop();
+        arrived.splice(0);
+        previews.forEach((url) => URL.revokeObjectURL(url));
+        previews.clear();
+        capture = null;
     }
 
     drop() {
