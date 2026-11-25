@@ -26,8 +26,8 @@ use Symfony\UX\LiveComponent\DefaultActionTrait;
 /**
  * One column of a kanban: the issues of the tracker at one place, as the
  * viewer sees them and as the address of the list filters them (props the
- * browser cannot change). Board:Columns renders it lazily, so a column
- * loads when it shows; it then grows by batches, never the whole board at
+ * browser cannot change). Board:Columns renders it lazily on the page, so a
+ * column loads when it shows, and at once in the answer of the frame; it then grows by batches, never the whole board at
  * once. The closed places start folded: a narrow rail that counts the
  * issues only, unfolded on demand, where a card can still be dropped. The
  * cards come in the order of the column (IssueSort::Rank), which whoever

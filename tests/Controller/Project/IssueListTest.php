@@ -260,6 +260,19 @@ final class IssueListTest extends WebTestCase
         self::assertSelectorExists('turbo-frame#issues table', 'a list across trackers has no kanban');
     }
 
+    public function testAChangeOfFilterDrawsTheColumnsOfTheKanbanInTheAnswerOfTheFrame(): void
+    {
+        $this->signInAs('thomas.girard@cairn.test');
+
+        $crawler = $this->client->request('GET', '/MD/SPT/issues/tracker/'.$this->scene->bugs->getId().'?view=board&q=cart', server: ['HTTP_TURBO_FRAME' => 'issues']);
+
+        self::assertResponseIsSuccessful();
+        self::assertCount(0, $crawler->filter('[loading="lazy"]'), 'no placeholder for the frame to show in place of the board');
+        self::assertCount(9, $crawler->filter('turbo-frame#issues section[data-board-column]'), 'every column drawn');
+        self::assertSelectorTextContains('turbo-frame#issues [data-board-column]', 'Endless spinner on the cart page');
+        self::assertSelectorTextNotContains('turbo-frame#issues', 'Typo in the footer', 'under the filters of the address');
+    }
+
     public function testEachListIsARouteWithItsOwnScopeAndFilters(): void
     {
         $this->signInAs('nadia.benali@cairn.test');
