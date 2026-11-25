@@ -2,7 +2,8 @@
  * What the demonstration site does wrong on purpose, so that the report of
  * the widget has something to say: the price of the first lamp comes from
  * a request the server refuses (500), which the page reports with
- * console.error and then shows as "NaN €". The filters change the address
+ * console.error and then shows as "NaN €"; the photo of Halo does not
+ * exist, and was missing before the widget loaded. The filters change the address
  * without loading a page, as an application in one page would.
  */
 (function () {
@@ -43,6 +44,11 @@
             var request = new XMLHttpRequest();
             request.open('POST', '/api/cart?token=secret');
             request.send();
+        },
+        file: function () {
+            var image = new Image(160, 100);
+            image.src = '/images/missing-' + Date.now() + '.png';
+            document.querySelector('.tools').appendChild(image);
         },
     };
     document.querySelectorAll('[data-break]').forEach(function (button) {

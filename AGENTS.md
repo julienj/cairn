@@ -800,8 +800,8 @@ host.
   in `compose.yaml`), declared on MD-SPT by the development data. It is
   another site than Cairn for the browser, which is the point: a second
   port of `localhost` would not be. Its port is fixed: the development
-  data declare the address. One request fails on purpose and one
-  page has a strict Content-Security-Policy; `live.html` loads the widget
+  data declare the address. One request fails on purpose, one
+  image is missing and one page has a strict Content-Security-Policy; `live.html` loads the widget
   as production does, on demand. Reached by the address of
   the machine on the network, the same pages are a site without HTTPS:
   declare that address on the project to see the widget without its

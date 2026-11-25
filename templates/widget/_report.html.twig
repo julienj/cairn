@@ -1,4 +1,4 @@
-{# What the widget noted on the site a problem is reported from, as the issue keeps it (`report`, a Widget/TechnicalReport, or null): the page, the environment, what the site says of itself, the errors of the console, the Ajax requests that failed, the pages seen. Shown to the reporter before sending, then on the page of the issue. Everything in it is what a site said: text, never markup nor a link. #}
+{# What the widget noted on the site a problem is reported from, as the issue keeps it (`report`, a Widget/TechnicalReport, or null): the page, the environment, what the site says of itself, the errors of the console, what failed on the network (Ajax requests and files, in their order), the pages seen. Shown to the reporter before sending, then on the page of the issue. Everything in it is what a site said: text, never markup nor a link. #}
 {% if report is null %}
     <p class="text-sm text-muted">{{ 'widget.report.none'|trans }}</p>
 {% else %}
@@ -30,9 +30,28 @@
                     <dt class="text-muted">{{ 'widget.report.screen'|trans }}</dt>
                     <dd class="text-strong">{{ reportEnvironment.screen.width }} × {{ reportEnvironment.screen.height }}{% if reportEnvironment.pixelRatio %} · ×{{ reportEnvironment.pixelRatio }}{% endif %}</dd>
                 {% endif %}
+                {% if reportEnvironment.zoom %}
+                    <dt class="text-muted">{{ 'widget.report.zoom'|trans }}</dt>
+                    <dd class="text-strong">{{ (reportEnvironment.zoom * 100)|round }} %</dd>
+                {% endif %}
                 {% if reportEnvironment.language %}
                     <dt class="text-muted">{{ 'widget.report.language'|trans }}</dt>
                     <dd class="text-strong">{{ reportEnvironment.language }}</dd>
+                {% endif %}
+                {% set reportPreferences = reportEnvironment.preferences %}
+                {% if reportPreferences %}
+                    {# Each preference the system holds, as people name it: what is the default (light, fine pointer, no request) is said only for the theme and the pointer. #}
+                    {% set preferenceTexts = [
+                        reportPreferences.colorScheme ? ('widget.report.preference.' ~ reportPreferences.colorScheme)|trans,
+                        reportPreferences.pointer ? ('widget.report.preference.pointer_' ~ reportPreferences.pointer)|trans,
+                        reportPreferences.reducedMotion ? 'widget.report.preference.reduced_motion'|trans,
+                        reportPreferences.contrast ? ('widget.report.preference.contrast_' ~ reportPreferences.contrast)|trans,
+                        reportPreferences.forcedColors ? 'widget.report.preference.forced_colors'|trans,
+                    ]|filter(text => text) %}
+                    {% if preferenceTexts is not empty %}
+                        <dt class="text-muted">{{ 'widget.report.preferences'|trans }}</dt>
+                        <dd class="text-strong">{{ preferenceTexts|join(' · ') }}</dd>
+                    {% endif %}
                 {% endif %}
             </dl>
         </section>
@@ -65,17 +84,20 @@
             {% endif %}
         </section>
 
+        {% set reportNetwork = report.network %}
         <section class="space-y-1">
-            <h3 class="text-xs font-semibold text-strong">{{ 'widget.report.requests'|trans({ '%count%': report.requests|length }) }}</h3>
-            <p class="text-xs text-muted">{{ 'widget.report.requests_help'|trans }}</p>
-            {% if report.requests is empty %}
+            <h3 class="text-xs font-semibold text-strong">{{ 'widget.report.network'|trans({ '%count%': reportNetwork|length }) }}</h3>
+            <p class="text-xs text-muted">{{ 'widget.report.network_help'|trans }}</p>
+            {% if reportNetwork is empty %}
                 <p class="text-xs text-muted">{{ 'widget.report.none'|trans }}</p>
             {% else %}
                 <ul class="space-y-1 font-mono text-xs">
-                    {% for request in report.requests %}
+                    {% for request in reportNetwork %}
                         <li class="flex items-start gap-2">
-                            <twig:Ui:Badge tone="red" size="sm">{{ request.status ?: 'widget.report.network'|trans }}</twig:Ui:Badge>
-                            <span class="min-w-0 break-all text-strong">{{ request.method }} {{ request.url }}</span>
+                            <span class="w-14 shrink-0 text-muted">{{ request.at ? request.at|date('H:i:s') : '' }}</span>
+                            <twig:Ui:Badge size="sm" class="shrink-0">{{ ('widget.report.kind.' ~ request.kind)|trans }}</twig:Ui:Badge>
+                            {% if request.status is not null %}<twig:Ui:Badge tone="red" size="sm" class="shrink-0">{{ request.status ?: 'widget.report.no_answer'|trans }}</twig:Ui:Badge>{% endif %}
+                            <span class="min-w-0 break-all text-strong">{% if request.method %}{{ request.method }} {% endif %}{{ request.url }}</span>
                         </li>
                     {% endfor %}
                 </ul>

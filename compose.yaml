@@ -55,12 +55,16 @@ services:
         }
         # And a site being reviewed, to try the widget on (docker/demo-site): static pages on a
         # port of their own, at http://staging.localhost:8001, another site than Cairn for the
-        # browser. One request fails on purpose, one page has a strict Content-Security-Policy.
+        # browser. One request fails on purpose, one image is missing, one page has a strict Content-Security-Policy.
         http://:8081 {
             root * /app/docker/demo-site
             header /csp.html Content-Security-Policy "default-src 'self'; script-src 'self' http://localhost:${HTTP_PORT:-8000}; frame-src http://localhost:${HTTP_PORT:-8000}; connect-src 'self' http://localhost:${HTTP_PORT:-8000}"
             handle /api/* {
                 respond 500
+            }
+            # Its images are missing: a file that does not load (the other addresses are its pages).
+            handle /images/* {
+                respond 404
             }
             # Where its pages find Cairn (docker/demo-site/loader.js).
             handle /cairn.js {

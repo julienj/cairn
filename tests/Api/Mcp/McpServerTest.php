@@ -84,7 +84,7 @@ final class McpServerTest extends McpTestCase
             report: [
                 'page' => ['url' => 'https://staging.maison-dupont.test/lamps'],
                 'errors' => [['kind' => 'console', 'message' => 'Price not found']],
-                'requests' => [['method' => 'GET', 'url' => 'https://staging.maison-dupont.test/api/prices/halo', 'status' => 500]],
+                'network' => [['kind' => 'ajax', 'method' => 'GET', 'url' => 'https://staging.maison-dupont.test/api/prices/halo', 'status' => 500]],
             ],
         ));
         \assert($reported instanceof Issue);
@@ -92,7 +92,7 @@ final class McpServerTest extends McpTestCase
         $report = $this->read('get_issue', ['key' => $reported->getKey()], $secret)['issue']['technicalReport'];
         self::assertSame('https://staging.maison-dupont.test/lamps', $report['page']['url']);
         self::assertSame(['Price not found'], array_column($report['errors'], 'message'));
-        self::assertSame([500], array_column($report['requests'], 'status'));
+        self::assertSame([500], array_column($report['network'], 'status'));
 
         self::assertArrayNotHasKey('technicalReport', $this->read('get_issue', ['key' => 'MD-SPT-1'], $secret)['issue']);
         $tool = array_find($this->rpc('tools/list', [], $secret)['result']['tools'], static fn (array $tool): bool => 'get_issue' === $tool['name']);

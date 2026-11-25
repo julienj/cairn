@@ -15,10 +15,10 @@ use App\Widget\TechnicalReport;
 final readonly class SiteReport
 {
     /**
-     * @param list<SiteContext> $context  what the site says of itself, in the order its pages said it
-     * @param list<SiteError>   $errors   the errors of the page, oldest first
-     * @param list<SiteRequest> $requests its Ajax requests that failed, oldest first
-     * @param list<SitePage>    $pages    the pages seen in the tab, the last one first
+     * @param list<SiteContext> $context what the site says of itself, in the order its pages said it
+     * @param list<SiteError>   $errors  the errors of the page, oldest first
+     * @param list<SiteRequest> $network what failed on the network, Ajax requests and files together, in the order it failed
+     * @param list<SitePage>    $pages   the pages seen in the tab, the last one first
      */
     public function __construct(
         public SitePage $page,
@@ -29,9 +29,12 @@ final readonly class SiteReport
         public ?SiteSize $viewport,
         public ?SiteSize $screen,
         public ?float $pixelRatio,
+        /** How much the page was zoomed by pinching, 1 when it was not; the zoom of the browser shows in `pixelRatio`. */
+        public ?float $zoom,
+        public ?SitePreferences $preferences,
         public array $context,
         public array $errors,
-        public array $requests,
+        public array $network,
         public array $pages,
         public ?string $collectedAt,
     ) {
@@ -49,9 +52,11 @@ final readonly class SiteReport
             viewport: null === $environment['viewport'] ? null : new SiteSize($environment['viewport']['width'], $environment['viewport']['height']),
             screen: null === $environment['screen'] ? null : new SiteSize($environment['screen']['width'], $environment['screen']['height']),
             pixelRatio: $environment['pixelRatio'],
+            zoom: $environment['zoom'],
+            preferences: null === $environment['preferences'] ? null : new SitePreferences(...$environment['preferences']),
             context: array_map(static fn (int|string $name, string $value): SiteContext => new SiteContext((string) $name, $value), array_keys($report->context()), $report->context()),
             errors: array_map(static fn (array $error): SiteError => new SiteError($error['kind'], $error['message'], $error['source'], $error['at']), $report->errors()),
-            requests: array_map(static fn (array $request): SiteRequest => new SiteRequest($request['method'], $request['url'], $request['status'], $request['at']), $report->requests()),
+            network: array_map(static fn (array $request): SiteRequest => new SiteRequest($request['kind'], $request['method'], $request['url'], $request['status'], $request['at']), $report->network()),
             pages: array_map(static fn (array $page): SitePage => new SitePage($page['url'], $page['title'], $page['at']), $report->pages()),
             collectedAt: $report->collectedAt(),
         );
