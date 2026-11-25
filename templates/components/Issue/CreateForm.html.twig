@@ -3,103 +3,107 @@
 {% set createTrackers = this.trackers %}
 {% set createTracker = this.tracker %}
 {% set createPendingFiles = this.pendingFiles %}
-<div {{ attributes }} class="space-y-6">
-    <section>
-        <div class="flex items-baseline gap-2 mb-2">
-            <h2 class="font-semibold text-strong">{{ 'issue.create.choose'|trans }}</h2>
-            <span class="text-xs text-faint">{{ 'issue.create.choose_hint'|trans }}</span>
-        </div>
-        <div class="grid sm:grid-cols-3 gap-3" data-loading="addClass(opacity-60)">
-            {% for tracker in createTrackers %}
-                <twig:Ui:Form:RadioCard large name="tracker" :value="tracker.id" :checked="tracker.id == trackerId" :dashed="tracker.private" :title="tracker.name" :description="tracker.description" model="trackerId">
-                    <twig:block name="badge">{% if tracker.private %}<twig:Ui:Badge tone="amber" size="sm" icon="lock" class="ml-auto">{{ 'issue.create.internal'|trans }}</twig:Ui:Badge>{% endif %}</twig:block>
-                </twig:Ui:Form:RadioCard>
-            {% endfor %}
-        </div>
-    </section>
-
-    {% if createTracker %}
-        {{ form_start(form, { attr: form.vars.attr|merge({ id: 'issue-form', 'data-action': 'live#action:prevent', 'data-live-action-param': 'save', class: 'space-y-6' }) }) }}
-            {% if failure %}
-                <twig:Ui:Callout tone="danger" size="sm" role="alert">{{ failure }}</twig:Ui:Callout>
-            {% endif %}
-
-            <section>
-                <h2 class="font-semibold text-strong mb-2">{{ 'issue.create.describe'|trans }}</h2>
-                <div class="rounded-lg border border-line bg-surface divide-y divide-line-subtle">
-                    <div class="p-4">{{ form_row(form.title) }}</div>
-                    <div class="p-4">{{ form_row(form.description) }}</div>
-                    {% if form.fields|length > 0 %}
-                        <div class="p-4 grid sm:grid-cols-2 gap-4">
-                            {% for field in form.fields %}
-                                {{ form_row(field, { row_attr: { class: field.vars.block_prefixes[field.vars.block_prefixes|length - 2] in ['textarea', 'url'] ? 'sm:col-span-2' : '' } }) }}
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-                    {% if form.criticality is defined %}
-                        <div class="p-4">{{ form_row(form.criticality) }}</div>
-                    {% endif %}
-                    {% if form.tags is defined %}
-                        {# Each tag is a checkbox drawn as the tag itself. #}
-                        <fieldset class="p-4">
-                            <legend class="float-left w-full text-sm font-medium text-body">{{ form.tags.vars.label|trans }} <span class="font-normal text-faint">{{ 'form.optional'|trans }}</span></legend>
-                            <div class="clear-both flex flex-wrap gap-1.5 pt-1.5">
-                                {% for choice in form.tags %}
-                                    <label class="cursor-pointer">
-                                        <input type="checkbox" id="{{ choice.vars.id }}" name="{{ choice.vars.full_name }}" value="{{ choice.vars.value }}" class="peer sr-only" {{ choice.vars.checked ? 'checked' }}>
-                                        <twig:Ui:Tag :colour="choice.vars.attr['data-colour']" class="peer-checked:bg-brand-soft peer-checked:ring-2 peer-checked:ring-brand peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-focus">{{ choice.vars.label }}</twig:Ui:Tag>
-                                    </label>
-                                    {% do choice.setRendered %}
-                                {% endfor %}
-                            </div>
-                            {% do form.tags.setRendered %}
-                        </fieldset>
-                    {% endif %}
-                </div>
-            </section>
-
-            {% if form.assignee is defined or form.private is defined %}
-                <section>
-                    <div class="flex items-baseline gap-2 mb-2">
-                        <h2 class="font-semibold text-strong">{{ 'issue.create.qualification'|trans }}</h2>
-                        <twig:Ui:Badge tone="amber" size="sm" icon="lock">{{ 'issue.create.internal'|trans }}</twig:Ui:Badge>
-                        <span class="text-xs text-faint">{{ 'issue.create.qualification_hint'|trans }}</span>
-                    </div>
-                    <div class="rounded-lg border border-amber-line bg-amber-soft/40 private-hatching p-4 grid sm:grid-cols-3 gap-4">
-                        {% if form.assignee is defined %}{{ form_row(form.assignee) }}{% endif %}
-                        {% if form.private is defined %}{{ form_row(form.private, { row_attr: { class: 'self-end' } }) }}{% endif %}
-                    </div>
-                </section>
-            {% endif %}
-
-        {{ form_end(form) }}
-
+<div {{ attributes }}>
+    <div class="px-4 sm:px-6 pb-6 max-w-5xl space-y-6">
         <section>
-            <h2 class="font-semibold text-strong mb-2">{{ 'attachment.title'|trans }}</h2>
-            <label class="flex cursor-pointer flex-col items-center rounded-lg border-2 border-dashed border-line-strong bg-surface p-5 text-center text-sm text-muted hover:border-brand-line hover:bg-brand-soft/30" data-loading="action(attach)|addClass(opacity-60)">
-                {{ ux_icon('lucide:paperclip', { class: 'h-5 w-5 text-faint' }) }}
-                <span class="mt-1">{{ 'attachment.choose'|trans }}</span>
-                <span class="text-xs text-faint">{{ 'attachment.limit'|trans }}</span>
-                <input type="file" name="files[]" multiple class="sr-only" data-controller="file-picker"
-                       data-action="change->file-picker#chosen file-picker:chosen->live#action" data-live-action-param="files|attach">
-            </label>
-            {% if attachError %}
-                <twig:Ui:Callout tone="danger" size="sm" role="alert" class="mt-2">{{ attachError }}</twig:Ui:Callout>
-            {% endif %}
-            {% if createPendingFiles is not empty %}
-                <div class="mt-2 flex flex-wrap gap-2">
-                    {% for file in createPendingFiles %}
-                        <twig:Ui:Attachment :name="file.filename" :size="file.size" :image="file.image" :href="attachment_url(file)" class="bg-surface">
-                            <twig:block name="actions">
-                                <twig:Ui:IconButton icon="x" size="sm" :label="'attachment.remove'|trans" class="-mr-1" data-action="live#action" data-live-action-param="discard" data-live-uuid-param="{{ file.uuid.toRfc4122 }}" />
-                            </twig:block>
-                        </twig:Ui:Attachment>
-                    {% endfor %}
-                </div>
-            {% endif %}
+            <div class="flex items-baseline gap-2 mb-2">
+                <h2 class="font-semibold text-strong">{{ 'issue.create.choose'|trans }}</h2>
+                <span class="text-xs text-faint">{{ 'issue.create.choose_hint'|trans }}</span>
+            </div>
+            <div class="grid sm:grid-cols-3 gap-3" data-loading="addClass(opacity-60)">
+                {% for tracker in createTrackers %}
+                    <twig:Ui:Form:RadioCard large name="tracker" :value="tracker.id" :checked="tracker.id == trackerId" :dashed="tracker.private" :title="tracker.name" :description="tracker.description" model="trackerId">
+                        <twig:block name="badge">{% if tracker.private %}<twig:Ui:Badge tone="amber" size="sm" icon="lock" class="ml-auto">{{ 'issue.create.internal'|trans }}</twig:Ui:Badge>{% endif %}</twig:block>
+                    </twig:Ui:Form:RadioCard>
+                {% endfor %}
+            </div>
         </section>
 
-        <div class="sticky bottom-0 border-t border-line bg-surface/95 backdrop-blur py-3 flex flex-wrap items-center gap-3">
+        {% if createTracker %}
+            {{ form_start(form, { attr: form.vars.attr|merge({ id: 'issue-form', 'data-action': 'live#action:prevent', 'data-live-action-param': 'save', class: 'space-y-6' }) }) }}
+                {% if failure %}
+                    <twig:Ui:Callout tone="danger" size="sm" role="alert">{{ failure }}</twig:Ui:Callout>
+                {% endif %}
+
+                <section>
+                    <h2 class="font-semibold text-strong mb-2">{{ 'issue.create.describe'|trans }}</h2>
+                    <div class="rounded-lg border border-line bg-surface divide-y divide-line-subtle">
+                        <div class="p-4">{{ form_row(form.title) }}</div>
+                        <div class="p-4">{{ form_row(form.description) }}</div>
+                        {% if form.fields|length > 0 %}
+                            <div class="p-4 grid sm:grid-cols-2 gap-4">
+                                {% for field in form.fields %}
+                                    {{ form_row(field, { row_attr: { class: field.vars.block_prefixes[field.vars.block_prefixes|length - 2] in ['textarea', 'url'] ? 'sm:col-span-2' : '' } }) }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        {% if form.criticality is defined %}
+                            <div class="p-4">{{ form_row(form.criticality) }}</div>
+                        {% endif %}
+                        {% if form.tags is defined %}
+                            {# Each tag is a checkbox drawn as the tag itself. #}
+                            <fieldset class="p-4">
+                                <legend class="float-left w-full text-sm font-medium text-body">{{ form.tags.vars.label|trans }} <span class="font-normal text-faint">{{ 'form.optional'|trans }}</span></legend>
+                                <div class="clear-both flex flex-wrap gap-1.5 pt-1.5">
+                                    {% for choice in form.tags %}
+                                        <label class="cursor-pointer">
+                                            <input type="checkbox" id="{{ choice.vars.id }}" name="{{ choice.vars.full_name }}" value="{{ choice.vars.value }}" class="peer sr-only" {{ choice.vars.checked ? 'checked' }}>
+                                            <twig:Ui:Tag :colour="choice.vars.attr['data-colour']" class="peer-checked:bg-brand-soft peer-checked:ring-2 peer-checked:ring-brand peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-focus">{{ choice.vars.label }}</twig:Ui:Tag>
+                                        </label>
+                                        {% do choice.setRendered %}
+                                    {% endfor %}
+                                </div>
+                                {% do form.tags.setRendered %}
+                            </fieldset>
+                        {% endif %}
+                    </div>
+                </section>
+
+                {% if form.assignee is defined or form.private is defined %}
+                    <section>
+                        <div class="flex items-baseline gap-2 mb-2">
+                            <h2 class="font-semibold text-strong">{{ 'issue.create.qualification'|trans }}</h2>
+                            <twig:Ui:Badge tone="amber" size="sm" icon="lock">{{ 'issue.create.internal'|trans }}</twig:Ui:Badge>
+                            <span class="text-xs text-faint">{{ 'issue.create.qualification_hint'|trans }}</span>
+                        </div>
+                        <div class="rounded-lg border border-amber-line bg-amber-soft/40 private-hatching p-4 grid sm:grid-cols-3 gap-4">
+                            {% if form.assignee is defined %}{{ form_row(form.assignee) }}{% endif %}
+                            {% if form.private is defined %}{{ form_row(form.private, { row_attr: { class: 'self-end' } }) }}{% endif %}
+                        </div>
+                    </section>
+                {% endif %}
+
+            {{ form_end(form) }}
+
+            <section>
+                <h2 class="font-semibold text-strong mb-2">{{ 'attachment.title'|trans }}</h2>
+                <label class="flex cursor-pointer flex-col items-center rounded-lg border-2 border-dashed border-line-strong bg-surface p-5 text-center text-sm text-muted hover:border-brand-line hover:bg-brand-soft/30" data-loading="action(attach)|addClass(opacity-60)">
+                    {{ ux_icon('lucide:paperclip', { class: 'h-5 w-5 text-faint' }) }}
+                    <span class="mt-1">{{ 'attachment.choose'|trans }}</span>
+                    <span class="text-xs text-faint">{{ 'attachment.limit'|trans }}</span>
+                    <input type="file" name="files[]" multiple class="sr-only" data-controller="file-picker"
+                           data-action="change->file-picker#chosen file-picker:chosen->live#action" data-live-action-param="files|attach">
+                </label>
+                {% if attachError %}
+                    <twig:Ui:Callout tone="danger" size="sm" role="alert" class="mt-2">{{ attachError }}</twig:Ui:Callout>
+                {% endif %}
+                {% if createPendingFiles is not empty %}
+                    <div class="mt-2 flex flex-wrap gap-2">
+                        {% for file in createPendingFiles %}
+                            <twig:Ui:Attachment :name="file.filename" :size="file.size" :image="file.image" :href="attachment_url(file)" class="bg-surface">
+                                <twig:block name="actions">
+                                    <twig:Ui:IconButton icon="x" size="sm" :label="'attachment.remove'|trans" class="-mr-1" data-action="live#action" data-live-action-param="discard" data-live-uuid-param="{{ file.uuid.toRfc4122 }}" />
+                                </twig:block>
+                            </twig:Ui:Attachment>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </section>
+        {% endif %}
+    </div>
+
+    {% if createTracker %}
+        <div class="sticky bottom-0 border-t border-line bg-surface/95 backdrop-blur px-4 sm:px-6 py-3 flex flex-wrap items-center gap-3">
             <twig:Ui:Button variant="primary" size="lg" type="submit" form="issue-form" data-loading="addAttribute(disabled)">{{ 'issue.create.submit'|trans }}</twig:Ui:Button>
             {# Not a submit button: the form would send `save` a second time. #}
             <twig:Ui:Button variant="secondary" size="lg" type="button" data-action="live#action" data-live-action-param="save" data-live-continue-param="1" data-loading="addAttribute(disabled)">{{ 'issue.create.submit_continue'|trans }}</twig:Ui:Button>
