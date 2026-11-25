@@ -1296,7 +1296,7 @@ tag:
 widget:
     title: Signaler un problème
     close: Fermer le panneau
-    intro: Le widget permet aux personnes du projet de signaler un problème depuis le site en recette, sans le quitter. Il s'affiche sur les sites déclarés ici et nulle part ailleurs ; chacun se connecte avec son propre compte Cairn.
+    intro: Le widget permet aux personnes du projet de signaler un problème depuis le site en recette, sans le quitter. Il ne s'affiche que sur les sites déclarés ici, pour tout le monde ou pour qui le demande ; chacun se connecte avec son propre compte Cairn.
     alone: Cette page est affichée par le widget, sur un site du projet.
     site:
         new: Nouveau site
@@ -1313,7 +1313,13 @@ widget:
             address_help: 'Le protocole et le domaine, sans chemin : https://recette.exemple.fr'
     install:
         title: Sur les pages du site
-        help: 'Placez cette ligne dans le <head> de chaque page, le plus tôt possible : ce qui s''est passé avant son chargement n''est pas dans le rapport. Ne la mettez pas en production.'
+        help: 'Placez l''une de ces lignes dans le <head> de chaque page, le plus tôt possible : ce qui s''est passé avant son chargement n''est pas dans le rapport.'
+        always:
+            title: Sur un site en recette
+            help: Tout le monde voit le bouton.
+        on_demand:
+            title: En production
+            help: 'Personne ne voit le bouton, et le script ne fait rien, tant que l''on n''a pas ouvert une page du site avec ?cairn=1 à la fin de son adresse. Le site s''en souvient ensuite dans ce navigateur ; ?cairn=0 masque de nouveau le bouton.'
         copy: Copier
         copied: Copié
     refused:

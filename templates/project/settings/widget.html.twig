@@ -1,6 +1,6 @@
 {% extends 'project/settings/base.html.twig' %}
 
-{# The widget of the project: the sites it is shown on, each removed in place, and the line of script their pages load; `form`, at its own address, is the dialog declaring a site. Without a site there is no widget, and no line to copy. #}
+{# The widget of the project: the sites it is shown on, each removed in place, and the line of script their pages load, in its two ways of showing the button; `form`, at its own address, is the dialog declaring a site. Without a site there is no widget, and no line to copy. #}
 {% block settings_title %}{{ 'nav.project.configuration.widget'|trans }}{% endblock %}
 
 {% block settings_count %}{{ sites|length }}{% endblock %}
@@ -36,16 +36,25 @@
                 {% endfor %}
             </ul>
 
-            <section class="rounded-lg border border-line bg-surface p-4 space-y-2" data-controller="clipboard">
-                <div class="flex flex-wrap items-center gap-2">
+            <section class="rounded-lg border border-line bg-surface p-4 space-y-4">
+                <div class="space-y-1">
                     <h2 class="text-sm font-semibold text-strong">{{ 'widget.install.title'|trans }}</h2>
-                    <twig:Ui:Button size="sm" icon="copy" class="ml-auto" data-action="clipboard#copy">
-                        <span data-clipboard-target="idle">{{ 'widget.install.copy'|trans }}</span>
-                        <span data-clipboard-target="done" hidden>{{ 'widget.install.copied'|trans }}</span>
-                    </twig:Ui:Button>
+                    <p class="text-xs text-muted">{{ 'widget.install.help'|trans }}</p>
                 </div>
-                <p class="text-xs text-muted">{{ 'widget.install.help'|trans }}</p>
-                <pre class="overflow-x-auto rounded-md bg-slate-900 px-3 py-2 font-mono text-xs text-slate-100" data-clipboard-target="source" data-test="widget-snippet">&lt;script src="{{ app.request.schemeAndHttpHost }}/widget.js" data-project="{{ project.issuePrefix }}" async&gt;&lt;/script&gt;</pre>
+                {# One line per way of showing the button: what differs is the data-display of the tag, which the script reads before anything else. #}
+                {% for display, attribute in { always: ' data-display="always"', on_demand: '' } %}
+                    <div class="space-y-2" data-controller="clipboard">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <h3 class="text-sm font-medium text-strong">{{ ('widget.install.' ~ display ~ '.title')|trans }}</h3>
+                            <twig:Ui:Button size="sm" icon="copy" class="ml-auto" data-action="clipboard#copy">
+                                <span data-clipboard-target="idle">{{ 'widget.install.copy'|trans }}</span>
+                                <span data-clipboard-target="done" hidden>{{ 'widget.install.copied'|trans }}</span>
+                            </twig:Ui:Button>
+                        </div>
+                        <p class="text-xs text-muted">{{ ('widget.install.' ~ display ~ '.help')|trans }}</p>
+                        <pre class="overflow-x-auto rounded-md bg-slate-900 px-3 py-2 font-mono text-xs text-slate-100" data-clipboard-target="source" data-test="widget-snippet-{{ display }}">&lt;script src="{{ app.request.schemeAndHttpHost }}/widget.js" data-project="{{ project.issuePrefix }}"{{ attribute }} async&gt;&lt;/script&gt;</pre>
+                    </div>
+                {% endfor %}
             </section>
         {% endif %}
     </div>

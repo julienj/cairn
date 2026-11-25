@@ -38,7 +38,7 @@ final class WidgetSettingsTest extends WebTestCase
         $this->client->request('GET', '/MD/SPT/settings/widget');
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('main', 'No site yet');
-        self::assertSelectorNotExists('[data-test="widget-snippet"]', 'no site, no widget: nothing to install');
+        self::assertSelectorNotExists('[data-test^="widget-snippet"]', 'no site, no widget: nothing to install');
 
         $site = $this->site('https://staging.maison-dupont.test');
         foreach (['nadia.benali@cairn.test', 'claire.martin@maison-dupont.test'] as $email) {
@@ -72,7 +72,8 @@ final class WidgetSettingsTest extends WebTestCase
 
         $this->client->followRedirect();
         self::assertSelectorTextContains('body', 'Site https://staging.maison-dupont.test added.');
-        self::assertSelectorTextContains('[data-test="widget-snippet"]', '<script src="http://localhost/widget.js" data-project="MD-SPT" async></script>');
+        self::assertSelectorTextContains('[data-test="widget-snippet-always"]', '<script src="http://localhost/widget.js" data-project="MD-SPT" data-display="always" async></script>');
+        self::assertSelectorTextContains('[data-test="widget-snippet-on_demand"]', '<script src="http://localhost/widget.js" data-project="MD-SPT" async></script>', 'without the attribute the button waits for ?cairn=1');
         self::assertSelectorNotExists('main li .ring-amber-line', 'HTTPS: the screenshot is offered');
 
         $this->client->clickLink('New site');

@@ -217,15 +217,23 @@ The widget lets the people of a project report a problem from the site being rev
 2. Copy the line of script shown there into the `<head>` of every page of the site, as early as possible:
 
    ```html
-   <script src="https://cairn.example.com/widget.js" data-project="MD-SPT" async></script>
+   <script src="https://cairn.example.com/widget.js" data-project="MD-SPT" data-display="always" async></script>
    ```
 
-   `data-version="…"` is optional: the version of the site, added to the report.
+   `data-display="always"` shows the button to everybody: it is for a site being reviewed. Without it (see below) the button is shown on demand. `data-version="…"` is optional: the version of the site, added to the report.
+
+**In production**, declare the site the same way and leave `data-display` out:
+
+```html
+<script src="https://cairn.example.com/widget.js" data-project="MD-SPT" async></script>
+```
+
+Nobody sees the button, and the script does nothing (it listens to nothing, stores nothing, asks Cairn nothing), until someone opens a page of the site with `?cairn=1` at the end of its address. The site then remembers them in that browser, and the widget follows them from page to page as on a site being reviewed; `?cairn=0` hides it again. The parameter is a courtesy to the visitors, not a secret: whoever adds it gets the button, then the sign-in page of Cairn, and nothing else.
 
 Good to know:
 
 - **The button can be moved** by dragging it to another corner of the window, when it hides what is being reviewed; the site remembers the corner, per browser.
-- **The button only shows on the sites declared on the project.** Leaving the script in production shows nothing there, but it still loads: keep it out.
+- **The button only shows on the sites declared on the project.** On any other site the script shows nothing, whatever its tag says.
 - **The screenshot needs HTTPS** on the site, as browsers require. Without it the widget works and offers to attach a file instead.
 - **A Content-Security-Policy on the site** must allow Cairn in `script-src`, `frame-src` and `connect-src`. A `Permissions-Policy` that names `display-capture` must allow Cairn there too, or the screenshot is refused.
 - **Behind a proxy**, let the answers under `/widget/` keep their own `Content-Security-Policy` (it names the sites allowed to frame the widget) and do not add an `X-Frame-Options` to them; pass the `Authorization` header through.
