@@ -1385,6 +1385,7 @@ tag:
         gray: Gris
 
 widget:
+    open_project: Ouvrir le projet dans Cairn
     title: Signaler un problème
     close: Fermer le panneau
     intro: Le widget permet aux personnes du projet de signaler un problème depuis le site en recette, sans le quitter. Il ne s'affiche que sur les sites déclarés ici, pour tout le monde ou pour qui le demande ; chacun se connecte avec son propre compte Cairn.
