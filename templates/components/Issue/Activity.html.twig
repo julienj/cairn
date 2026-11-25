@@ -3,6 +3,7 @@
 {% set activityDetail = this.detail %}
 {% set activityTimeline = this.timeline %}
 {% set activityHidden = this.hiddenKinds %}
+{% set activityCounts = this.activityCounts %}
 {% set activityTransitions = this.transitions %}
 {% set activityAwaiting = this.awaitingTransition %}
 {% set activityCanComment = this.canComment %}
@@ -12,14 +13,16 @@
 <div {{ attributes }}>
 
     <section class="mt-8">
-        <div class="mb-3 flex items-center gap-2">
+        <div class="mb-3 flex flex-wrap items-center gap-2">
             <h2 class="font-semibold text-strong">{{ 'issue.show.activity'|trans }}</h2>
             {# Who reads chooses what to read, for every issue: the choice is kept on the account. #}
-            <twig:Ui:Filter:Menu class="ml-auto" align="right" :label="this.filterLabel" :active="activityHidden is not empty">
-                {% for kind in enum_cases('App\\Entity\\Enum\\ActivityKind') %}
-                    <twig:Ui:Filter:Option :checked="kind not in activityHidden" data-action="change->live#action" data-live-action-param="toggleActivity" data-live-kind-param="{{ kind.value }}">{{ ('issue.activity.kind.' ~ kind.value)|trans }}</twig:Ui:Filter:Option>
+            <div class="ml-auto flex items-center gap-2">
+                <span class="text-sm text-muted">{{ 'issue.activity.show'|trans }}</span>
+                {% for activityKind in this.activityKinds %}
+                    <twig:Ui:Filter:Toggle :checked="activityKind not in activityHidden" :count="activityCounts[activityKind.value]" data-action="change->live#action" data-live-action-param="toggleActivity" data-live-kind-param="{{ activityKind.value }}">{{ ('issue.activity.kind.' ~ activityKind.value)|trans }}</twig:Ui:Filter:Toggle>
                 {% endfor %}
-            </twig:Ui:Filter:Menu>
+            </div>
+            {% if this.filterError %}<p class="basis-full text-right text-sm text-red" role="alert">{{ this.filterError }}</p>{% endif %}
         </div>
         <ol class="relative border-l border-line ml-3 space-y-4">
             {% for entry in activityTimeline %}
@@ -115,7 +118,9 @@
                     </li>
                 {% endif %}
             {% else %}
-                <li class="pl-6 text-sm text-muted">{{ 'issue.activity.filtered_empty'|trans }}</li>
+                {% if activityHidden is not empty %}
+                    <li class="pl-6 text-sm text-muted">{{ 'issue.activity.filtered_empty'|trans }}</li>
+                {% endif %}
             {% endfor %}
         </ol>
         {# The decision and the comment are two boxes. The decision keeps its slot even when empty, so that the comment editor, whose inside the morph ignores, stays the same sibling and is not recreated. #}

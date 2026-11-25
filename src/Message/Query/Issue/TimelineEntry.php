@@ -6,7 +6,6 @@ namespace App\Message\Query\Issue;
 
 use App\Entity\Comment;
 use App\Entity\Enum\ActivityKind;
-use App\Entity\Enum\JournalEntryType;
 use App\Entity\JournalEntry;
 
 /**
@@ -35,26 +34,26 @@ final readonly class TimelineEntry
 
     /**
      * What is left of this moment once the viewer hid some kinds of
-     * activity, null when nothing is. A comment that came with an action
-     * follows the comments, the entry follows its own kind: hiding the
-     * changes still leaves the comment of a refusal to read.
+     * activity, null when nothing is. Comments are never hidden, so a
+     * comment that came with an action stays to read when the action goes.
      *
      * @param list<ActivityKind> $hidden
      */
     public function without(array $hidden): ?self
     {
         $event = null !== $this->event && !\in_array($this->kindOfEvent($this->event), $hidden, true) ? $this->event : null;
-        $comment = !\in_array(ActivityKind::Comments, $hidden, true) ? $this->comment : null;
 
-        return null === $event && null === $comment ? null : new self($this->at, $event, $comment);
+        return null === $event && null === $this->comment ? null : new self($this->at, $event, $this->comment);
     }
 
     private function kindOfEvent(JournalEntry $event): ActivityKind
     {
-        return match (true) {
-            $event->getType()->isCode() => ActivityKind::Code,
-            \in_array($event->getType(), [JournalEntryType::CommentEdited, JournalEntryType::CommentDeleted], true) => ActivityKind::Comments,
-            default => ActivityKind::Changes,
-        };
+        return $event->getType()->isCode() ? ActivityKind::Code : ActivityKind::Changes;
+    }
+
+    /** Whether the moment is of this kind: a comment alone is of none. */
+    public function isOfKind(ActivityKind $kind): bool
+    {
+        return null !== $this->event && $this->kindOfEvent($this->event) === $kind;
     }
 }

@@ -236,7 +236,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Equatab
      */
     public function getHiddenActivity(): array
     {
-        return array_map(ActivityKind::from(...), $this->hiddenActivity);
+        return array_values(array_filter(array_map(ActivityKind::tryFrom(...), $this->hiddenActivity)));
     }
 
     /**

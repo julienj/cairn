@@ -1,0 +1,11 @@
+{# A filter that is on or off, as a pill with its checkbox and, optionally, how many it holds; the attributes (name, value, data-action…) go to the checkbox, `model` becomes its `data-model` in a live component. The content is the label. #}
+{% props checked = false, count = null, model = null %}
+{% set filterToggleClasses = html_cva(
+    base: 'inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-sm cursor-pointer has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-focus',
+    variants: { checked: { true: 'border-brand-line bg-brand-soft text-brand', false: 'border-line bg-surface text-muted hover:bg-subtle' } },
+) %}
+<label class="{{ filterToggleClasses.apply({ checked: checked })|tailwind_merge }}">
+    <input type="checkbox" {{ attributes }}{% if model %} data-model="{{ model }}"{% endif %} {{ checked ? 'checked' }} class="h-3.5 w-3.5 rounded border-line-strong text-brand focus:outline-none">
+    <span>{% block content %}{% endblock %}</span>
+    {% if count is not null %}<span class="text-xs tabular-nums opacity-70">{{ count }}</span>{% endif %}
+</label>

@@ -78,6 +78,9 @@ final class Activity
     /** Why the last action of the workflow did not go through; `error` is the comment box's. */
     public ?string $decisionError = null;
 
+    /** Why the filter of the activity was refused, shown beside it. */
+    public ?string $filterError = null;
+
     /** @var list<string> uuids of the files sent for the comment being written, pending until it is posted */
     #[LiveProp]
     public array $pending = [];
@@ -170,17 +173,31 @@ final class Activity
         return $this->viewer->get()->getHiddenActivity();
     }
 
-    /** What the filter shows, in a few words: everything, or the kinds kept. */
-    public function getFilterLabel(): string
+    /**
+     * The kinds of activity the viewer may filter. What a forge reported is
+     * private: external users never receive it, so it is not offered.
+     *
+     * @return list<ActivityKind>
+     */
+    public function getActivityKinds(): array
     {
-        $shown = array_filter(ActivityKind::cases(), fn (ActivityKind $kind): bool => !\in_array($kind, $this->getHiddenKinds(), true));
-        if (\count($shown) === \count(ActivityKind::cases())) {
-            return $this->translator->trans('issue.activity.show_all');
+        return $this->viewer->get()->isInternal() ? ActivityKind::cases() : [ActivityKind::Changes];
+    }
+
+    /**
+     * How many moments of the thread each kind holds, before any filter.
+     *
+     * @return array<string, int>
+     */
+    public function getActivityCounts(): array
+    {
+        $timeline = $this->getDetail()->timeline;
+        $counts = [];
+        foreach ($this->getActivityKinds() as $kind) {
+            $counts[$kind->value] = \count(array_filter($timeline, static fn (TimelineEntry $entry): bool => $entry->isOfKind($kind)));
         }
 
-        return $this->translator->trans('issue.activity.show', [
-            '%kinds%' => [] === $shown ? $this->translator->trans('issue.activity.none') : implode(', ', array_map(fn (ActivityKind $kind): string => $this->translator->trans('issue.activity.short.'.$kind->value), $shown)),
-        ]);
+        return $counts;
     }
 
     /**
@@ -192,14 +209,14 @@ final class Activity
     public function toggleActivity(CommandBus $commands, #[LiveArg] string $kind): void
     {
         $kind = ActivityKind::tryFrom($kind);
-        if (null === $kind) {
+        if (null === $kind || !\in_array($kind, $this->getActivityKinds(), true)) {
             return;
         }
 
         $hidden = $this->getHiddenKinds();
         $hidden = \in_array($kind, $hidden, true) ? array_values(array_filter($hidden, static fn (ActivityKind $hiddenKind): bool => $hiddenKind !== $kind)) : [...$hidden, $kind];
         $userId = (int) $this->viewer->get()->getId();
-        $this->tryCommand($commands, new UpdateUser($userId, hiddenActivity: $hidden, actorId: $userId));
+        $this->filterError = $this->refusal($commands, new UpdateUser($userId, hiddenActivity: $hidden, actorId: $userId));
     }
 
     /**

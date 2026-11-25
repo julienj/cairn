@@ -367,7 +367,7 @@ final class UserHandlersTest extends KernelTestCase
         self::assertSame([ActivityKind::Code], $claire->getHiddenActivity(), 'each kind once');
 
         foreach ([
-            'the hidden activity of someone else' => new UpdateUser((int) $paul->getId(), hiddenActivity: [ActivityKind::Comments], actorId: $claireId),
+            'the hidden activity of someone else' => new UpdateUser((int) $paul->getId(), hiddenActivity: [ActivityKind::Changes], actorId: $claireId),
             'the account of someone else' => new UpdateUser((int) $paul->getId(), mailGrouping: MailGrouping::Issue, actorId: $claireId),
             'their name' => new UpdateUser($claireId, firstName: 'Clara', actorId: $claireId),
             'their email' => new UpdateUser($claireId, email: 'clara@client.test', actorId: $claireId),

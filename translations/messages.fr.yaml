@@ -12,17 +12,10 @@ criticality:
 
 issue:
     activity:
-        show_all: Tout afficher
-        show: 'Afficher %kinds%'
-        none: rien
-        short:
-            changes: changements
-            code: Git
-            comments: commentaires
+        show: Afficher
         kind:
-            changes: Changements
-            code: Activité Git
-            comments: Commentaires
+            changes: Historique
+            code: Git
         filtered_empty: Rien à afficher avec ces filtres.
     follow:
         follow: Suivre
