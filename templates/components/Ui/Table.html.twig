@@ -1,14 +1,17 @@
-{# Bordered table whose header hides on small screens, where rows become cards (see Table:Row). #}
-{% props responsive = true %}
-{% set tableClasses = html_cva(base: 'rounded-lg border border-line bg-surface overflow-hidden') %}
+{# Bordered table whose header hides on small screens, where rows become cards (see Table:Row). A sticky head stays in view under the application header (`top-header`) while the page scrolls: the frame clips rather than hides its overflow, which would stop it. #}
+{% props responsive = true, stickyHead = false %}
+{% set tableClasses = html_cva(base: 'rounded-lg border border-line bg-surface overflow-clip') %}
 {% set tableHeadClasses = html_cva(
     base: 'bg-subtle text-[11px] uppercase tracking-wider text-muted',
-    variants: { responsive: { true: 'hidden sm:table-header-group' } },
+    variants: {
+        responsive: { true: 'hidden sm:table-header-group' },
+        stickyHead: { true: 'sticky top-header z-10 shadow-[0_1px_0_var(--color-line)]' },
+    },
 ) %}
 <div class="{{ tableClasses.apply({}, attributes.render('class'))|tailwind_merge }}" {{ attributes }}>
     <table class="w-full text-sm">
         {% if block('head') is not empty %}
-            <thead class="{{ tableHeadClasses.apply({ responsive: responsive }) }}">
+            <thead class="{{ tableHeadClasses.apply({ responsive: responsive, stickyHead: stickyHead }) }}">
                 <tr>{% block head %}{% endblock %}</tr>
             </thead>
         {% endif %}

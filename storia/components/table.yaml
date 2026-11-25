@@ -4,3 +4,9 @@ variants:
         blocks:
             head: '<th class="px-3 py-2 text-left font-medium w-32">Issue</th><th class="px-3 py-2 text-left font-medium">Title</th><th class="px-3 py-2 text-left font-medium w-32">Step</th>'
             content: '<tr class="group hover:bg-brand-soft/40"><td class="px-3 py-2.5 font-mono text-xs text-muted">MD-SPT-128</td><td class="px-3 py-2.5 text-strong">The CSV export of orders is empty</td><td class="px-3 py-2.5 text-xs text-muted">To test</td></tr>'
+    sticky_head:
+        args:
+            stickyHead: true
+        blocks:
+            head: '<th class="px-3 py-2 text-left font-medium w-32">Issue</th><th class="px-3 py-2 text-left font-medium">Title</th><th class="px-3 py-2 text-left font-medium w-32">Step</th>'
+            content: '<tr class="group hover:bg-brand-soft/40"><td class="px-3 py-2.5 font-mono text-xs text-muted">MD-SPT-128</td><td class="px-3 py-2.5 text-strong">The CSV export of orders is empty</td><td class="px-3 py-2.5 text-xs text-muted">To test</td></tr>'

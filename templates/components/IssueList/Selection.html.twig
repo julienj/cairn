@@ -85,7 +85,7 @@
 
         {% if report is not null %}
             {% set selectionRefused = report|filter(result => result.refusal)|length %}
-            <section class="rounded-lg border border-line bg-surface p-4 space-y-3 lg:sticky lg:top-16">
+            <section class="rounded-lg border border-line bg-surface p-4 space-y-3 lg:sticky lg:top-[calc(var(--spacing-header)+1rem)]">
                 <h2 class="font-semibold text-strong">{{ 'issue.bulk.done'|trans({ '%count%': report|length - selectionRefused }) }}</h2>
                 {% if selectionRefused %}
                     <twig:Ui:Callout tone="danger" size="sm" role="alert">{{ 'issue.bulk.some_refused'|trans({ '%count%': selectionRefused }) }}</twig:Ui:Callout>
@@ -98,7 +98,7 @@
                 </div>
             </section>
         {% else %}
-            <section class="rounded-lg border border-line bg-surface text-[13px] shadow-sm lg:sticky lg:top-16" data-loading="action(apply)|addClass(opacity-60)">
+            <section class="rounded-lg border border-line bg-surface text-[13px] shadow-sm lg:sticky lg:top-[calc(var(--spacing-header)+1rem)]" data-loading="action(apply)|addClass(opacity-60)">
                 <h2 class="rounded-t-lg border-b border-line-subtle bg-subtle/80 px-3.5 py-2.5 text-xs font-medium text-body">{{ 'issue.bulk.changes'|trans }}</h2>
                 <div class="space-y-0.5 p-3.5">
                     {% if error %}<twig:Ui:Callout tone="danger" size="sm" role="alert" class="mb-2">{{ error }}</twig:Ui:Callout>{% endif %}

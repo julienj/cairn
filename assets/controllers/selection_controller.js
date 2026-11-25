@@ -9,18 +9,36 @@ import { Controller } from '@hotwired/stimulus';
  *      data-selection-other-value="%count% issues selected">
  *   <form data-selection-target="bar" hidden> <span data-selection-target="count"></span> … </form>
  *   <input type="checkbox" data-selection-target="all" data-action="selection#togglePage">
- *   <input type="checkbox" name="ids[]" data-selection-target="box" data-action="selection#refresh">
+ *   <input type="checkbox" name="ids[]" data-selection-target="box" data-action="click->selection#toggle">
  *
  * The bar shows while a row is checked and counts them, in the sentence of
  * the language of the page for one or for several; the header box checks
  * or unchecks the rows on screen (not those of a folded group) and says
- * when they all are.
+ * when they all are. A box clicked with Shift gives the rows on screen
+ * between it and the box clicked before the state it just took.
  */
 export default class extends Controller {
     static targets = ['box', 'all', 'bar', 'count'];
     static values = { one: String, other: String };
 
     connect() {
+        this.anchor = null;
+        this.refresh();
+    }
+
+    toggle(event) {
+        const box = event.currentTarget;
+        if (event.shiftKey && this.anchor && this.anchor !== box) {
+            const shown = this.shown;
+            const from = shown.indexOf(this.anchor);
+            const to = shown.indexOf(box);
+            if (-1 !== from && -1 !== to) {
+                shown.slice(Math.min(from, to), Math.max(from, to) + 1).forEach((other) => {
+                    other.checked = box.checked;
+                });
+            }
+        }
+        this.anchor = box;
         this.refresh();
     }
 

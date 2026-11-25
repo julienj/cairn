@@ -13,7 +13,7 @@
             <twig:Issue:Follow :issue="issue" class="shrink-0" />
         </div>
 
-        <aside class="mt-6 lg:mt-0 lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:self-start lg:sticky lg:top-16 lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto lg:overscroll-contain scrollbar-thin">
+        <aside class="mt-6 lg:mt-0 lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:self-start lg:sticky lg:top-[calc(var(--spacing-header)+1rem)] lg:max-h-[calc(100vh-var(--spacing-header)-2rem)] lg:overflow-y-auto lg:overscroll-contain scrollbar-thin">
             <div class="space-y-3 lg:px-0.5 lg:pb-1">
                 <twig:Issue:Properties :issue="issue" />
                 <twig:Issue:Budget :issue="issue" />

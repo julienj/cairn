@@ -1,6 +1,6 @@
 {# Project navigation, sticky on desktop, sliding in on mobile (target of the Shell's `sidebar` controller). `title` heads the mobile panel. Sections go in the content. #}
 {% props title %}
-{% set layoutSidebarClasses = html_cva(base: 'fixed md:sticky top-12 bottom-0 left-0 z-40 w-56 md:h-[calc(100vh-3rem)] shrink-0 flex flex-col bg-surface border-r border-line transition-transform -translate-x-full md:translate-x-0') %}
+{% set layoutSidebarClasses = html_cva(base: 'fixed md:sticky top-header bottom-0 left-0 z-40 w-56 md:h-[calc(100vh-var(--spacing-header))] shrink-0 flex flex-col bg-surface border-r border-line transition-transform -translate-x-full md:translate-x-0') %}
 <aside class="{{ layoutSidebarClasses.apply({}, attributes.render('class'))|tailwind_merge }}" data-sidebar-target="panel" {{ attributes }}>
     <div class="md:hidden flex items-center justify-between px-4 h-11 border-b border-line">
         <span class="text-xs font-semibold uppercase tracking-wider text-faint">{{ title }}</span>
