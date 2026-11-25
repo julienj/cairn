@@ -2,13 +2,14 @@
 {% set reportRoute = { workspaceKey: project.workspace.key, projectKey: project.key } %}
 <turbo-frame id="widget-report">
     {{ form_start(form, { attr: {
+        class: 'flex flex-1 flex-col',
         'data-controller': 'widget-report',
         'data-widget-report-attachment-url-value': path('app_widget_attachment', reportRoute),
         'data-widget-report-preview-url-value': path('app_widget_report_preview', reportRoute),
         'data-widget-report-failed-value': 'widget.form.upload_failed'|trans,
         'data-action': 'widget:context-changed@window->widget-report#noted widget-capture:taken->widget-report#captured turbo:submit-end->widget-report#settled input->widget-report#save change->widget-report#save',
     } }) }}
-        <div class="flex min-h-full flex-col" data-widget-report-target="main">
+        <div class="flex flex-1 flex-col" data-widget-report-target="main">
             <div class="flex-1 space-y-4 p-4">
                 {{ form_errors(form) }}
                 {{ form_row(form.tracker, { attr: { 'data-action': 'change->widget-report#refresh' } }) }}
@@ -48,14 +49,33 @@
                             <input type="file" multiple class="sr-only" data-action="change->widget-report#chosen">
                         </label>
                     </div>
-                    <div data-controller="widget-capture" data-widget-capture-failed-value="{{ 'widget.capture.failed'|trans }}">
+                    <div data-controller="widget-capture" data-widget-capture-failed-value="{{ 'widget.capture.failed'|trans }}" data-action="widget:annotate@window->widget-capture#annotate keydown@window->widget-capture#key">
                         <twig:Ui:Button icon="camera" data-action="widget-capture#take" data-widget-capture-target="take" hidden>{{ 'widget.capture.take'|trans }}</twig:Ui:Button>
-                        <div class="space-y-2" data-widget-capture-target="cropper" hidden>
-                            <p class="text-xs text-muted">{{ 'widget.capture.crop_help'|trans }}</p>
-                            <canvas class="w-full cursor-crosshair touch-none rounded-md border border-line" data-widget-capture-target="canvas" data-action="pointerdown->widget-capture#press pointermove->widget-capture#drag pointerup->widget-capture#release"></canvas>
-                            <div class="flex gap-2">
-                                <twig:Ui:Button variant="primary" size="sm" data-action="widget-capture#keep">{{ 'widget.capture.apply'|trans }}</twig:Ui:Button>
-                                <twig:Ui:Button variant="ghost" size="sm" data-action="widget-capture#cancel">{{ 'widget.capture.cancel'|trans }}</twig:Ui:Button>
+                        {# The editor of the screenshot, over the whole frame, which the panel makes a dialog over the page meanwhile. #}
+                        <div class="fixed inset-0 z-50 flex flex-col bg-sunken" role="dialog" aria-modal="true" aria-labelledby="widget-editor-title" data-widget-capture-target="editor" hidden>
+                            <header class="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2 border-b border-line bg-surface px-3 py-2">
+                                <h2 id="widget-editor-title" class="font-semibold text-strong">{{ 'widget.capture.title'|trans }}</h2>
+                                <div class="flex items-center gap-0.5" role="group" aria-label="{{ 'widget.capture.tools'|trans }}">
+                                    {% for tool, icon in { pen: 'pencil', arrow: 'move-up-right', box: 'square', crop: 'crop' } %}
+                                        <twig:Ui:IconButton :icon="icon" :label="('widget.capture.tool.' ~ tool)|trans" class="aria-pressed:bg-sunken aria-pressed:text-strong" aria-pressed="false" data-tool="{{ tool }}" data-widget-capture-target="tool" data-widget-capture-tool-param="{{ tool }}" data-action="widget-capture#choose" />
+                                    {% endfor %}
+                                </div>
+                                <div class="flex items-center gap-2.5" role="group" aria-label="{{ 'widget.capture.colours'|trans }}">
+                                    {# The colours of the drawing, which are those of the image and not of the theme. #}
+                                    {% for colour, value in { red: '#e11d48', orange: '#f97316', green: '#16a34a', blue: '#2563eb', black: '#111827', white: '#ffffff' } %}
+                                        <button type="button" title="{{ ('widget.capture.colour.' ~ colour)|trans }}" aria-label="{{ ('widget.capture.colour.' ~ colour)|trans }}" aria-pressed="false" class="h-5 w-5 rounded-full ring-1 ring-line-strong ring-offset-2 ring-offset-surface aria-pressed:ring-2 aria-pressed:ring-brand focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-line" data-colour="{{ value }}" data-widget-capture-target="colour" data-widget-capture-colour-param="{{ value }}" data-action="widget-capture#pick"></button>
+                                    {% endfor %}
+                                </div>
+                                <twig:Ui:IconButton icon="undo-2" :label="'widget.capture.undo'|trans" data-widget-capture-target="undo" data-action="widget-capture#undo" />
+                                <p class="text-xs text-muted" data-widget-capture-target="cropHelp" hidden>{{ 'widget.capture.crop_help'|trans }}</p>
+                                <twig:Ui:IconButton icon="x" :label="'widget.capture.cancel'|trans" class="ml-auto" data-action="widget-capture#cancel" />
+                            </header>
+                            <div class="flex min-h-0 flex-1 items-center justify-center overflow-hidden p-4">
+                                <canvas class="min-h-0 min-w-0 max-h-full max-w-full cursor-crosshair touch-none rounded shadow-lg" data-widget-capture-target="canvas" data-action="pointerdown->widget-capture#press pointermove->widget-capture#drag pointerup->widget-capture#release pointercancel->widget-capture#release"></canvas>
+                            </div>
+                            <div class="flex shrink-0 items-center justify-end gap-2 border-t border-line bg-surface px-3 py-2">
+                                <twig:Ui:Button variant="ghost" data-action="widget-capture#cancel">{{ 'widget.capture.cancel'|trans }}</twig:Ui:Button>
+                                <twig:Ui:Button variant="primary" icon="paperclip" data-action="widget-capture#keep">{{ 'widget.capture.attach'|trans }}</twig:Ui:Button>
                             </div>
                         </div>
                     </div>
@@ -97,7 +117,7 @@
             </footer>
         </div>
 
-        <div class="flex min-h-full flex-col" data-widget-report-target="detail" hidden>
+        <div class="flex flex-1 flex-col" data-widget-report-target="detail" hidden>
             <div class="flex-1 space-y-4 p-4">
                 <h2 class="font-semibold text-strong">{{ 'widget.report.title'|trans }}</h2>
                 <div data-widget-report-target="body"></div>

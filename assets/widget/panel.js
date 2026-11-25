@@ -15,8 +15,9 @@ const NOTED_WAIT = 300;
  * The frame and the script talk by messages, each checking where the
  * other's come from: the script hands over what it noted (`report()`),
  * again whenever it notes more (the function returned, which waits for
- * a burst to end), closes the panel when asked to, and takes the whole widget out of the
- * picture while the frame takes a screenshot.
+ * a burst to end), closes the panel when asked to, takes the whole widget out of the
+ * picture while the frame takes a screenshot, and makes the panel a dialog over the
+ * page while the screenshot is edited.
  */
 export function createPanel({ cairn, address, label, report }) {
     const host = document.createElement('div');
@@ -27,12 +28,20 @@ export function createPanel({ cairn, address, label, report }) {
     style.textContent = `
 :host { all: initial; }
 ${buttonStyles}
-div { position: fixed; top: 0; right: 0; bottom: 0; z-index: 2147483647; width: min(400px, 100vw); background: #fff; box-shadow: -12px 0 32px rgba(17, 24, 39, .18); }
+.panel { position: fixed; top: 0; right: 0; bottom: 0; z-index: 2147483647; width: min(400px, 100vw); background: #fff; box-shadow: -12px 0 32px rgba(17, 24, 39, .18); }
+.panel.wide { top: 32px; right: 32px; bottom: 32px; left: 32px; width: auto; overflow: hidden; border-radius: 12px; box-shadow: 0 24px 64px rgba(17, 24, 39, .35); }
+.backdrop { position: fixed; inset: 0; z-index: 2147483647; background: rgba(17, 24, 39, .55); }
+@media (max-width: 640px) { .panel.wide { inset: 0; border-radius: 0; } }
 iframe { display: block; width: 100%; height: 100%; border: 0; }
 [hidden] { display: none !important; }
 `;
     const panel = document.createElement('div');
+    panel.className = 'panel';
     panel.hidden = true;
+    // Behind the panel while it is a dialog over the page: the site stays out of reach meanwhile.
+    const backdrop = document.createElement('div');
+    backdrop.className = 'backdrop';
+    backdrop.hidden = true;
     let frame = null;
 
     const send = (message) => frame?.contentWindow?.postMessage(message, cairn);
@@ -93,10 +102,18 @@ iframe { display: block; width: 100%; height: 100%; border: 0; }
                 host.style.opacity = '';
                 host.style.pointerEvents = '';
                 break;
+            case 'cairn:widen':
+                panel.classList.add('wide');
+                backdrop.hidden = false;
+                break;
+            case 'cairn:narrow':
+                panel.classList.remove('wide');
+                backdrop.hidden = true;
+                break;
         }
     });
 
-    root.append(style, button, panel);
+    root.append(style, button, backdrop, panel);
     // Beside the body, not in it: a site that replaces its body to change page (Turbo, htmx) would take the widget away.
     document.documentElement.appendChild(host);
     try {

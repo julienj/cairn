@@ -1457,11 +1457,24 @@ widget:
     capture:
         title: Screenshot
         take: Capture the screen
-        retake: Retake
-        remove: Remove
-        crop: Crop
+        annotate: Annotate the screenshot
+        tools: Tools
+        tool:
+            pen: Draw
+            arrow: Arrow
+            box: Rectangle
+            crop: Crop
+        colours: Colour
+        colour:
+            red: Red
+            orange: Orange
+            green: Green
+            blue: Blue
+            black: Black
+            white: White
+        undo: Undo
         crop_help: Drag over the part to keep.
-        apply: Keep this part
+        attach: Attach the screenshot
         cancel: Cancel
         failed: The screenshot could not be taken. You can attach a file instead.
     report:

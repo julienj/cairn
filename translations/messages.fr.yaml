@@ -1457,11 +1457,24 @@ widget:
     capture:
         title: Capture d'écran
         take: Capturer l'écran
-        retake: Refaire
-        remove: Retirer
-        crop: Recadrer
+        annotate: Annoter la capture
+        tools: Outils
+        tool:
+            pen: Dessiner
+            arrow: Flèche
+            box: Rectangle
+            crop: Recadrer
+        colours: Couleur
+        colour:
+            red: Rouge
+            orange: Orange
+            green: Vert
+            blue: Bleu
+            black: Noir
+            white: Blanc
+        undo: Annuler la dernière modification
         crop_help: Faites glisser sur la partie à garder.
-        apply: Garder cette partie
+        attach: Joindre la capture
         cancel: Annuler
         failed: La capture n'a pas pu être prise. Vous pouvez joindre un fichier à la place.
     report:
