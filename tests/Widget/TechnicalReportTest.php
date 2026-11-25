@@ -32,6 +32,7 @@ final class TechnicalReportTest extends TestCase
                 'pixelRatio' => 2,
                 'plugins' => ['anything'],
             ],
+            'context' => ['version' => '2026.11.3', 'user' => ' claire@example.com ', 'cart' => ['an', 'array'], 'empty' => '', str_repeat('n', 100) => 'cut name'],
             'errors' => [
                 ['kind' => 'console', 'message' => str_repeat('a', 5000), 'source' => 'https://staging.example.com/app.js:42', 'at' => '2026-11-24T10:14:07.123Z'],
                 ['kind' => 'made-up', 'message' => 'Boom', 'at' => 'yesterday'],
@@ -47,12 +48,13 @@ final class TechnicalReportTest extends TestCase
         ]);
 
         self::assertNotNull($report);
-        self::assertSame(['page', 'environment', 'errors', 'requests', 'pages', 'collectedAt'], array_keys($report->toArray()));
+        self::assertSame(['page', 'environment', 'context', 'errors', 'requests', 'pages', 'collectedAt'], array_keys($report->toArray()));
         self::assertSame(['url' => 'https://staging.example.com/cart', 'title' => 'Cart'], $report->page());
         self::assertSame(['width' => 1280, 'height' => 800], $report->environment()['viewport']);
         self::assertNull($report->environment()['screen'], 'a size is two numbers');
         self::assertSame(2.0, $report->environment()['pixelRatio']);
         self::assertSame('Chrome 154 · macOS', $report->browser());
+        self::assertSame(['version' => '2026.11.3', 'user' => 'claire@example.com', str_repeat('n', 60) => 'cut name'], $report->context(), 'names and texts only');
 
         self::assertCount(2, $report->errors());
         self::assertSame(600, mb_strlen($report->errors()[0]['message']));

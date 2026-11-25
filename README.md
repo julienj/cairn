@@ -220,7 +220,21 @@ The widget lets the people of a project report a problem from the site being rev
    <script src="https://cairn.example.com/widget.js" data-project="MD-SPT" data-display="always" async></script>
    ```
 
-   `data-display="always"` shows the button to everybody: it is for a site being reviewed. Without it (see below) the button is shown on demand. `data-version="…"` is optional: the version of the site, added to the report.
+   `data-display="always"` shows the button to everybody: it is for a site being reviewed. Without it (see below) the button is shown on demand.
+
+3. Optionally, say what the site knows of itself, in names and texts of your choosing: they go into the technical report of each issue. Push objects into `window.Cairn`, before or after the widget is loaded, as many times as you want; a later name replaces an earlier one, and `undefined` takes it away. Values are shown as text, `null` included: an object inside is laid out under dotted names (`user.id`, `user.email`), a list is written on one line, a function is left out. From the layout of a Symfony site:
+
+   ```twig
+   <script nonce="{{ csp_nonce('script') }}">
+       (window.Cairn ||= []).push({{ {
+           version: app_version,
+           environment: app.environment,
+           user: app.user ? app.user.userIdentifier : null,
+       }|json_encode|raw }});
+   </script>
+   ```
+
+   And from the JavaScript of the page, when something changes: `window.Cairn.push({ cart: '3 items' })`. The `nonce` is only needed under a Content-Security-Policy (`csp_nonce()` comes with NelmioSecurityBundle). What is pushed is shown to whoever sees the issue, external users included: never push a secret.
 
 **In production**, declare the site the same way and leave `data-display` out:
 

@@ -14,13 +14,15 @@
  *
  * 1. From the moment it is loaded, it notes what helps reproduce a
  *    problem: the errors of the page (errors.js), its Ajax requests that
- *    failed (requests.js) and the pages seen in this tab (pages.js).
+ *    failed (requests.js), the pages seen in this tab (pages.js), and
+ *    what the site says of itself in `window.Cairn` (context.js).
  * 2. It asks Cairn whether the project knows this site. Only then does it
  *    show its button; on any other site nothing shows.
  * 3. The button opens a panel holding a page of Cairn (panel.js), which
  *    it hands what it noted, and again each time it notes more.
  */
 import { wanted } from './activation.js';
+import { watchContext } from './context.js';
 import { watchErrors } from './errors.js';
 import { watchPages } from './pages.js';
 import { createPanel } from './panel.js';
@@ -35,14 +37,13 @@ if (script && keys && window.fetch && !window.__cairnWidget && wanted(script)) {
 
     const cairn = new URL(script.src, window.location.href).origin;
     const address = `${cairn}/widget/${keys[1]}/${keys[2]}`;
-    // What the site says of its own version, if it says it: shown in the report as it is.
-    const version = script.getAttribute('data-version') || null;
 
     // the panel, once there, hears of what is noted
     let noted = () => {};
     const errors = watchErrors(() => noted());
     const { requests, nativeFetch } = watchRequests(cairn, () => noted());
     const pages = watchPages(() => noted());
+    const context = watchContext(() => noted());
 
     const report = () => ({
         page: { url: bare(window.location.href), title: cut(document.title) },
@@ -52,8 +53,8 @@ if (script && keys && window.fetch && !window.__cairnWidget && wanted(script)) {
             viewport: { width: window.innerWidth, height: window.innerHeight },
             screen: { width: window.screen.width, height: window.screen.height },
             pixelRatio: window.devicePixelRatio || 1,
-            version,
         },
+        context: context(),
         errors: errors(),
         requests: requests(),
         pages: pages(),

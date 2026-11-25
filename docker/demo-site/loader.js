@@ -11,13 +11,18 @@
  * tag of the widget: the pages of the site have it for everybody, as a
  * site being reviewed does, and live.html only on demand, as production.
  *
+ * Before it, the site says what it is, as a Symfony site would from its
+ * layout (README: the context of the site).
+ *
  * The tag is written into the page as it is read, so that the widget is
  * there before the scripts of the page run, as it is on a real site: what
  * happens before it loads is not in its report.
  */
+(window.Cairn = window.Cairn || []).push({ version: '2026.11.3-rc2', environment: 'staging' });
+
 (function () {
     var display = document.currentScript.getAttribute('data-display');
     var local = 'localhost' === window.location.hostname || /\.localhost$/.test(window.location.hostname);
     var cairn = 'http://' + (local ? 'localhost' : window.location.hostname) + ':' + (window.cairnPort || 8000);
-    document.write('<script src="' + cairn + '/widget.js" data-project="MD-SPT" data-version="2026.11.3-rc2"' + (display ? ' data-display="' + display + '"' : '') + '><\/script>');
+    document.write('<script src="' + cairn + '/widget.js" data-project="MD-SPT"' + (display ? ' data-display="' + display + '"' : '') + '><\/script>');
 })();

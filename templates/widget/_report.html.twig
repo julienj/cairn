@@ -1,4 +1,4 @@
-{# What the widget noted on the site a problem is reported from, as the issue keeps it (`report`, a Widget/TechnicalReport, or null): the page, the environment, the errors of the console, the Ajax requests that failed, the pages seen. Shown to the reporter before sending, then on the page of the issue. Everything in it is what a site said: text, never markup nor a link. #}
+{# What the widget noted on the site a problem is reported from, as the issue keeps it (`report`, a Widget/TechnicalReport, or null): the page, the environment, what the site says of itself, the errors of the console, the Ajax requests that failed, the pages seen. Shown to the reporter before sending, then on the page of the issue. Everything in it is what a site said: text, never markup nor a link. #}
 {% if report is null %}
     <p class="text-sm text-muted">{{ 'widget.report.none'|trans }}</p>
 {% else %}
@@ -34,12 +34,20 @@
                     <dt class="text-muted">{{ 'widget.report.language'|trans }}</dt>
                     <dd class="text-strong">{{ reportEnvironment.language }}</dd>
                 {% endif %}
-                {% if reportEnvironment.version %}
-                    <dt class="text-muted">{{ 'widget.report.version'|trans }}</dt>
-                    <dd class="font-mono text-xs text-strong">{{ reportEnvironment.version }}</dd>
-                {% endif %}
             </dl>
         </section>
+
+        {% if report.context is not empty %}
+            <section class="space-y-1">
+                <h3 class="text-xs font-semibold text-strong">{{ 'widget.report.context'|trans }}</h3>
+                <dl class="grid grid-cols-[7rem_1fr] gap-x-2 gap-y-1">
+                    {% for contextName, contextValue in report.context %}
+                        <dt class="truncate text-muted" title="{{ contextName }}">{{ contextName }}</dt>
+                        <dd class="min-w-0 break-words text-strong">{{ contextValue }}</dd>
+                    {% endfor %}
+                </dl>
+            </section>
+        {% endif %}
 
         <section class="space-y-1">
             <h3 class="text-xs font-semibold text-strong">{{ 'widget.report.errors'|trans({ '%count%': report.errors|length }) }}</h3>

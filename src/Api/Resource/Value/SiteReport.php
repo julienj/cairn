@@ -15,6 +15,7 @@ use App\Widget\TechnicalReport;
 final readonly class SiteReport
 {
     /**
+     * @param list<SiteContext> $context  what the site says of itself, in the order its pages said it
      * @param list<SiteError>   $errors   the errors of the page, oldest first
      * @param list<SiteRequest> $requests its Ajax requests that failed, oldest first
      * @param list<SitePage>    $pages    the pages seen in the tab, the last one first
@@ -28,8 +29,7 @@ final readonly class SiteReport
         public ?SiteSize $viewport,
         public ?SiteSize $screen,
         public ?float $pixelRatio,
-        /** The version of the site, when the site says it. */
-        public ?string $siteVersion,
+        public array $context,
         public array $errors,
         public array $requests,
         public array $pages,
@@ -49,7 +49,7 @@ final readonly class SiteReport
             viewport: null === $environment['viewport'] ? null : new SiteSize($environment['viewport']['width'], $environment['viewport']['height']),
             screen: null === $environment['screen'] ? null : new SiteSize($environment['screen']['width'], $environment['screen']['height']),
             pixelRatio: $environment['pixelRatio'],
-            siteVersion: $environment['version'],
+            context: array_map(static fn (int|string $name, string $value): SiteContext => new SiteContext((string) $name, $value), array_keys($report->context()), $report->context()),
             errors: array_map(static fn (array $error): SiteError => new SiteError($error['kind'], $error['message'], $error['source'], $error['at']), $report->errors()),
             requests: array_map(static fn (array $request): SiteRequest => new SiteRequest($request['method'], $request['url'], $request['status'], $request['at']), $report->requests()),
             pages: array_map(static fn (array $page): SitePage => new SitePage($page['url'], $page['title'], $page['at']), $report->pages()),

@@ -460,8 +460,9 @@ src/
   (`widget_frame_controller.js`); what a controller of the form sends by
   itself asks the frame for the token (`widget:context`).
 - **What the site says is data, never trusted.** The report comes from a
-  page nobody here controls: `Widget/TechnicalReport` is the one place
-  that reads it, keeps the shape it knows and bounds everything; it is
+  page nobody here controls, and so does the context its pages push into
+  `window.Cairn` (names and texts of their choosing, `context.js`):
+  `Widget/TechnicalReport` is the one place that reads it, keeps the shape it knows and bounds everything; it is
   kept on the issue (`Issue::$report`) as a fact of its creation, shown as
   text to whoever sees the issue. The API and `get_issue` carry it on the
   issue itself, never in a list (`technicalReport`, a `SiteReport`), and

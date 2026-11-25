@@ -327,6 +327,7 @@ final class WidgetTest extends WebTestCase
         $technical = [
             'page' => ['url' => self::SITE.'/lamps', 'title' => 'Pendant lamps'],
             'environment' => ['userAgent' => 'Mozilla/5.0 (X11; Linux x86_64; rv:145.0) Gecko/20100101 Firefox/145.0', 'viewport' => ['width' => 1280, 'height' => 800]],
+            'context' => ['version' => '2026.11.3-rc2'],
             'errors' => [['kind' => 'console', 'message' => 'Price not found', 'at' => '2026-11-24T10:14:07.000Z']],
             'requests' => [['method' => 'GET', 'url' => self::SITE.'/api/prices/halo', 'status' => 500]],
             'pages' => [['url' => self::SITE.'/'], ['url' => self::SITE.'/lamps']],
@@ -335,6 +336,7 @@ final class WidgetTest extends WebTestCase
         $this->widget('POST', '/widget/MD/SPT/report/preview', $secret, content: (string) json_encode($technical));
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('body', 'Firefox 145 · Linux');
+        self::assertSelectorTextContains('body', '2026.11.3-rc2');
         self::assertSelectorTextContains('body', 'Price not found');
         self::assertSelectorTextContains('body', 'GET '.self::SITE.'/api/prices/halo');
         self::assertSelectorTextNotContains('body', 'whatever else');

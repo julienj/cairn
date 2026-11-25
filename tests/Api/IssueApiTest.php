@@ -81,7 +81,8 @@ final class IssueApiTest extends ApiTestCase
             fields: ['environment' => 'preprod'],
             report: [
                 'page' => ['url' => 'https://staging.maison-dupont.test/lamps', 'title' => 'Pendant lamps'],
-                'environment' => ['userAgent' => 'Mozilla/5.0 (X11; Linux x86_64; rv:145.0) Gecko/20100101 Firefox/145.0', 'viewport' => ['width' => 1280, 'height' => 800], 'version' => '2026.11.3'],
+                'environment' => ['userAgent' => 'Mozilla/5.0 (X11; Linux x86_64; rv:145.0) Gecko/20100101 Firefox/145.0', 'viewport' => ['width' => 1280, 'height' => 800]],
+                'context' => ['version' => '2026.11.3', 'environment' => 'staging'],
                 'errors' => [['kind' => 'console', 'message' => 'Price not found', 'at' => '2026-11-24T10:14:07.000Z']],
                 'requests' => [['method' => 'GET', 'url' => 'https://staging.maison-dupont.test/api/prices/halo', 'status' => 500]],
                 'pages' => [['url' => 'https://staging.maison-dupont.test/'], ['url' => 'https://staging.maison-dupont.test/lamps']],
@@ -91,7 +92,8 @@ final class IssueApiTest extends ApiTestCase
 
         $report = $this->api('GET', '/api/issues/'.$reported->getKey(), $secret)['technicalReport'];
         self::assertSame(['https://staging.maison-dupont.test/lamps', 'Pendant lamps'], [$report['page']['url'], $report['page']['title']]);
-        self::assertSame(['Firefox 145 · Linux', '2026.11.3'], [$report['browser'], $report['siteVersion']]);
+        self::assertSame('Firefox 145 · Linux', $report['browser']);
+        self::assertSame([['version', '2026.11.3'], ['environment', 'staging']], array_map(static fn (array $context): array => [$context['name'], $context['value']], $report['context']));
         self::assertSame(['width' => 1280, 'height' => 800], array_intersect_key($report['viewport'], ['width' => 0, 'height' => 0]));
         self::assertSame([['console', 'Price not found', '2026-11-24T10:14:07.000Z']], array_map(static fn (array $error): array => [$error['kind'], $error['message'], $error['at']], $report['errors']));
         self::assertSame([['GET', 'https://staging.maison-dupont.test/api/prices/halo', 500]], array_map(static fn (array $request): array => [$request['method'], $request['url'], $request['status']], $report['requests']));
