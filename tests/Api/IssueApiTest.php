@@ -88,6 +88,7 @@ final class IssueApiTest extends ApiTestCase
                     ['kind' => 'image', 'url' => 'https://staging.maison-dupont.test/images/halo.jpg', 'status' => 404, 'at' => '2026-11-24T10:14:05.000Z'],
                     ['kind' => 'ajax', 'method' => 'GET', 'url' => 'https://staging.maison-dupont.test/api/prices/halo', 'status' => 500, 'at' => '2026-11-24T10:14:06.000Z'],
                 ],
+                'performance' => ['ttfb' => 320, 'lcp' => 4800, 'cls' => 0.12, 'inp' => 90],
                 'pages' => [['url' => 'https://staging.maison-dupont.test/'], ['url' => 'https://staging.maison-dupont.test/lamps']],
             ],
         ));
@@ -104,6 +105,7 @@ final class IssueApiTest extends ApiTestCase
             ['ajax', 'GET', 'https://staging.maison-dupont.test/api/prices/halo', 500],
         ], array_map(static fn (array $request): array => [$request['kind'], $request['method'], $request['url'], $request['status']], $report['network']));
         self::assertSame(1.25, $report['zoom']);
+        self::assertSame([320, 4800, 0.12, 90], [$report['performance']['ttfb'], $report['performance']['lcp'], $report['performance']['cls'], $report['performance']['inp']]);
         self::assertSame(['dark', false, 'fine'], [$report['preferences']['colorScheme'], $report['preferences']['reducedMotion'], $report['preferences']['pointer']]);
         self::assertSame(['https://staging.maison-dupont.test/lamps', 'https://staging.maison-dupont.test/'], array_column($report['pages'], 'url'), 'the last page seen first');
 

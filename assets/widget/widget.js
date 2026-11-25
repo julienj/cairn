@@ -16,8 +16,9 @@
  *    problem: the errors of the page (errors.js), its requests that
  *    failed, Ajax or files (network.js), the pages seen in this tab
  *    (pages.js), and what the site says of itself in `window.Cairn`
- *    (context.js); and, when the report is handed over, the zoom and the
- *    preferences of the system (preferences.js).
+ *    (context.js), and how the page performed (performance.js); and, when
+ *    the report is handed over, the zoom and the preferences of the
+ *    system (preferences.js).
  * 2. It asks Cairn whether the project knows this site. Only then does it
  *    show its button; on any other site nothing shows.
  * 3. The button opens a panel holding a page of Cairn (panel.js), which
@@ -28,6 +29,7 @@ import { watchContext } from './context.js';
 import { watchErrors } from './errors.js';
 import { watchNetwork } from './network.js';
 import { watchPages } from './pages.js';
+import { watchPerformance } from './performance.js';
 import { createPanel } from './panel.js';
 import { preferences, zoom } from './preferences.js';
 import { bare, cut, now } from './text.js';
@@ -46,6 +48,7 @@ if (script && keys && window.fetch && !window.__cairnWidget && wanted(script)) {
     const errors = watchErrors(() => noted());
     const { network, nativeFetch } = watchNetwork(cairn, () => noted());
     const pages = watchPages(() => noted());
+    const measured = watchPerformance();
     const context = watchContext(() => noted());
 
     const report = () => ({
@@ -62,6 +65,7 @@ if (script && keys && window.fetch && !window.__cairnWidget && wanted(script)) {
         context: context(),
         errors: errors(),
         network: network(),
+        performance: measured(),
         pages: pages(),
         collectedAt: now(),
     });

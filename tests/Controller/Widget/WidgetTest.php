@@ -335,6 +335,7 @@ final class WidgetTest extends WebTestCase
                 ['kind' => 'font', 'url' => self::SITE.'/fonts/brume.woff2', 'status' => 404, 'at' => '2026-11-24T10:14:05.000Z'],
                 ['kind' => 'image', 'url' => self::SITE.'/images/halo.jpg', 'at' => '2026-11-24T10:14:07.000Z'],
             ],
+            'performance' => ['ttfb' => 320, 'lcp' => 4800, 'cls' => 0.12],
             'pages' => [['url' => self::SITE.'/'], ['url' => self::SITE.'/lamps']],
             'cookies' => 'whatever else a page may send',
         ];
@@ -351,6 +352,10 @@ final class WidgetTest extends WebTestCase
             '10:14:07 image '.self::SITE.'/images/halo.jpg',
         ], array_values(array_filter($network, static fn (string $line): bool => 1 === preg_match('/^\d\d:\d\d:\d\d /', $line))), 'in the order it failed: its kind, its status, its address');
         self::assertSelectorTextContains('body', '150 %');
+        self::assertSelectorTextContains('body', 'Server answer Good 320 ms');
+        self::assertSelectorTextContains('body', 'Main content Poor 4.8 s');
+        self::assertSelectorTextContains('body', 'Stability To improve 0.12');
+        self::assertSelectorTextNotContains('body', 'Reactivity', 'what the browser did not measure is not shown');
         self::assertSelectorTextContains('body', 'Dark theme · Touch screen · Reduced motion');
         self::assertSelectorTextNotContains('body', 'whatever else');
 

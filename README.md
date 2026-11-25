@@ -233,7 +233,7 @@ In return, Cairn holds no access token to GitLab. Prefer a secret per repository
 
 ### Widget (optional)
 
-The widget lets the people of a project report a problem from the site being reviewed, without leaving it: a button, a panel with a short form, a screenshot, and a technical report (page, browser and system preferences, console errors, failed requests, Ajax or files, pages seen). Everyone signs in with their own Cairn account, password or single sign-on, and creates the issue with their own rights. There is nothing to enable on the instance.
+The widget lets the people of a project report a problem from the site being reviewed, without leaving it: a button, a panel with a short form, a screenshot, and a technical report (page, browser and system preferences, console errors, failed requests, Ajax or files, performance, pages seen). Everyone signs in with their own Cairn account, password or single sign-on, and creates the issue with their own rights. There is nothing to enable on the instance.
 
 1. In the project, open **Configuration → Widget** and declare the site by its address (`https://staging.example.com`).
 2. Copy the line of script shown there into the `<head>` of every page of the site, as early as possible:
@@ -273,7 +273,7 @@ Good to know:
 - **The screenshot needs HTTPS** on the site, as browsers require. Without it the widget works and offers to attach a file instead.
 - **A Content-Security-Policy on the site** must allow Cairn in `script-src`, `frame-src` and `connect-src`. A `Permissions-Policy` that names `display-capture` must allow Cairn there too, or the screenshot is refused.
 - **Behind a proxy**, let the answers under `/widget/` keep their own `Content-Security-Policy` (it names the sites allowed to frame the widget) and do not add an `X-Frame-Options` to them; pass the `Authorization` header through.
-- **What the script notes** stays in the page until someone reports a problem, and is shown to them before it is sent: the errors of the page, its requests that failed, Ajax or files (kind, method, address, status: never what they carried), the pages seen in the tab, all addresses without their parameters, and the zoom and preferences of the system (theme, pointer, reduced motion, contrast).
+- **What the script notes** stays in the page until someone reports a problem, and is shown to them before it is sent: the errors of the page, its requests that failed, Ajax or files (kind, method, address, status: never what they carried), the pages seen in the tab, all addresses without their parameters, how the page performed (server answer, load, Core Web Vitals), and the zoom and preferences of the system (theme, pointer, reduced motion, contrast).
 - Someone who linked their account on a site stays linked for 30 days in that browser. Removing the site from the project, or deactivating the account, ends it at once.
 
 ### Real time (optional)

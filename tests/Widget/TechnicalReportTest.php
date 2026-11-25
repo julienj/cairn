@@ -48,12 +48,13 @@ final class TechnicalReportTest extends TestCase
                 ['kind' => 'video game', 'url' => 'https://cdn.example.com/hero', 'status' => 'Not Found', 'at' => '2026-11-24T10:14:08.000Z'],
                 ['kind' => 'image'],
             ],
+            'performance' => ['ttfb' => 120, 'domContentLoaded' => 'fast', 'load' => 99999999, 'lcp' => 3200, 'cls' => 0.4, 'inp' => 80.5, 'fps' => 60],
             'pages' => array_map(static fn (int $i): array => ['url' => 'https://staging.example.com/page/'.$i], range(1, 80)),
             'secrets' => ['token' => 'abc'],
         ]);
 
         self::assertNotNull($report);
-        self::assertSame(['page', 'environment', 'context', 'errors', 'network', 'pages', 'collectedAt'], array_keys($report->toArray()));
+        self::assertSame(['page', 'environment', 'context', 'errors', 'network', 'performance', 'pages', 'collectedAt'], array_keys($report->toArray()));
         self::assertSame(['url' => 'https://staging.example.com/cart', 'title' => 'Cart'], $report->page());
         self::assertSame(['width' => 1280, 'height' => 800], $report->environment()['viewport']);
         self::assertNull($report->environment()['screen'], 'a size is two numbers');
@@ -75,6 +76,8 @@ final class TechnicalReportTest extends TestCase
             ['kind' => 'ajax', 'method' => 'GET', 'url' => 'https://staging.example.com/api', 'status' => 0, 'at' => null],
         ], $report->network(), 'in the order it failed, a method for a request only, a file without a known status has none; a moment that does not exist is no moment, and comes last');
 
+        self::assertSame(['ttfb' => 120, 'domContentLoaded' => null, 'load' => null, 'lcp' => 3200, 'cls' => 0.4, 'inp' => null], $report->performance(), 'times are whole milliseconds, of ten minutes at most');
+
         self::assertCount(30, $report->pages(), 'the last ones seen');
         self::assertSame('https://staging.example.com/page/80', $report->pages()[0]['url'], 'the last one first');
     }
@@ -87,5 +90,22 @@ final class TechnicalReportTest extends TestCase
         self::assertSame($report->toArray(), TechnicalReport::from($report->toArray())?->toArray());
         self::assertNull($report->browser());
         self::assertNull($report->environment()['preferences']);
+        self::assertNull($report->performance());
+        self::assertSame([], $report->measures());
+    }
+
+    public function testAMeasureIsRatedAsGoogleRatesIt(): void
+    {
+        $report = TechnicalReport::from(['page' => ['url' => 'https://staging.example.com/'], 'performance' => ['ttfb' => 400, 'domContentLoaded' => 900, 'load' => 2400, 'lcp' => 3250, 'inp' => 1200, 'cls' => 0]]);
+        self::assertNotNull($report);
+
+        self::assertSame([
+            ['name' => 'ttfb', 'value' => 400, 'rating' => 'good', 'position' => 16.7],
+            ['name' => 'domContentLoaded', 'value' => 900, 'rating' => null, 'position' => null],
+            ['name' => 'lcp', 'value' => 3250, 'rating' => 'average', 'position' => 50.0],
+            ['name' => 'load', 'value' => 2400, 'rating' => null, 'position' => null],
+            ['name' => 'inp', 'value' => 1200, 'rating' => 'poor', 'position' => 98.0],
+            ['name' => 'cls', 'value' => 0.0, 'rating' => 'good', 'position' => 2.0],
+        ], $report->measures(), 'in the order they come while the page loads, a measure without a scale unrated; the mark never leaves the gauge');
     }
 }
