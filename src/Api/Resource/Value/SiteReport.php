@@ -35,6 +35,7 @@ final readonly class SiteReport
         public array $context,
         public array $errors,
         public array $network,
+        public ?SitePerformance $performance,
         public array $pages,
         public ?string $collectedAt,
     ) {
@@ -57,6 +58,7 @@ final readonly class SiteReport
             context: array_map(static fn (int|string $name, string $value): SiteContext => new SiteContext((string) $name, $value), array_keys($report->context()), $report->context()),
             errors: array_map(static fn (array $error): SiteError => new SiteError($error['kind'], $error['message'], $error['source'], $error['at']), $report->errors()),
             network: array_map(static fn (array $request): SiteRequest => new SiteRequest($request['kind'], $request['method'], $request['url'], $request['status'], $request['at']), $report->network()),
+            performance: null === $report->performance() ? null : new SitePerformance(...$report->performance()),
             pages: array_map(static fn (array $page): SitePage => new SitePage($page['url'], $page['title'], $page['at']), $report->pages()),
             collectedAt: $report->collectedAt(),
         );

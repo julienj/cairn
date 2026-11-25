@@ -1,0 +1,6 @@
+component: Ui:Measure
+variants:
+    good: { args: { label: LCP, value: 1.2 s, rating: good, position: 16, caption: Largest content drawn } }
+    average: { args: { label: INP, value: 320 ms, rating: average, position: 50, caption: Slowest answer to a click } }
+    poor: { args: { label: CLS, value: '0.42', rating: poor, position: 90, caption: How much the page moved } }
+    unrated: { args: { label: Loaded, value: 2.4 s } }

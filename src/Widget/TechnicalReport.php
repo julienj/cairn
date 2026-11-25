@@ -8,8 +8,8 @@ namespace App\Widget;
  * What the script of the widget noted on the site a problem is reported
  * from: the page, the browser, what the site says of itself (its
  * context: names and texts its pages chose), the errors of the page,
- * what failed on its network (its Ajax requests and its files) and the
- * pages seen in the tab. It comes from a page nobody here controls,
+ * what failed on its network (its Ajax requests and its files), how the
+ * page performed and the pages seen in the tab. It comes from a page nobody here controls,
  * through the browser of the reporter: only the shape known here is kept, every text cut and every list bounded, and it is
  * shown as what the site said, never trusted for anything.
  */
@@ -25,6 +25,10 @@ final readonly class TechnicalReport
     private const array ERROR_KINDS = ['console', 'error', 'rejection'];
     /** An Ajax request of the page, or one of its files that did not load. */
     private const array NETWORK_KINDS = ['ajax', 'image', 'script', 'stylesheet', 'font', 'media', 'other'];
+    /** The measures that rate: up to what is good, and from what is poor (web.dev). */
+    private const array THRESHOLDS = ['ttfb' => [800, 1800], 'lcp' => [2500, 4000], 'inp' => [200, 500], 'cls' => [0.1, 0.25]];
+    /** Ten minutes: no time of a page is longer. */
+    private const int MAX_TIME = 600000;
 
     /**
      * @param array{
@@ -33,6 +37,7 @@ final readonly class TechnicalReport
      *     context: array<string, string>,
      *     errors: list<array{kind: string, message: string, source: ?string, at: ?string}>,
      *     network: list<array{kind: string, method: ?string, url: string, status: ?int, at: ?string}>,
+     *     performance: ?array{ttfb: ?int, domContentLoaded: ?int, load: ?int, lcp: ?int, cls: ?float, inp: ?int},
      *     pages: list<array{url: string, title: ?string, at: ?string}>,
      *     collectedAt: ?string,
      * } $data
@@ -109,6 +114,7 @@ final readonly class TechnicalReport
             'context' => self::pairs($raw['context'] ?? null),
             'errors' => $errors,
             'network' => $network,
+            'performance' => self::performanceOf($raw['performance'] ?? null),
             'pages' => $pages,
             'collectedAt' => self::time($raw['collectedAt'] ?? null),
         ]);
@@ -170,6 +176,50 @@ final readonly class TechnicalReport
     public function network(): array
     {
         return $this->data['network'];
+    }
+
+    /**
+     * How the page performed, in milliseconds from the start of its last
+     * load, the CLS apart (a score); null when the site sent none, and each
+     * measure null where the browser does not take it.
+     *
+     * @return ?array{ttfb: ?int, domContentLoaded: ?int, load: ?int, lcp: ?int, cls: ?float, inp: ?int}
+     */
+    public function performance(): ?array
+    {
+        return $this->data['performance'];
+    }
+
+    /**
+     * The measures of the performance as they are shown, in the order they
+     * come while the page loads, those the site sent: each with, when it
+     * rates, its rating (good, average, poor) and where it stands on a
+     * scale of 0 to 100 drawn in three equal parts, one per rating.
+     *
+     * @return list<array{name: string, value: int|float, rating: ?string, position: ?float}>
+     */
+    public function measures(): array
+    {
+        $measures = [];
+        foreach (['ttfb', 'domContentLoaded', 'lcp', 'load', 'inp', 'cls'] as $name) {
+            $value = $this->data['performance'][$name] ?? null;
+            if (null === $value) {
+                continue;
+            }
+            if (!isset(self::THRESHOLDS[$name])) {
+                $measures[] = ['name' => $name, 'value' => $value, 'rating' => null, 'position' => null];
+                continue;
+            }
+            [$good, $poor] = self::THRESHOLDS[$name];
+            [$rating, $position] = match (true) {
+                $value <= $good => ['good', $value / $good],
+                $value <= $poor => ['average', 1 + ($value - $good) / ($poor - $good)],
+                default => ['poor', 2 + min(1, ($value - $poor) / $poor)],
+            };
+            $measures[] = ['name' => $name, 'value' => $value, 'rating' => $rating, 'position' => round(max(2, min(98, $position / 3 * 100)), 1)];
+        }
+
+        return $measures;
     }
 
     /**
@@ -268,6 +318,27 @@ final readonly class TechnicalReport
     private static function number(mixed $value, int $min, int $max): ?int
     {
         return \is_int($value) && $value >= $min && $value <= $max ? $value : null;
+    }
+
+    /**
+     * @return ?array{ttfb: ?int, domContentLoaded: ?int, load: ?int, lcp: ?int, cls: ?float, inp: ?int}
+     */
+    private static function performanceOf(mixed $value): ?array
+    {
+        if (!\is_array($value)) {
+            return null;
+        }
+        $time = static fn (string $name): ?int => self::number($value[$name] ?? null, 0, self::MAX_TIME);
+        $cls = $value['cls'] ?? null;
+
+        return [
+            'ttfb' => $time('ttfb'),
+            'domContentLoaded' => $time('domContentLoaded'),
+            'load' => $time('load'),
+            'lcp' => $time('lcp'),
+            'cls' => (\is_int($cls) || \is_float($cls)) && $cls >= 0 && $cls <= 100 ? round((float) $cls, 3) : null,
+            'inp' => $time('inp'),
+        ];
     }
 
     /**

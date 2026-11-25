@@ -431,6 +431,12 @@ attachment:
         kb: '%size% KB'
         mb: '%size% MB'
 
+measure:
+    rating:
+        good: Good
+        average: To improve
+        poor: Poor
+
 admin:
     title: Administration
     back: ← Back to Cairn
@@ -1414,6 +1420,27 @@ widget:
             font: font
             media: media
             other: file
+        performance: Performance
+        performance_help: As the browser measured it while this page loaded, with how Google rates it.
+        measure:
+            ttfb:
+                label: Server answer
+                help: Time to first byte (TTFB)
+            domContentLoaded:
+                label: Page ready
+                help: Its HTML read
+            lcp:
+                label: Main content
+                help: Largest content drawn (LCP)
+            load:
+                label: Page loaded
+                help: With all its files
+            inp:
+                label: Reactivity
+                help: Slowest answer to an interaction (INP)
+            cls:
+                label: Stability
+                help: How much the page moved (CLS)
         pages: '{0}Pages seen|{1}Pages seen · 1|]1,Inf[ Pages seen · %count%'
         pages_help: In this tab, without the parameters of the addresses.
         zoom: Zoom
@@ -1429,7 +1456,7 @@ widget:
             contrast_less: Less contrast
             forced_colors: Forced colours
         none: Nothing noted.
-        summary: Page, browser, screen, errors, network, pages seen
+        summary: Page, browser, screen, errors, network, performance, pages seen
     sent:
         title: 'Issue %key% created'
         text: The team of the project is told.
