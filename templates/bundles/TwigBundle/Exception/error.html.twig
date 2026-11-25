@@ -12,7 +12,7 @@
         <meta name="robots" content="noindex">
         <title>{{ ('error.' ~ errorKey ~ '.title')|trans }} · Cairn</title>
         {# The same tags as base.html.twig: Turbo shows the answer in place instead of loading the failing address again. #}
-        {{ reprise_entry_link_tags('app', attributes={'data-turbo-track': 'reload'}) }}
+        {{ reprise_entry_link_tags('styles', attributes={'data-turbo-track': 'reload'}) }}
         {{ reprise_entry_script_tags('app', attributes={'data-turbo-track': 'reload'}) }}
     </head>
     <body class="min-h-screen bg-canvas text-body text-sm antialiased">
