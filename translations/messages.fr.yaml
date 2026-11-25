@@ -1361,6 +1361,7 @@ widget:
         private_tracker: 'Catégorie privée : masquée aux utilisateurs externes.'
         files: Fichiers
         attach: Joindre un fichier
+        drop: Déposez vos fichiers pour les joindre
         remove_file: 'Retirer %name%'
         upload_failed: Ce fichier n'a pas pu être envoyé.
         submit: Envoyer la demande

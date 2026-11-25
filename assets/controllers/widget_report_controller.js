@@ -71,9 +71,12 @@ async function pictureStore(mode, request) {
  * screenshot was made of, are kept beside it in the IndexedDB of the
  * frame, so that the page drawn again still shows them and the
  * screenshot can still be annotated.
+ *
+ * Files dropped anywhere on the panel are sent as those chosen are; a
+ * veil says so while they are dragged over it.
  */
 export default class extends Controller {
-    static targets = ['main', 'detail', 'body', 'box', 'files', 'template', 'submit', 'refresher', 'actions', 'discard', 'confirm'];
+    static targets = ['main', 'detail', 'body', 'box', 'files', 'template', 'submit', 'refresher', 'actions', 'discard', 'confirm', 'drop'];
 
     static values = { attachmentUrl: String, previewUrl: String, failed: String };
 
@@ -129,6 +132,46 @@ export default class extends Controller {
     }
 
     // --- the files
+
+    // --- files dropped anywhere on the panel, the editor of the description included
+
+    /* What is dragged is files, not a text nor a link of the page. */
+    carriesFiles(event) {
+        return Array.from(event.dataTransfer?.types ?? []).includes('Files');
+    }
+
+    /* Each element entered is left again: what is still over the panel is counted, so that the veil does not blink. */
+    dragEnter(event) {
+        if (this.carriesFiles(event)) {
+            this.dragging = (this.dragging ?? 0) + 1;
+            this.dropTarget.hidden = false;
+        }
+    }
+
+    dragOver(event) {
+        if (this.carriesFiles(event)) {
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'copy';
+        }
+    }
+
+    dragLeave(event) {
+        if (this.carriesFiles(event)) {
+            this.dragging = Math.max(0, (this.dragging ?? 0) - 1);
+            this.dropTarget.hidden = 0 === this.dragging;
+        }
+    }
+
+    dropped(event) {
+        if (!this.carriesFiles(event)) {
+            return;
+        }
+        event.preventDefault();
+        event.stopPropagation();
+        this.dragging = 0;
+        this.dropTarget.hidden = true;
+        Array.from(event.dataTransfer.files).forEach((file) => this.send(file));
+    }
 
     chosen(event) {
         Array.from(event.target.files).forEach((file) => this.send(file, false));

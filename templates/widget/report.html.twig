@@ -7,7 +7,7 @@
         'data-widget-report-attachment-url-value': path('app_widget_attachment', reportRoute),
         'data-widget-report-preview-url-value': path('app_widget_report_preview', reportRoute),
         'data-widget-report-failed-value': 'widget.form.upload_failed'|trans,
-        'data-action': 'widget:context-changed@window->widget-report#noted widget-capture:taken->widget-report#captured turbo:submit-end->widget-report#settled input->widget-report#save change->widget-report#save',
+        'data-action': 'widget:context-changed@window->widget-report#noted widget-capture:taken->widget-report#captured turbo:submit-end->widget-report#settled input->widget-report#save change->widget-report#save dragenter@window->widget-report#dragEnter:capture dragover@window->widget-report#dragOver:capture dragleave@window->widget-report#dragLeave:capture drop@window->widget-report#dropped:capture',
     } }) }}
         <div class="flex flex-1 flex-col" data-widget-report-target="main">
             <div class="flex-1 space-y-4 p-4">
@@ -126,6 +126,11 @@
                 {{ form_widget(form.includeReport) }}
                 <twig:Ui:Button data-action="widget-report#back">{{ 'widget.report.back'|trans }}</twig:Ui:Button>
             </footer>
+        </div>
+        {# Over the whole panel while files are dragged over it: dropped anywhere, they are attached. #}
+        <div class="pointer-events-none fixed inset-2 z-40 flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-brand bg-surface/85 text-brand backdrop-blur-sm" data-widget-report-target="drop" hidden>
+            <span class="grid h-14 w-14 place-items-center rounded-full bg-brand-soft"><twig:ux:icon name="lucide:paperclip" class="h-6 w-6" /></span>
+            <p class="font-medium text-strong">{{ 'widget.form.drop'|trans }}</p>
         </div>
         {# What a change of category submits the form with. After the button that sends the issue: the first one of a form is the one Enter presses. #}
         <button type="submit" name="refresh" value="1" formnovalidate hidden data-widget-report-target="refresher"></button>
