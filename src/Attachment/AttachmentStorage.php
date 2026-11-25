@@ -12,14 +12,17 @@ use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\Uid\Uuid;
 
 /**
- * Where attachment files live: `ATTACHMENTS_DIR`, outside `public/`, one
- * file per attachment named by its uuid, without extension. Nothing else
- * knows the layout.
+ * Where attachment files live: `ATTACHMENTS_DIR/files`, outside
+ * `public/` and beside the pictures of the accounts (AvatarStorage), one
+ * file per attachment named by its uuid, without extension, in a folder
+ * named by the first two characters of that uuid (`files/3f/3f2a…`): 256
+ * folders share the files evenly, and the uuid alone says where a file
+ * is, its row gone or not. Nothing else knows the layout.
  */
 final class AttachmentStorage
 {
     public function __construct(
-        #[Autowire('%env(resolve:ATTACHMENTS_DIR)%')]
+        #[Autowire('%env(resolve:ATTACHMENTS_DIR)%/files')]
         private readonly string $directory,
     ) {
     }
@@ -29,7 +32,8 @@ final class AttachmentStorage
      */
     public function store(File $file, Attachment $attachment): void
     {
-        $file->move($this->directory, $this->name($attachment));
+        $path = $this->path($attachment);
+        $file->move(\dirname($path), basename($path));
     }
 
     public function delete(Attachment $attachment): void
@@ -55,30 +59,28 @@ final class AttachmentStorage
 
     public function pathOf(Uuid $uuid): string
     {
-        return $this->directory.'/'.$uuid->toRfc4122();
+        $name = $uuid->toRfc4122();
+
+        return $this->directory.'/'.substr($name, 0, 2).'/'.$name;
     }
 
     /**
-     * The uuids of the files present, whatever rows exist for them.
+     * The uuids of the files present, whatever rows exist for them, read
+     * a folder at a time. A file that is not where its name puts it is
+     * not one of ours.
      *
-     * @return list<Uuid>
+     * @return iterable<Uuid>
      */
-    public function storedUuids(): array
+    public function storedUuids(): iterable
     {
-        $uuids = [];
-        foreach (glob($this->directory.'/*') ?: [] as $path) {
-            $name = basename($path);
-            if (Uuid::isValid($name)) {
-                $uuids[] = Uuid::fromString($name);
+        foreach (glob($this->directory.'/[0-9a-f][0-9a-f]', \GLOB_ONLYDIR) ?: [] as $folder) {
+            foreach (glob($folder.'/*') ?: [] as $path) {
+                $name = basename($path);
+                if (Uuid::isValid($name) && $this->pathOf(Uuid::fromString($name)) === $path) {
+                    yield Uuid::fromString($name);
+                }
             }
         }
-
-        return $uuids;
-    }
-
-    private function name(Attachment $attachment): string
-    {
-        return $attachment->getUuid()->toRfc4122();
     }
 
     /**

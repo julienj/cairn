@@ -49,8 +49,11 @@ final class AttachmentPrunerTest extends KernelTestCase
         $taken = $this->upload('taken.pdf');
         $this->commands->dispatch(new AddComment((int) $this->fixtures->client->getId(), $issue->getKey(), 'Taken.', attachments: [$taken->getUuid()->toRfc4122()]));
         $storage = self::getContainer()->get(AttachmentStorage::class);
-        $directory = \dirname($storage->path($old));
-        $orphan = $directory.'/'.Uuid::v4()->toRfc4122();
+        self::assertSame(substr($old->getUuid()->toRfc4122(), 0, 2), basename(\dirname($storage->path($old))), 'a file lives in the folder of its first two characters');
+        $orphan = $storage->pathOf(Uuid::v4());
+        if (!is_dir(\dirname($orphan))) {
+            mkdir(\dirname($orphan), recursive: true);
+        }
         file_put_contents($orphan, 'orphan');
         touch($orphan, $clock->now()->getTimestamp() - 3 * 86400);
         $clock->modify('+6 hours');
