@@ -11,7 +11,12 @@
 {% set ruleFormValueClasses = 'w-full sm:w-72' %}
 {% set ruleFormControl = 'mt-0 h-8 py-0' %}
 {% set ruleFormPillClasses = 'my-1 inline-flex h-6 items-center gap-1.5 rounded-md px-2 text-xs font-semibold uppercase tracking-wide' %}
-{% set ruleFormAddClasses = 'inline-flex h-8 items-center gap-1.5 self-start rounded-md border border-dashed border-line-strong bg-surface px-2.5 text-sm text-body hover:bg-subtle' %}
+{% set ruleFormAddClasses = 'mt-2.5 inline-flex h-8 items-center gap-1.5 self-start rounded-md border border-dashed border-line-strong bg-surface px-2.5 text-sm text-body hover:bg-subtle' %}
+{# A condition or an action is a card of its own, its values and its help inside; the word that joins two cards reads as the sentence does. #}
+{% set ruleFormCardClasses = 'space-y-2.5 rounded-md border border-line bg-subtle/50 p-2.5' %}
+{% set ruleFormJoinClasses = 'ml-5 flex h-7 items-center border-l-2 pl-3 text-[11px] font-semibold uppercase tracking-wide' %}
+{% set ruleFormValuesClasses = 'space-y-1.5 border-t border-line-subtle pt-2.5' %}
+{% set ruleFormValuesLabelClasses = 'text-xs font-medium text-muted' %}
 <div {{ attributes }} class="grid max-w-6xl items-start gap-5 lg:grid-cols-[minmax(0,1fr)_18rem]" data-loading="addClass(opacity-60)">
     {{ form_start(form, { attr: form.vars.attr|merge({ class: 'space-y-4', 'data-action': 'live#action:prevent', 'data-live-action-param': 'save' }) }) }}
         {{ form_errors(form) }}
@@ -48,30 +53,35 @@
                     <span class="{{ ruleFormPillClasses }} bg-amber-soft text-amber"><twig:ux:icon name="lucide:filter" class="h-3 w-3" />{{ 'automation.form.if'|trans }}</span>
                     <p class="text-xs leading-snug text-muted">{{ 'automation.form.if_help'|trans }}</p>
                 </div>
-                <div class="flex min-w-0 flex-1 basis-72 flex-col gap-2.5">
+                <div class="flex min-w-0 flex-1 basis-72 flex-col">
                     {% for index, row in form.conditions %}
-                        <div class="space-y-1.5">
-                            <div class="{{ ruleFormRowClasses }}">
-                                <div class="{{ ruleFormTypeClasses }}">{{ form_widget(row.type, { attr: { class: ruleFormControl, 'aria-label': 'automation.form.if'|trans } }) }}</div>
-                                {% for field in row.params %}
-                                    {% if not field.vars.expanded|default(false) %}
-                                        <div class="{{ ruleFormValueClasses }}">{{ form_widget(field, { attr: field.vars.attr|merge({ class: ruleFormControl }) }) }}{{ form_errors(field) }}</div>
-                                    {% endif %}
-                                {% endfor %}
-                                <twig:Ui:IconButton icon="x" :label="'automation.form.remove'|trans" class="ml-auto" data-action="live#action" data-live-action-param="removeCondition" data-live-index-param="{{ index }}" />
+                        {% if not loop.first %}<div class="{{ ruleFormJoinClasses }} border-amber-line text-amber">{{ 'automation.form.and'|trans }}</div>{% endif %}
+                        <div class="{{ ruleFormCardClasses }}">
+                            <div class="flex items-start gap-2">
+                                <div class="{{ ruleFormRowClasses }} min-w-0 flex-1">
+                                    <div class="{{ ruleFormTypeClasses }}">{{ form_widget(row.type, { attr: { class: ruleFormControl, 'aria-label': 'automation.form.if'|trans } }) }}</div>
+                                    {% for field in row.params %}
+                                        {% if not field.vars.expanded|default(false) %}
+                                            <div class="{{ ruleFormValueClasses }}">{{ form_widget(field, { attr: field.vars.attr|merge({ class: ruleFormControl }) }) }}{{ form_errors(field) }}</div>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                                <twig:Ui:IconButton icon="x" :label="'automation.form.remove'|trans" class="mt-0.5" data-action="live#action" data-live-action-param="removeCondition" data-live-index-param="{{ index }}" />
                             </div>
-                            {# Several values: one box each under the row, any of them holds. #}
+                            {# Several values: one box each, any of them holds. #}
                             {% for field in row.params %}
                                 {% if field.vars.expanded|default(false) %}
-                                    <div class="flex flex-wrap gap-x-5 gap-y-1.5 rounded-md border border-line-subtle bg-subtle/60 px-3 py-2.5">
-                                        {% for ruleFormBox in field %}
-                                            <twig:Ui:Form:Checkbox :label="ruleFormBox.vars.label" :checked="ruleFormBox.vars.checked" :id="ruleFormBox.vars.id" :name="ruleFormBox.vars.full_name" :value="ruleFormBox.vars.value" />
-                                            {% do ruleFormBox.setRendered %}
-                                        {% endfor %}
+                                    <div class="{{ ruleFormValuesClasses }}">
+                                        <p class="{{ ruleFormValuesLabelClasses }}">{{ 'automation.form.any_of'|trans }}</p>
+                                        <div class="flex flex-wrap gap-x-5 gap-y-1.5">
+                                            {% for ruleFormBox in field %}
+                                                <twig:Ui:Form:Checkbox :label="ruleFormBox.vars.label" :checked="ruleFormBox.vars.checked" :id="ruleFormBox.vars.id" :name="ruleFormBox.vars.full_name" :value="ruleFormBox.vars.value" />
+                                                {% do ruleFormBox.setRendered %}
+                                            {% endfor %}
+                                        </div>
+                                        {% do field.setRendered %}
+                                        {{ form_errors(field) }}
                                     </div>
-                                    {% do field.setRendered %}
-                                    <p class="text-xs text-muted">{{ 'automation.form.any_of'|trans }}</p>
-                                    {{ form_errors(field) }}
                                 {% endif %}
                             {% endfor %}
                         </div>
@@ -87,34 +97,42 @@
                     <span class="{{ ruleFormPillClasses }} bg-emerald-soft text-emerald"><twig:ux:icon name="lucide:play" class="h-3 w-3" />{{ 'automation.form.then'|trans }}</span>
                     <p class="text-xs leading-snug text-muted">{{ 'automation.form.then_help'|trans }}</p>
                 </div>
-                <div class="flex min-w-0 flex-1 basis-72 flex-col gap-2.5">
+                <div class="flex min-w-0 flex-1 basis-72 flex-col">
                     {% for index, row in form.actions %}
-                        <div class="space-y-1.5">
-                            <div class="{{ ruleFormRowClasses }}">
-                                <div class="{{ ruleFormTypeClasses }}">{{ form_widget(row.type, { attr: { class: ruleFormControl, 'aria-label': 'automation.form.then'|trans } }) }}</div>
-                                {% for field in row.params %}
-                                    {% if 'textarea' not in field.vars.block_prefixes and not field.vars.expanded|default(false) %}
-                                        <div class="{{ 'checkbox' in field.vars.block_prefixes ? 'min-w-0 flex-1 basis-48 px-1' : ruleFormValueClasses }}">{{ form_widget(field, { attr: field.vars.attr|merge({ class: ruleFormControl }) }) }}{{ form_errors(field) }}</div>
-                                    {% endif %}
-                                {% endfor %}
-                                <twig:Ui:IconButton icon="x" :label="'automation.form.remove'|trans" class="ml-auto" data-action="live#action" data-live-action-param="removeAction" data-live-index-param="{{ index }}" />
+                        {% if not loop.first %}<div class="{{ ruleFormJoinClasses }} border-emerald-line text-emerald">{{ 'automation.form.next'|trans }}</div>{% endif %}
+                        <div class="{{ ruleFormCardClasses }}">
+                            <div class="flex items-start gap-2">
+                                <div class="{{ ruleFormRowClasses }} min-w-0 flex-1">
+                                    <div class="{{ ruleFormTypeClasses }}">{{ form_widget(row.type, { attr: { class: ruleFormControl, 'aria-label': 'automation.form.then'|trans } }) }}</div>
+                                    {% for field in row.params %}
+                                        {% if 'textarea' not in field.vars.block_prefixes and not field.vars.expanded|default(false) %}
+                                            <div class="{{ 'checkbox' in field.vars.block_prefixes ? 'min-w-0 flex-1 basis-48 px-1' : ruleFormValueClasses }}">{{ form_widget(field, { attr: field.vars.attr|merge({ class: ruleFormControl }) }) }}{{ form_errors(field) }}</div>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                                <twig:Ui:IconButton icon="x" :label="'automation.form.remove'|trans" class="mt-0.5" data-action="live#action" data-live-action-param="removeAction" data-live-index-param="{{ index }}" />
                             </div>
                             {% for field in row.params %}
                                 {% if field.vars.expanded|default(false) %}
-                                    {# Several values: one box each under the row, the action holds on any of them. #}
-                                    <div class="flex flex-wrap gap-x-5 gap-y-1.5 rounded-md border border-line-subtle bg-subtle/60 px-3 py-2.5">
-                                        {% for ruleFormBox in field %}
-                                            <twig:Ui:Form:Checkbox :label="ruleFormBox.vars.label" :checked="ruleFormBox.vars.checked" :id="ruleFormBox.vars.id" :name="ruleFormBox.vars.full_name" :value="ruleFormBox.vars.value" />
-                                            {% do ruleFormBox.setRendered %}
-                                        {% endfor %}
+                                    {# Several values: one box each, the action holds on any of them. #}
+                                    <div class="{{ ruleFormValuesClasses }}">
+                                        <p class="{{ ruleFormValuesLabelClasses }}">{{ ('automation.form.' ~ row.type.vars.value ~ '_' ~ field.vars.name)|trans }}</p>
+                                        <div class="flex flex-wrap gap-x-5 gap-y-1.5">
+                                            {% for ruleFormBox in field %}
+                                                <twig:Ui:Form:Checkbox :label="ruleFormBox.vars.label" :checked="ruleFormBox.vars.checked" :id="ruleFormBox.vars.id" :name="ruleFormBox.vars.full_name" :value="ruleFormBox.vars.value" />
+                                                {% do ruleFormBox.setRendered %}
+                                            {% endfor %}
+                                        </div>
+                                        {% do field.setRendered %}
+                                        <p class="text-xs text-muted">{{ ('automation.form.' ~ row.type.vars.value ~ '_help')|trans }}</p>
+                                        {{ form_errors(field) }}
                                     </div>
-                                    {% do field.setRendered %}
-                                    <p class="text-xs text-muted">{{ ('automation.form.' ~ row.type.vars.value ~ '_help')|trans }}</p>
-                                    {{ form_errors(field) }}
                                 {% elseif 'textarea' in field.vars.block_prefixes %}
-                                    {{ form_widget(field, { attr: field.vars.attr|merge({ class: 'mt-0' }) }) }}
-                                    {{ form_errors(field) }}
-                                    <p class="text-xs text-muted">{{ 'automation.form.body_help'|trans }}</p>
+                                    <div class="space-y-1.5">
+                                        {{ form_widget(field, { attr: field.vars.attr|merge({ class: 'mt-0 block' }) }) }}
+                                        {{ form_errors(field) }}
+                                        <p class="text-xs text-muted">{{ 'automation.form.body_help'|trans }}</p>
+                                    </div>
                                 {% elseif field.vars.name == 'target' %}
                                     {# A referent is a role, not a person: who it leads to today, or that nobody answers for it. #}
                                     {% set ruleFormReferent = this.referentToday(field.vars.value ?? '') %}

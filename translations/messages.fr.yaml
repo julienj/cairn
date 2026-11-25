@@ -1679,8 +1679,11 @@ automation:
         cancel: Annuler
         choose: Choisir…
         any_place: n'importe quelle étape
-        any_of: "Cochez une ou plusieurs valeurs : la condition est vraie si l'une d'elles correspond."
-        mark_budget_lines_help: "Cochez les statuts de départ : seules les lignes de la demande qui sont dans l'un d'eux sont marquées, dans les budgets ouverts, chacune gardant sa quantité. Une ligne sans quantité est laissée telle quelle quand le nouveau statut en demande un."
+        any_of: "L'une de ces valeurs :"
+        and: et
+        next: puis
+        mark_budget_lines_from: 'Lignes actuellement :'
+        mark_budget_lines_help: "Seules les lignes de la demande dans l'un des statuts cochés sont marquées, dans les budgets ouverts, chacune gardant sa quantité. Une ligne sans quantité est laissée telle quelle quand le nouveau statut en demande un."
         needs_tracker: Limitez la règle à une catégorie pour choisir ici.
         in_plain: En clair
         how: Comment elle agit
