@@ -1,10 +1,14 @@
 import { buttonStyles, createButton } from './button.js';
 
+const KEY = 'cairn-widget-open';
+
 /*
  * What the widget shows on the site: its button, and the panel that
  * holds a page of Cairn in a frame the site cannot read. Both live in a
  * closed shadow tree, out of reach of the styles of the site and of its
- * own. The frame is only created the first time the panel opens.
+ * own. The frame is only created the first time the panel opens. Whether
+ * the panel is open is kept in the sessionStorage of the site, so that it
+ * stays open from page to page in this tab.
  *
  * The frame and the script talk by messages, each checking where the
  * other's come from: the script hands over what it noted (`report()`),
@@ -41,6 +45,13 @@ iframe { display: block; width: 100%; height: 100%; border: 0; }
         }
         panel.hidden = !open;
         button.hidden = open;
+        try {
+            if (open) {
+                window.sessionStorage.setItem(KEY, '1');
+            } else {
+                window.sessionStorage.removeItem(KEY);
+            }
+        } catch { /* no storage: the panel closes with the page */ }
         if (open) {
             send({ type: 'cairn:context', report: report() });
         }
@@ -75,4 +86,9 @@ iframe { display: block; width: 100%; height: 100%; border: 0; }
     root.append(style, button, panel);
     // Beside the body, not in it: a site that replaces its body to change page (Turbo, htmx) would take the widget away.
     document.documentElement.appendChild(host);
+    try {
+        if ('1' === window.sessionStorage.getItem(KEY)) {
+            show(true);
+        }
+    } catch { /* no storage: the panel starts closed */ }
 }
