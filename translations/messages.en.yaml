@@ -1679,8 +1679,11 @@ automation:
         cancel: Cancel
         choose: Choose…
         any_place: any step
-        any_of: 'Check one or several values: the condition holds when one of them matches.'
-        mark_budget_lines_help: 'Check the statuses to start from: only the lines of the issue that stand in one of them are marked, in the open budgets, each keeping its quantity. A line without a quantity is left alone when the new status asks for one.'
+        any_of: 'Any of these values:'
+        and: and
+        next: then
+        mark_budget_lines_from: 'Lines that are now:'
+        mark_budget_lines_help: 'Only the lines of the issue in one of the statuses checked are marked, in the open budgets, each keeping its quantity. A line without a quantity is left alone when the new status asks for one.'
         needs_tracker: Limit the rule to a category to choose here.
         in_plain: In plain words
         how: How it acts
