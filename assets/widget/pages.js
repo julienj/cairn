@@ -8,10 +8,11 @@ const KEY = 'cairn-widget-pages';
  * sessionStorage: the list lasts as long as the tab, and is nobody's
  * history. A page that changes its address without loading (an
  * application in one page) is another page seen. A page that does not
- * load the widget is missing from the list.
+ * load the widget is missing from the list. `noted` is called after
+ * each page seen.
  * Returns the function that gives the list.
  */
-export function watchPages() {
+export function watchPages(noted) {
     const pages = () => {
         try {
             const list = JSON.parse(window.sessionStorage.getItem(KEY) || '[]');
@@ -33,6 +34,7 @@ export function watchPages() {
         try {
             window.sessionStorage.setItem(KEY, JSON.stringify(list));
         } catch { /* no storage: the list is this page alone */ }
+        noted();
     };
 
     for (const name of ['pushState', 'replaceState']) {

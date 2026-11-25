@@ -8,10 +8,11 @@ const MAX_REQUESTS = 30;
  * the address without its parameters, the status and the time are kept:
  * nothing of what a request carried or received is read. The requests
  * made to Cairn itself (`ignored`, its origin) are not the page's.
+ * `noted` is called after each one.
  * Returns the function that gives what was noted so far, and the fetch
  * of the browser as it was, for the widget's own request.
  */
-export function watchRequests(ignored) {
+export function watchRequests(ignored, noted) {
     const requests = [];
     const nativeFetch = window.fetch;
 
@@ -19,6 +20,7 @@ export function watchRequests(ignored) {
         const url = bare(address);
         if (!url.startsWith(`${ignored}/`)) {
             keep(requests, MAX_REQUESTS, { method: String(method || 'GET').toUpperCase(), url, status, at: now() });
+            noted();
         }
     };
 
