@@ -1403,13 +1403,33 @@ widget:
         screen: Écran
         context: Transmis par le site
         errors: '{0}Console|{1}Console · 1 erreur|]1,Inf[ Console · %count% erreurs'
-        requests: '{0}Requêtes Ajax en échec|{1}Requêtes Ajax en échec · 1|]1,Inf[ Requêtes Ajax en échec · %count%'
-        requests_help: Les appels faits par la page (fetch, XHR), sans leur contenu.
-        network: réseau
+        network: '{0}Réseau|{1}Réseau · 1 échec|]1,Inf[ Réseau · %count% échecs'
+        network_help: 'Ce que la page a demandé au réseau sans l''obtenir, dans l''ordre : ses appels Ajax (fetch, XHR, sans leur contenu) et ses fichiers, avec le code de la réponse quand le navigateur le donne.'
+        no_answer: sans réponse
+        kind:
+            ajax: Ajax
+            image: image
+            script: script
+            stylesheet: style
+            font: police
+            media: média
+            other: fichier
         pages: '{0}Pages vues|{1}Pages vues · 1|]1,Inf[ Pages vues · %count%'
         pages_help: Dans cet onglet, sans les paramètres des adresses.
+        zoom: Zoom
+        preferences: Système
+        preference:
+            light: Thème clair
+            dark: Thème sombre
+            pointer_fine: Souris
+            pointer_coarse: Écran tactile
+            pointer_none: Sans pointeur
+            reduced_motion: Animations réduites
+            contrast_more: Contraste élevé
+            contrast_less: Contraste réduit
+            forced_colors: Couleurs forcées
         none: Rien de relevé.
-        summary: Page, navigateur, écran, erreurs, requêtes Ajax, pages vues
+        summary: Page, navigateur, écran, erreurs, réseau, pages vues
     sent:
         title: 'Demande %key% créée'
         text: L'équipe du projet est prévenue.

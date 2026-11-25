@@ -81,10 +81,13 @@ final class IssueApiTest extends ApiTestCase
             fields: ['environment' => 'preprod'],
             report: [
                 'page' => ['url' => 'https://staging.maison-dupont.test/lamps', 'title' => 'Pendant lamps'],
-                'environment' => ['userAgent' => 'Mozilla/5.0 (X11; Linux x86_64; rv:145.0) Gecko/20100101 Firefox/145.0', 'viewport' => ['width' => 1280, 'height' => 800]],
+                'environment' => ['userAgent' => 'Mozilla/5.0 (X11; Linux x86_64; rv:145.0) Gecko/20100101 Firefox/145.0', 'viewport' => ['width' => 1280, 'height' => 800], 'zoom' => 1.25, 'preferences' => ['colorScheme' => 'dark', 'reducedMotion' => false, 'forcedColors' => false, 'pointer' => 'fine']],
                 'context' => ['version' => '2026.11.3', 'environment' => 'staging'],
                 'errors' => [['kind' => 'console', 'message' => 'Price not found', 'at' => '2026-11-24T10:14:07.000Z']],
-                'requests' => [['method' => 'GET', 'url' => 'https://staging.maison-dupont.test/api/prices/halo', 'status' => 500]],
+                'network' => [
+                    ['kind' => 'image', 'url' => 'https://staging.maison-dupont.test/images/halo.jpg', 'status' => 404, 'at' => '2026-11-24T10:14:05.000Z'],
+                    ['kind' => 'ajax', 'method' => 'GET', 'url' => 'https://staging.maison-dupont.test/api/prices/halo', 'status' => 500, 'at' => '2026-11-24T10:14:06.000Z'],
+                ],
                 'pages' => [['url' => 'https://staging.maison-dupont.test/'], ['url' => 'https://staging.maison-dupont.test/lamps']],
             ],
         ));
@@ -96,7 +99,12 @@ final class IssueApiTest extends ApiTestCase
         self::assertSame([['version', '2026.11.3'], ['environment', 'staging']], array_map(static fn (array $context): array => [$context['name'], $context['value']], $report['context']));
         self::assertSame(['width' => 1280, 'height' => 800], array_intersect_key($report['viewport'], ['width' => 0, 'height' => 0]));
         self::assertSame([['console', 'Price not found', '2026-11-24T10:14:07.000Z']], array_map(static fn (array $error): array => [$error['kind'], $error['message'], $error['at']], $report['errors']));
-        self::assertSame([['GET', 'https://staging.maison-dupont.test/api/prices/halo', 500]], array_map(static fn (array $request): array => [$request['method'], $request['url'], $request['status']], $report['requests']));
+        self::assertSame([
+            ['image', null, 'https://staging.maison-dupont.test/images/halo.jpg', 404],
+            ['ajax', 'GET', 'https://staging.maison-dupont.test/api/prices/halo', 500],
+        ], array_map(static fn (array $request): array => [$request['kind'], $request['method'], $request['url'], $request['status']], $report['network']));
+        self::assertSame(1.25, $report['zoom']);
+        self::assertSame(['dark', false, 'fine'], [$report['preferences']['colorScheme'], $report['preferences']['reducedMotion'], $report['preferences']['pointer']]);
         self::assertSame(['https://staging.maison-dupont.test/lamps', 'https://staging.maison-dupont.test/'], array_column($report['pages'], 'url'), 'the last page seen first');
 
         // an issue written in Cairn has none, and a list carries none

@@ -1403,13 +1403,33 @@ widget:
         screen: Screen
         context: Said by the site
         errors: '{0}Console|{1}Console · 1 error|]1,Inf[ Console · %count% errors'
-        requests: '{0}Failed Ajax requests|{1}Failed Ajax requests · 1|]1,Inf[ Failed Ajax requests · %count%'
-        requests_help: The calls made by the page (fetch, XHR), without what they carried.
-        network: network
+        network: '{0}Network|{1}Network · 1 failure|]1,Inf[ Network · %count% failures'
+        network_help: 'What the page asked of the network and did not get, in order: its Ajax calls (fetch, XHR, without what they carried) and its files, with the code of the answer when the browser gives it.'
+        no_answer: no answer
+        kind:
+            ajax: Ajax
+            image: image
+            script: script
+            stylesheet: style
+            font: font
+            media: media
+            other: file
         pages: '{0}Pages seen|{1}Pages seen · 1|]1,Inf[ Pages seen · %count%'
         pages_help: In this tab, without the parameters of the addresses.
+        zoom: Zoom
+        preferences: System
+        preference:
+            light: Light theme
+            dark: Dark theme
+            pointer_fine: Mouse
+            pointer_coarse: Touch screen
+            pointer_none: No pointer
+            reduced_motion: Reduced motion
+            contrast_more: More contrast
+            contrast_less: Less contrast
+            forced_colors: Forced colours
         none: Nothing noted.
-        summary: Page, browser, screen, errors, Ajax requests, pages seen
+        summary: Page, browser, screen, errors, network, pages seen
     sent:
         title: 'Issue %key% created'
         text: The team of the project is told.

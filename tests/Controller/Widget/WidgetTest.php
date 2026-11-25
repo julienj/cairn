@@ -327,10 +327,14 @@ final class WidgetTest extends WebTestCase
 
         $technical = [
             'page' => ['url' => self::SITE.'/lamps', 'title' => 'Pendant lamps'],
-            'environment' => ['userAgent' => 'Mozilla/5.0 (X11; Linux x86_64; rv:145.0) Gecko/20100101 Firefox/145.0', 'viewport' => ['width' => 1280, 'height' => 800]],
+            'environment' => ['userAgent' => 'Mozilla/5.0 (X11; Linux x86_64; rv:145.0) Gecko/20100101 Firefox/145.0', 'viewport' => ['width' => 1280, 'height' => 800], 'zoom' => 1.5, 'preferences' => ['colorScheme' => 'dark', 'reducedMotion' => true, 'pointer' => 'coarse']],
             'context' => ['version' => '2026.11.3-rc2'],
             'errors' => [['kind' => 'console', 'message' => 'Price not found', 'at' => '2026-11-24T10:14:07.000Z']],
-            'requests' => [['method' => 'GET', 'url' => self::SITE.'/api/prices/halo', 'status' => 500]],
+            'network' => [
+                ['kind' => 'ajax', 'method' => 'GET', 'url' => self::SITE.'/api/prices/halo', 'status' => 500, 'at' => '2026-11-24T10:14:06.000Z'],
+                ['kind' => 'font', 'url' => self::SITE.'/fonts/brume.woff2', 'status' => 404, 'at' => '2026-11-24T10:14:05.000Z'],
+                ['kind' => 'image', 'url' => self::SITE.'/images/halo.jpg', 'at' => '2026-11-24T10:14:07.000Z'],
+            ],
             'pages' => [['url' => self::SITE.'/'], ['url' => self::SITE.'/lamps']],
             'cookies' => 'whatever else a page may send',
         ];
@@ -339,7 +343,15 @@ final class WidgetTest extends WebTestCase
         self::assertSelectorTextContains('body', 'Firefox 145 · Linux');
         self::assertSelectorTextContains('body', '2026.11.3-rc2');
         self::assertSelectorTextContains('body', 'Price not found');
-        self::assertSelectorTextContains('body', 'GET '.self::SITE.'/api/prices/halo');
+        self::assertSelectorTextContains('body', 'Network · 3 failures');
+        $network = $this->client->getCrawler()->filter('li')->each(static fn ($item): string => (string) preg_replace('/\s+/', ' ', trim($item->text())));
+        self::assertSame([
+            '10:14:05 font 404 '.self::SITE.'/fonts/brume.woff2',
+            '10:14:06 Ajax 500 GET '.self::SITE.'/api/prices/halo',
+            '10:14:07 image '.self::SITE.'/images/halo.jpg',
+        ], array_values(array_filter($network, static fn (string $line): bool => 1 === preg_match('/^\d\d:\d\d:\d\d /', $line))), 'in the order it failed: its kind, its status, its address');
+        self::assertSelectorTextContains('body', '150 %');
+        self::assertSelectorTextContains('body', 'Dark theme · Touch screen · Reduced motion');
         self::assertSelectorTextNotContains('body', 'whatever else');
 
         $form = ['tracker' => (string) $bug->getId(), 'title' => 'The price of Halo shows NaN', 'description' => 'The first lamp has no price.', 'criticality' => 'high', 'tags' => [(string) $tag->getId()], 'technical' => json_encode($technical), 'includeReport' => '1'];

@@ -13,9 +13,11 @@
  * neither an account nor a token. It does three things.
  *
  * 1. From the moment it is loaded, it notes what helps reproduce a
- *    problem: the errors of the page (errors.js), its Ajax requests that
- *    failed (requests.js), the pages seen in this tab (pages.js), and
- *    what the site says of itself in `window.Cairn` (context.js).
+ *    problem: the errors of the page (errors.js), its requests that
+ *    failed, Ajax or files (network.js), the pages seen in this tab
+ *    (pages.js), and what the site says of itself in `window.Cairn`
+ *    (context.js); and, when the report is handed over, the zoom and the
+ *    preferences of the system (preferences.js).
  * 2. It asks Cairn whether the project knows this site. Only then does it
  *    show its button; on any other site nothing shows.
  * 3. The button opens a panel holding a page of Cairn (panel.js), which
@@ -24,9 +26,10 @@
 import { wanted } from './activation.js';
 import { watchContext } from './context.js';
 import { watchErrors } from './errors.js';
+import { watchNetwork } from './network.js';
 import { watchPages } from './pages.js';
 import { createPanel } from './panel.js';
-import { watchRequests } from './requests.js';
+import { preferences, zoom } from './preferences.js';
 import { bare, cut, now } from './text.js';
 
 const script = document.currentScript;
@@ -41,7 +44,7 @@ if (script && keys && window.fetch && !window.__cairnWidget && wanted(script)) {
     // the panel, once there, hears of what is noted
     let noted = () => {};
     const errors = watchErrors(() => noted());
-    const { requests, nativeFetch } = watchRequests(cairn, () => noted());
+    const { network, nativeFetch } = watchNetwork(cairn, () => noted());
     const pages = watchPages(() => noted());
     const context = watchContext(() => noted());
 
@@ -53,10 +56,12 @@ if (script && keys && window.fetch && !window.__cairnWidget && wanted(script)) {
             viewport: { width: window.innerWidth, height: window.innerHeight },
             screen: { width: window.screen.width, height: window.screen.height },
             pixelRatio: window.devicePixelRatio || 1,
+            zoom: zoom(),
+            preferences: preferences(),
         },
         context: context(),
         errors: errors(),
-        requests: requests(),
+        network: network(),
         pages: pages(),
         collectedAt: now(),
     });

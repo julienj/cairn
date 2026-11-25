@@ -7,28 +7,32 @@ namespace App\Widget;
 /**
  * What the script of the widget noted on the site a problem is reported
  * from: the page, the browser, what the site says of itself (its
- * context: names and texts its pages chose), the errors of the page, its
- * Ajax requests that failed and the pages seen in the tab. It comes from a page nobody
- * here controls, through the browser of the reporter: only the shape
- * known here is kept, every text cut and every list bounded, and it is
+ * context: names and texts its pages chose), the errors of the page,
+ * what failed on its network (its Ajax requests and its files) and the
+ * pages seen in the tab. It comes from a page nobody here controls,
+ * through the browser of the reporter: only the shape known here is kept, every text cut and every list bounded, and it is
  * shown as what the site said, never trusted for anything.
  */
 final readonly class TechnicalReport
 {
     private const int MAX_ENTRIES = 30;
+    /** Ajax requests and files together: as many of each as of the other lists. */
+    private const int MAX_NETWORK = 60;
     private const int MAX_TEXT = 600;
     private const int MAX_ADDRESS = 400;
     private const int MAX_NAME = 60;
 
     private const array ERROR_KINDS = ['console', 'error', 'rejection'];
+    /** An Ajax request of the page, or one of its files that did not load. */
+    private const array NETWORK_KINDS = ['ajax', 'image', 'script', 'stylesheet', 'font', 'media', 'other'];
 
     /**
      * @param array{
      *     page: array{url: string, title: ?string},
-     *     environment: array{userAgent: ?string, language: ?string, viewport: ?array{width: int, height: int}, screen: ?array{width: int, height: int}, pixelRatio: ?float},
+     *     environment: array{userAgent: ?string, language: ?string, viewport: ?array{width: int, height: int}, screen: ?array{width: int, height: int}, pixelRatio: ?float, zoom: ?float, preferences: ?array{colorScheme: ?string, reducedMotion: ?bool, contrast: ?string, forcedColors: ?bool, pointer: ?string}},
      *     context: array<string, string>,
      *     errors: list<array{kind: string, message: string, source: ?string, at: ?string}>,
-     *     requests: list<array{method: string, url: string, status: int, at: ?string}>,
+     *     network: list<array{kind: string, method: ?string, url: string, status: ?int, at: ?string}>,
      *     pages: list<array{url: string, title: ?string, at: ?string}>,
      *     collectedAt: ?string,
      * } $data
@@ -47,7 +51,6 @@ final readonly class TechnicalReport
             return null;
         }
         $environment = \is_array($raw['environment'] ?? null) ? $raw['environment'] : [];
-        $pixelRatio = $environment['pixelRatio'] ?? null;
 
         $errors = [];
         foreach (self::entries($raw['errors'] ?? null) as $entry) {
@@ -61,18 +64,30 @@ final readonly class TechnicalReport
                 ];
             }
         }
-        $requests = [];
-        foreach (self::entries($raw['requests'] ?? null) as $entry) {
+        $network = [];
+        foreach (self::entries($raw['network'] ?? null, self::MAX_NETWORK) as $entry) {
             if (null !== $address = self::text($entry['url'] ?? null, self::MAX_ADDRESS)) {
+                $kind = \in_array($entry['kind'] ?? null, self::NETWORK_KINDS, true) ? $entry['kind'] : 'other';
                 $method = strtoupper((string) self::text($entry['method'] ?? null, 10));
-                $requests[] = [
+                $network[] = 'ajax' === $kind ? [
+                    'kind' => $kind,
                     'method' => 1 === preg_match('/^[A-Z]+$/', $method) ? $method : 'GET',
                     'url' => $address,
+                    // 0: no answer at all
                     'status' => self::number($entry['status'] ?? null, 0, 599) ?? 0,
+                    'at' => self::time($entry['at'] ?? null),
+                ] : [
+                    'kind' => $kind,
+                    'method' => null,
+                    'url' => $address,
+                    // null: the browser did not say
+                    'status' => self::number($entry['status'] ?? null, 100, 599),
                     'at' => self::time($entry['at'] ?? null),
                 ];
             }
         }
+        // in the order it failed, whatever order the page sent it in; what has no moment last
+        usort($network, static fn (array $one, array $other): int => [null === $one['at'], $one['at']] <=> [null === $other['at'], $other['at']]);
         $pages = [];
         foreach (self::entries($raw['pages'] ?? null) as $entry) {
             if (null !== $address = self::text($entry['url'] ?? null, self::MAX_ADDRESS)) {
@@ -87,11 +102,13 @@ final readonly class TechnicalReport
                 'language' => self::text($environment['language'] ?? null, 20),
                 'viewport' => self::size($environment['viewport'] ?? null),
                 'screen' => self::size($environment['screen'] ?? null),
-                'pixelRatio' => (\is_int($pixelRatio) || \is_float($pixelRatio)) && $pixelRatio > 0 && $pixelRatio <= 10 ? round((float) $pixelRatio, 2) : null,
+                'pixelRatio' => self::ratio($environment['pixelRatio'] ?? null),
+                'zoom' => self::ratio($environment['zoom'] ?? null),
+                'preferences' => self::preferences($environment['preferences'] ?? null),
             ],
             'context' => self::pairs($raw['context'] ?? null),
             'errors' => $errors,
-            'requests' => $requests,
+            'network' => $network,
             'pages' => $pages,
             'collectedAt' => self::time($raw['collectedAt'] ?? null),
         ]);
@@ -116,7 +133,7 @@ final readonly class TechnicalReport
     }
 
     /**
-     * @return array{userAgent: ?string, language: ?string, viewport: ?array{width: int, height: int}, screen: ?array{width: int, height: int}, pixelRatio: ?float}
+     * @return array{userAgent: ?string, language: ?string, viewport: ?array{width: int, height: int}, screen: ?array{width: int, height: int}, pixelRatio: ?float, zoom: ?float, preferences: ?array{colorScheme: ?string, reducedMotion: ?bool, contrast: ?string, forcedColors: ?bool, pointer: ?string}}
      */
     public function environment(): array
     {
@@ -142,11 +159,17 @@ final readonly class TechnicalReport
     }
 
     /**
-     * @return list<array{method: string, url: string, status: int, at: ?string}>
+     * What failed on the network, Ajax requests and files together, in the
+     * order it failed: its kind (`ajax`, or the kind of the file), the
+     * method of a request, its address, the status of the answer (0 for a
+     * request that got none, null for a file whose status the browser did
+     * not give) and its moment.
+     *
+     * @return list<array{kind: string, method: ?string, url: string, status: ?int, at: ?string}>
      */
-    public function requests(): array
+    public function network(): array
     {
-        return $this->data['requests'];
+        return $this->data['network'];
     }
 
     /**
@@ -200,13 +223,13 @@ final readonly class TechnicalReport
     /**
      * @return list<array<mixed>>
      */
-    private static function entries(mixed $list): array
+    private static function entries(mixed $list, int $max = self::MAX_ENTRIES): array
     {
         if (!\is_array($list)) {
             return [];
         }
 
-        return \array_slice(array_values(array_filter($list, \is_array(...))), -self::MAX_ENTRIES);
+        return \array_slice(array_values(array_filter($list, \is_array(...))), -$max);
     }
 
     private static function text(mixed $value, int $max): ?string
@@ -245,6 +268,37 @@ final readonly class TechnicalReport
     private static function number(mixed $value, int $min, int $max): ?int
     {
         return \is_int($value) && $value >= $min && $value <= $max ? $value : null;
+    }
+
+    /**
+     * A ratio of pixels or a zoom: a number above 0 and up to 10.
+     */
+    private static function ratio(mixed $value): ?float
+    {
+        return (\is_int($value) || \is_float($value)) && $value > 0 && $value <= 10 ? round((float) $value, 2) : null;
+    }
+
+    /**
+     * What the reporter asked of their system, each preference one of the
+     * values a media query gives, or nothing.
+     *
+     * @return array{colorScheme: ?string, reducedMotion: ?bool, contrast: ?string, forcedColors: ?bool, pointer: ?string}|null
+     */
+    private static function preferences(mixed $value): ?array
+    {
+        if (!\is_array($value)) {
+            return null;
+        }
+        $one = static fn (string $name, array $values): ?string => \in_array($value[$name] ?? null, $values, true) ? $value[$name] : null;
+        $flag = static fn (string $name): ?bool => \is_bool($value[$name] ?? null) ? $value[$name] : null;
+
+        return [
+            'colorScheme' => $one('colorScheme', ['light', 'dark']),
+            'reducedMotion' => $flag('reducedMotion'),
+            'contrast' => $one('contrast', ['more', 'less']),
+            'forcedColors' => $flag('forcedColors'),
+            'pointer' => $one('pointer', ['fine', 'coarse', 'none']),
+        ];
     }
 
     /**
