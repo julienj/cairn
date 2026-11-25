@@ -3,8 +3,9 @@ import { Controller } from '@hotwired/stimulus';
 /*
  * A text field with suggestions: the list opens on focus and narrows as
  * the user types; arrows move, Enter or a click fills the field with the
- * suggestion, Escape or a click outside closes. What is typed and
+ * suggestion, Escape, Tab or a click outside closes. What is typed and
  * matches nothing stays: a suggestion is a shortcut, not a constraint.
+ * The document is listened to only while the list is open.
  *
  * <div data-controller="combobox">
  *   <input data-combobox-target="input" data-action="input->combobox#filter focus->combobox#open keydown->combobox#navigate">
@@ -23,7 +24,6 @@ export default class extends Controller {
                 this.close();
             }
         };
-        document.addEventListener('click', this.onDocumentClick);
     }
 
     disconnect() {
@@ -48,12 +48,20 @@ export default class extends Controller {
     }
 
     navigate(event) {
-        if (event.key === 'Escape') {
+        if (event.key === 'Escape' || event.key === 'Tab') {
+            if (event.key === 'Escape' && this.isOpen) {
+                // so that what holds the field (a dialog) does not close with the list
+                event.preventDefault();
+            }
             this.close();
 
             return;
         }
-        if (!['ArrowDown', 'ArrowUp', 'Enter'].includes(event.key)) {
+        if (!['ArrowDown', 'ArrowUp', 'Home', 'End', 'Enter'].includes(event.key)) {
+            return;
+        }
+        if ((event.key === 'Home' || event.key === 'End') && this.active < 0) {
+            // the caret moves in the text until an option is reached
             return;
         }
         const options = this.visibleOptions;
@@ -72,7 +80,12 @@ export default class extends Controller {
         if (!this.isOpen) {
             this.show();
         }
-        this.active = event.key === 'ArrowDown' ? Math.min(this.active + 1, options.length - 1) : Math.max(this.active - 1, 0);
+        this.active = {
+            ArrowDown: Math.min(this.active + 1, options.length - 1),
+            ArrowUp: Math.max(this.active - 1, 0),
+            Home: 0,
+            End: options.length - 1,
+        }[event.key];
         options.forEach((option, index) => {
             if (index === this.active) {
                 option.setAttribute('aria-selected', 'true');
@@ -98,9 +111,11 @@ export default class extends Controller {
     show() {
         this.listTarget.hidden = false;
         this.inputTarget.setAttribute('aria-expanded', 'true');
+        document.addEventListener('click', this.onDocumentClick);
     }
 
     close() {
+        document.removeEventListener('click', this.onDocumentClick);
         this.listTarget.hidden = true;
         this.inputTarget.setAttribute('aria-expanded', 'false');
         this.active = -1;
