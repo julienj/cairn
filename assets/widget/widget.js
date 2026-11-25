@@ -1,7 +1,10 @@
 /*
  * The widget of Cairn, as a site being reviewed loads it:
  *
- *   <script src="https://cairn.example.com/widget.js" data-project="MD-SPT" async></script>
+ *   <script src="https://cairn.example.com/widget.js" data-project="MD-SPT" data-display="always" async></script>
+ *
+ * Without data-display="always" (production), it does nothing at all
+ * until someone asks for it with `?cairn=1` (activation.js).
  *
  * Built by Vite into one file of its own (vite.config.ts, mode "widget"), at an
  * address that never changes: a classic script, not a module, because a
@@ -13,10 +16,11 @@
  *    problem: the errors of the page (errors.js), its Ajax requests that
  *    failed (requests.js) and the pages seen in this tab (pages.js).
  * 2. It asks Cairn whether the project knows this site. Only then does it
- *    show its button; on any other site (production, say) nothing shows.
+ *    show its button; on any other site nothing shows.
  * 3. The button opens a panel holding a page of Cairn (panel.js), which
  *    it hands what it noted.
  */
+import { wanted } from './activation.js';
 import { watchErrors } from './errors.js';
 import { watchPages } from './pages.js';
 import { createPanel } from './panel.js';
@@ -26,7 +30,7 @@ import { bare, cut, now } from './text.js';
 const script = document.currentScript;
 const keys = /^([A-Z0-9]{2,5})-([A-Z0-9]{2,5})$/.exec((script?.getAttribute('data-project') ?? '').toUpperCase());
 
-if (script && keys && window.fetch && !window.__cairnWidget) {
+if (script && keys && window.fetch && !window.__cairnWidget && wanted(script)) {
     window.__cairnWidget = true;
 
     const cairn = new URL(script.src, window.location.href).origin;

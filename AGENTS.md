@@ -495,14 +495,21 @@ src/
   and what happened before is not in the report. It has no dependency,
   notes what the page did, asks whether the project knows the site before
   it shows anything, and never sees an account nor a token. Its button is
-  moved by whoever reviews the site, and the site remembers where.
+  moved by whoever reviews the site, and the site remembers where. The
+  tag says who gets it: everybody (`data-display="always"`, a site being
+  reviewed), or whoever asked with `?cairn=1`, which the site remembers
+  (`activation.js`). That is decided by the page alone, before anything
+  else: for everybody else the script listens to nothing, stores nothing
+  and asks Cairn nothing, which is what lets it sit in production, and
+  why it is not a setting of the site in Cairn. The parameter is no
+  secret.
 - **The widget is optional without a setting**: a project has one as soon
   as it has a site (`WidgetSite`, an origin), declared by its managers
   under `project.configure`. The sites say who may frame the widget
   (`Widget/FrameHeaders`: the one site the frame was asked for; the rest
   of the application is never framed), what a token is bound to, and
-  where the button shows: a site nobody declared, production above all,
-  gets nothing. What answers before anybody is known answers a declared
+  where the button may show: a site nobody declared gets nothing,
+  whatever its tag says. What answers before anybody is known answers a declared
   site and is a 404 for anything else, a project that does not exist
   included: nobody learns from outside which projects there are, nor
   where they are reviewed.
@@ -791,7 +798,8 @@ host.
   another site than Cairn for the browser, which is the point: a second
   port of `localhost` would not be. Its port is fixed: the development
   data declare the address. One request fails on purpose and one
-  page has a strict Content-Security-Policy. Reached by the address of
+  page has a strict Content-Security-Policy; `live.html` loads the widget
+  as production does, on demand. Reached by the address of
   the machine on the network, the same pages are a site without HTTPS:
   declare that address on the project to see the widget without its
   screenshot, or on a phone. Nothing of it is in the production image.

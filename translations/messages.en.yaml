@@ -1387,7 +1387,7 @@ tag:
 widget:
     title: Report a problem
     close: Close the panel
-    intro: The widget lets the people of the project report a problem from the site being reviewed, without leaving it. It shows on the sites declared here and nowhere else; everyone signs in with their own Cairn account.
+    intro: The widget lets the people of the project report a problem from the site being reviewed, without leaving it. It only shows on the sites declared here, to everybody or to whoever asks for it; everyone signs in with their own Cairn account.
     alone: This page is shown by the widget, on a site of the project.
     site:
         new: New site
@@ -1404,7 +1404,13 @@ widget:
             address_help: 'Scheme and domain, without a path: https://staging.example.com'
     install:
         title: On the pages of the site
-        help: 'Put this line in the <head> of every page, as early as possible: what happened before it loaded is not in the report. Leave it out of production.'
+        help: 'Put one of these lines in the <head> of every page, as early as possible: what happened before it loaded is not in the report.'
+        always:
+            title: On a site being reviewed
+            help: Everybody sees the button.
+        on_demand:
+            title: In production
+            help: 'Nobody sees the button, and the script does nothing, until someone opens a page of the site with ?cairn=1 at the end of its address. The site then remembers them in that browser; ?cairn=0 hides the button again.'
         copy: Copy
         copied: Copied
     refused:
