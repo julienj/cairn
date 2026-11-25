@@ -10,13 +10,13 @@ use App\Entity\Enum\Criticality;
 use App\Entity\Tag;
 use App\Entity\Tracker;
 use App\Form\Issue\IssueFieldsType;
+use App\Form\Type\MarkdownType;
 use App\Form\Type\ToggleType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\EnumType;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
-use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -27,8 +27,9 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  * (the page is one, redrawn when it changes), of the workflow fields only
  * those it requires are asked, and what the reporter may qualify
  * (criticality, tags, privacy) is decided by the controller through the
- * options, as for the form of the application. The description is plain
- * markdown: the editor of the application lives in its session.
+ * options, as for the form of the application. The description is
+ * written in the editor of the application, without what lives in its
+ * session: no suggestion of issues nor people, no pasted image.
  *
  * @extends AbstractType<ReportData>
  */
@@ -49,7 +50,7 @@ final class ReportType extends AbstractType
                 'label' => 'widget.form.tracker',
             ])
             ->add('title', TextType::class, ['label' => 'widget.form.title'])
-            ->add('description', TextareaType::class, [
+            ->add('description', MarkdownType::class, [
                 'label' => 'widget.form.description',
                 'attr' => ['rows' => 4],
             ])

@@ -452,8 +452,10 @@ src/
   identity providers cut that.
 - **The form of the widget is its own** (`Form/Widget/ReportType`): a
   plain form in a Turbo frame, no live component (their endpoint is under
-  the `main` firewall), the fields the category requires and no other, a
-  plain textarea. It feeds the ordinary commands (`CreateIssue`,
+  the `main` firewall), the fields the category requires and no other.
+  The description is written in the editor of the application, without
+  its suggestions nor its pasted images, whose endpoints are under the
+  `main` firewall too. It feeds the ordinary commands (`CreateIssue`,
   `UploadAttachment`). The frame signs what Turbo sends
   (`widget_frame_controller.js`); what a controller of the form sends by
   itself asks the frame for the token (`widget:context`).
