@@ -1,6 +1,8 @@
 import { buttonStyles, createButton } from './button.js';
 
 const KEY = 'cairn-widget-open';
+/* How long what is noted waits before going to the frame, so that a burst goes as one message, in milliseconds. */
+const NOTED_WAIT = 300;
 
 /*
  * What the widget shows on the site: its button, and the panel that
@@ -12,7 +14,8 @@ const KEY = 'cairn-widget-open';
  *
  * The frame and the script talk by messages, each checking where the
  * other's come from: the script hands over what it noted (`report()`),
- * closes the panel when asked to, and takes the whole widget out of the
+ * again whenever it notes more (the function returned, which waits for
+ * a burst to end), closes the panel when asked to, and takes the whole widget out of the
  * picture while the frame takes a screenshot.
  */
 export function createPanel({ cairn, address, label, report }) {
@@ -33,6 +36,16 @@ iframe { display: block; width: 100%; height: 100%; border: 0; }
     let frame = null;
 
     const send = (message) => frame?.contentWindow?.postMessage(message, cairn);
+    let pending = null;
+    const noted = () => {
+        if (null === frame || null !== pending) {
+            return;
+        }
+        pending = window.setTimeout(() => {
+            pending = null;
+            send({ type: 'cairn:context', report: report() });
+        }, NOTED_WAIT);
+    };
 
     const show = (open) => {
         if (open && null === frame) {
@@ -91,4 +104,6 @@ iframe { display: block; width: 100%; height: 100%; border: 0; }
             show(true);
         }
     } catch { /* no storage: the panel starts closed */ }
+
+    return noted;
 }
