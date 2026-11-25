@@ -1452,6 +1452,7 @@ widget:
         private_tracker: 'Private category: hidden from external users.'
         files: Files
         attach: Attach a file
+        drop: Drop your files to attach them
         remove_file: 'Remove %name%'
         upload_failed: This file could not be sent.
         submit: Send the issue

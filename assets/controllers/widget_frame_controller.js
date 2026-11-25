@@ -244,6 +244,13 @@ export default class extends Controller {
         }
     }
 
+    /* A file dropped where no form takes it is not opened in place of the frame. */
+    refuse(event) {
+        if (Array.from(event.dataTransfer?.types ?? []).includes('Files')) {
+            event.preventDefault();
+        }
+    }
+
     close() {
         if (this.linked) {
             window.parent.postMessage({ type: 'cairn:close' }, this.siteValue);
