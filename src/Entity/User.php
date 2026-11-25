@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Entity\Enum\ActivityKind;
 use App\Entity\Enum\AuthMethod;
 use App\Entity\Enum\MailGrouping;
 use App\Repository\UserRepository;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\EquatableInterface;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
@@ -71,6 +73,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Equatab
 
     #[ORM\Column(length: 16, enumType: MailGrouping::class, options: ['default' => 'project'])]
     private MailGrouping $mailGrouping = MailGrouping::Project;
+
+    /** @var list<string> the values of the ActivityKind this person leaves out of the thread of every issue */
+    #[ORM\Column(type: Types::JSONB, options: ['default' => '[]'])]
+    private array $hiddenActivity = [];
 
     #[ORM\Column]
     private \DateTimeImmutable $createdAt;
@@ -223,6 +229,22 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Equatab
     public function groupMails(MailGrouping $grouping): void
     {
         $this->mailGrouping = $grouping;
+    }
+
+    /**
+     * @return list<ActivityKind>
+     */
+    public function getHiddenActivity(): array
+    {
+        return array_values(array_filter(array_map(ActivityKind::tryFrom(...), $this->hiddenActivity)));
+    }
+
+    /**
+     * @param list<ActivityKind> $kinds
+     */
+    public function hideActivity(array $kinds): void
+    {
+        $this->hiddenActivity = array_values(array_unique(array_map(static fn (ActivityKind $kind): string => $kind->value, $kinds)));
     }
 
     public function setPassword(string $hashedPassword): void

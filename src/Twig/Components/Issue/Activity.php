@@ -7,15 +7,18 @@ namespace App\Twig\Components\Issue;
 use App\Config\Definition\TransitionDefinition;
 use App\Entity\Attachment;
 use App\Entity\Comment;
+use App\Entity\Enum\ActivityKind;
 use App\Entity\Issue;
 use App\Message\Command\Attachment\RemoveAttachment;
 use App\Message\Command\Issue\AddComment;
 use App\Message\Command\Issue\ApplyTransition;
 use App\Message\Command\Issue\DeleteComment;
 use App\Message\Command\Issue\EditComment;
+use App\Message\Command\User\UpdateUser;
 use App\Message\CommandBus;
 use App\Message\Query\Issue\IssueDetail;
 use App\Message\Query\Issue\ShowIssue;
+use App\Message\Query\Issue\TimelineEntry;
 use App\Message\QueryBus;
 use App\Repository\AttachmentRepository;
 use App\Security\AccessControl;
@@ -74,6 +77,9 @@ final class Activity
 
     /** Why the last action of the workflow did not go through; `error` is the comment box's. */
     public ?string $decisionError = null;
+
+    /** Why the filter of the activity was refused, shown beside it. */
+    public ?string $filterError = null;
 
     /** @var list<string> uuids of the files sent for the comment being written, pending until it is posted */
     #[LiveProp]
@@ -145,6 +151,72 @@ final class Activity
     {
         return $this->detail ??= $this->queries->ask(new ShowIssue($this->viewer->get(), (int) $this->issue->getProject()->getId(), $this->issue->getNumber()))
             ?? throw new NotFoundHttpException('The issue is no longer visible.');
+    }
+
+    /**
+     * The thread without the kinds of activity the viewer hides.
+     *
+     * @return list<TimelineEntry>
+     */
+    public function getTimeline(): array
+    {
+        $hidden = $this->getHiddenKinds();
+
+        return array_values(array_filter(array_map(static fn (TimelineEntry $entry): ?TimelineEntry => $entry->without($hidden), $this->getDetail()->timeline)));
+    }
+
+    /**
+     * @return list<ActivityKind>
+     */
+    public function getHiddenKinds(): array
+    {
+        return $this->viewer->get()->getHiddenActivity();
+    }
+
+    /**
+     * The kinds of activity the viewer may filter. What a forge reported is
+     * private: external users never receive it, so it is not offered.
+     *
+     * @return list<ActivityKind>
+     */
+    public function getActivityKinds(): array
+    {
+        return $this->viewer->get()->isInternal() ? ActivityKind::cases() : [ActivityKind::Changes];
+    }
+
+    /**
+     * How many moments of the thread each kind holds, before any filter.
+     *
+     * @return array<string, int>
+     */
+    public function getActivityCounts(): array
+    {
+        $timeline = $this->getDetail()->timeline;
+        $counts = [];
+        foreach ($this->getActivityKinds() as $kind) {
+            $counts[$kind->value] = \count(array_filter($timeline, static fn (TimelineEntry $entry): bool => $entry->isOfKind($kind)));
+        }
+
+        return $counts;
+    }
+
+    /**
+     * Shows or hides a kind of activity, for this person on every issue.
+     * Filtering is reading, not an activity: no toast, and no other
+     * component of the page depends on it.
+     */
+    #[LiveAction]
+    public function toggleActivity(CommandBus $commands, #[LiveArg] string $kind): void
+    {
+        $kind = ActivityKind::tryFrom($kind);
+        if (null === $kind || !\in_array($kind, $this->getActivityKinds(), true)) {
+            return;
+        }
+
+        $hidden = $this->getHiddenKinds();
+        $hidden = \in_array($kind, $hidden, true) ? array_values(array_filter($hidden, static fn (ActivityKind $hiddenKind): bool => $hiddenKind !== $kind)) : [...$hidden, $kind];
+        $userId = (int) $this->viewer->get()->getId();
+        $this->filterError = $this->refusal($commands, new UpdateUser($userId, hiddenActivity: $hidden, actorId: $userId));
     }
 
     /**

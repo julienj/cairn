@@ -5,9 +5,13 @@ declare(strict_types=1);
 namespace App\Tests\Twig\Components\Issue;
 
 use App\Entity\Comment;
+use App\Entity\Enum\ActivityKind;
 use App\Entity\Issue;
+use App\Entity\User;
+use App\Message\Command\Forge\RecordCommits;
 use App\Message\Command\Issue\MoveIssue;
 use App\Message\CommandBus;
+use App\Tests\MessageHandler\Command\Forge\ForgeTestSupport;
 use App\Tests\Scene\ShopScene;
 use App\Twig\Components\Issue\Activity;
 use Doctrine\ORM\EntityManagerInterface;
@@ -319,6 +323,93 @@ final class ActivityTest extends KernelTestCase
         self::assertStringContainsString(\sprintf('id="%s"', $anchor), $render);
         self::assertStringContainsString(\sprintf('<a href="#%s"', $anchor), $render, 'the date is the link');
         self::assertStringContainsString(\sprintf('data-controller="clipboard" data-clipboard-text-value="#%s"', $anchor), $render, 'and its link is copied in one click');
+    }
+
+    public function testWhoReadsChoosesWhatToReadForEveryIssueButTheCommentsStay(): void
+    {
+        $manager = 'thomas.girard@cairn.test';
+        $repository = (new ForgeTestSupport(self::getContainer()->get(EntityManagerInterface::class)))->link($this->issue->getProject());
+        self::getContainer()->get(CommandBus::class)->dispatch(new RecordCommits((int) $repository->getId(), $this->issue->getKey(), 'main', 'https://gitlab.test/maison-dupont/shop/-/tree/main', [ForgeTestSupport::commit('a1b2c3d4e5f6')]));
+        $component = $this->activity($manager);
+        $this->postedComment($component, 'A comment of the manager.');
+        $render = (string) $component->render();
+        self::assertStringContainsString('created the issue', $render);
+        self::assertStringContainsString('a1b2c3d4', $render);
+        self::assertStringContainsString('A comment of the manager.', $render);
+        self::assertStringContainsString('data-live-kind-param="code"', $render);
+        self::assertStringContainsString('data-live-kind-param="changes"', $render);
+        self::assertStringNotContainsString('data-live-kind-param="comments"', $render, 'comments are the thread, not a filter');
+        self::assertStringNotContainsString('Nothing to show', $render, 'no filter is active');
+
+        $component->call('toggleActivity', ['kind' => 'code']);
+        $render = (string) $component->render();
+        self::assertStringNotContainsString('a1b2c3d4', $render, 'the commits are hidden');
+        self::assertStringContainsString('created the issue', $render);
+        self::assertSame([ActivityKind::Code], $this->hiddenBy($manager));
+
+        $component->call('toggleActivity', ['kind' => 'changes']);
+        $render = (string) $component->render();
+        self::assertStringNotContainsString('created the issue', $render);
+        self::assertStringContainsString('A comment of the manager.', $render, 'the comments stay');
+        self::assertStringContainsString('data-live-action-param="submit"', $render, 'and so does the comment box');
+
+        // The choice follows the person to the other issues, and a kind can be shown again.
+        $other = (string) $this->activityOn('MD-SPT-3', $manager)->render();
+        self::assertStringNotContainsString('created the issue', $other);
+        $component->call('toggleActivity', ['kind' => 'code'])->call('toggleActivity', ['kind' => 'changes']);
+        self::assertSame([], $this->hiddenBy($manager));
+        self::assertStringContainsString('a1b2c3d4', (string) $component->render());
+    }
+
+    public function testTheCommentOfAnActionStaysWhenTheChangesAreHidden(): void
+    {
+        $component = $this->activity('claire.martin@maison-dupont.test');
+        $component->call('apply', ['transition' => 'refuse'])->set('reason', 'Still empty in production.')->call('confirm');
+
+        $component->call('toggleActivity', ['kind' => 'changes']);
+        $render = (string) $component->render();
+        self::assertStringNotContainsString('applied &quot;Refuse&quot;', $render);
+        self::assertStringContainsString('Still empty in production.', $render);
+    }
+
+    public function testAnExternalUserIsNotOfferedTheGitActivity(): void
+    {
+        $claire = 'claire.martin@maison-dupont.test';
+        $component = $this->activity($claire);
+        $render = (string) $component->render();
+        self::assertStringContainsString('data-live-kind-param="changes"', $render);
+        self::assertStringNotContainsString('data-live-kind-param="code"', $render);
+
+        $component->call('toggleActivity', ['kind' => 'code']);
+        self::assertSame([], $this->hiddenBy($claire));
+    }
+
+    public function testAnUnknownKindChangesNothing(): void
+    {
+        $component = $this->activity('thomas.girard@cairn.test');
+        $component->call('toggleActivity', ['kind' => 'bogus'])->call('toggleActivity', ['kind' => 'comments']);
+        self::assertSame([], $this->hiddenBy('thomas.girard@cairn.test'));
+    }
+
+    public function testAKindThatNoLongerExistsKeptOnAnAccountIsIgnored(): void
+    {
+        $manager = 'thomas.girard@cairn.test';
+        $entityManager = self::getContainer()->get(EntityManagerInterface::class);
+        $entityManager->getConnection()->executeStatement('UPDATE app_user SET hidden_activity = :kinds WHERE id = :id', ['kinds' => '["comments","code"]', 'id' => $this->scene->user($manager)->getId()]);
+
+        self::assertSame([ActivityKind::Code], $this->hiddenBy($manager));
+        self::assertStringContainsString('created the issue', (string) $this->activity($manager)->render());
+    }
+
+    /**
+     * @return list<ActivityKind>
+     */
+    private function hiddenBy(string $email): array
+    {
+        $entityManager = self::getContainer()->get(EntityManagerInterface::class);
+        $entityManager->clear();
+
+        return $entityManager->find(User::class, $this->scene->user($email)->getId())?->getHiddenActivity() ?? self::fail('user vanished');
     }
 
     /** Posts a comment from the composer and returns its id. */

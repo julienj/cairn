@@ -1,0 +1,5 @@
+component: Ui:Filter:Toggle
+variants:
+    unchecked: { args: { count: 2 }, blocks: { content: Git } }
+    checked: { args: { count: 5, checked: true }, blocks: { content: Historique } }
+    without_count: { args: { checked: true }, blocks: { content: History } }

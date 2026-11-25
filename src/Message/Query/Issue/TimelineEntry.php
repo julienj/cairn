@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Message\Query\Issue;
 
 use App\Entity\Comment;
+use App\Entity\Enum\ActivityKind;
 use App\Entity\JournalEntry;
 
 /**
@@ -29,5 +30,30 @@ final readonly class TimelineEntry
     public static function ofComment(Comment $comment): self
     {
         return new self($comment->getCreatedAt(), null, $comment);
+    }
+
+    /**
+     * What is left of this moment once the viewer hid some kinds of
+     * activity, null when nothing is. Comments are never hidden, so a
+     * comment that came with an action stays to read when the action goes.
+     *
+     * @param list<ActivityKind> $hidden
+     */
+    public function without(array $hidden): ?self
+    {
+        $event = null !== $this->event && !\in_array($this->kindOfEvent($this->event), $hidden, true) ? $this->event : null;
+
+        return null === $event && null === $this->comment ? null : new self($this->at, $event, $this->comment);
+    }
+
+    private function kindOfEvent(JournalEntry $event): ActivityKind
+    {
+        return $event->getType()->isCode() ? ActivityKind::Code : ActivityKind::Changes;
+    }
+
+    /** Whether the moment is of this kind: a comment alone is of none. */
+    public function isOfKind(ActivityKind $kind): bool
+    {
+        return null !== $this->event && $this->kindOfEvent($this->event) === $kind;
     }
 }
