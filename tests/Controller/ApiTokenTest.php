@@ -9,9 +9,12 @@ use App\Repository\ApiTokenRepository;
 use App\Tests\Scene\ShopScene;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\Clock\Test\ClockSensitiveTrait;
 
 final class ApiTokenTest extends WebTestCase
 {
+    use ClockSensitiveTrait;
+
     private KernelBrowser $client;
     private ShopScene $scene;
 
@@ -23,6 +26,8 @@ final class ApiTokenTest extends WebTestCase
 
     public function testATokenIsCreatedShownOnceThenRevoked(): void
     {
+        // The expiry is counted by the page and the creation dated by the entity: one moment for both.
+        self::mockTime();
         $this->client->loginUser($this->scene->user('nadia.benali@cairn.test'));
 
         $crawler = $this->client->request('GET', '/account/tokens');
