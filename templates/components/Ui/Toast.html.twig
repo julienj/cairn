@@ -1,7 +1,7 @@
-{# Dark message at the bottom, dismissed by the `toast` controller after `delay` ms. #}
+{# Dark message at the bottom, rising in as it appears, dismissed by the `toast` controller after `delay` ms. #}
 {% props delay = 2500, position = 'center' %}
 {% set toastClasses = html_cva(
-    base: 'fixed bottom-4 z-[60] max-w-lg rounded-md bg-inverse text-on-inverse text-sm px-3 py-2 shadow-lg',
+    base: 'fixed bottom-4 z-[60] max-w-lg rounded-md bg-inverse text-on-inverse text-sm px-3 py-2 shadow-lg transition duration-200 ease-out starting:opacity-0 motion-safe:starting:translate-y-2 motion-safe:starting:scale-95',
     variants: { position: { center: 'left-1/2 -translate-x-1/2', right: 'right-4' } },
 ) %}
 <div class="{{ toastClasses.apply({ position: position }, attributes.render('class'))|tailwind_merge }}" role="status" data-controller="toast" data-toast-delay-value="{{ delay }}" {{ attributes }}>{% block content %}{% endblock %}</div>
