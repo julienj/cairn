@@ -7,6 +7,8 @@ const NOTED_WAIT = 300;
 const WIDTH = 480;
 const HEIGHT = 760;
 const GAP = 12;
+/* The mark of Cairn as the frame draws it in its band. */
+const MARK = '<svg width="24" height="24" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"><rect x="6" y="43" width="44" height="9" rx="4.5"/><rect x="16" y="29" width="40" height="8" rx="4" transform="rotate(-3 36 33)"/><rect x="12" y="15" width="27" height="8" rx="4" transform="rotate(4 25.5 19)"/></svg>';
 
 /*
  * What the widget shows on the site: its button, and the panel that
@@ -17,8 +19,9 @@ const GAP = 12;
  * beside it on the left and right ones, as tall as the window allows; on
  * a narrow window it takes the whole of it. The button stays and closes
  * it. The panel has one size: it holds a form, which gains nothing from
- * another. The frame is only created the first time the panel opens. Whether
- * the panel is open is kept in the sessionStorage of the site, so that it
+ * another. The frame is only asked for once the button is aimed at, and
+ * the panel shows the shape of the form until the frame has drawn itself:
+ * it is never a blank card. Whether the panel is open is kept in the sessionStorage of the site, so that it
  * stays open from page to page in this tab.
  *
  * The frame and the script talk by messages, each checking where the
@@ -41,9 +44,19 @@ ${buttonStyles}
 .panel { position: fixed; left: var(--left); top: var(--top); z-index: 2147483647; width: var(--width); height: var(--height); overflow: hidden; border-radius: 14px; background: #fff; color-scheme: light dark; box-shadow: 0 0 0 1px rgba(17, 24, 39, .1), 0 2px 6px rgba(17, 24, 39, .08), 0 24px 56px -12px rgba(17, 24, 39, .35); transform-origin: var(--origin); opacity: 0; scale: .96; visibility: hidden; transition: opacity .15s, scale .15s, visibility 0s .15s; }
 .panel.open { opacity: 1; scale: 1; visibility: visible; transition: opacity .18s, scale .3s cubic-bezier(.2, 1.15, .3, 1); }
 .panel.wide { top: 32px; right: 32px; bottom: 32px; left: 32px; width: auto; height: auto; border-radius: 12px; box-shadow: 0 24px 64px rgba(17, 24, 39, .35); }
+.panel { --line: #e5e7eb; --sunken: #f3f4f6; --brand: #4f46e5; }
+.waiting { position: absolute; inset: 0; z-index: 1; display: flex; flex-direction: column; background: inherit; border-radius: inherit; pointer-events: none; transition: opacity .2s; }
+.waiting.gone { opacity: 0; visibility: hidden; transition: opacity .2s, visibility 0s .2s; }
+.waiting header { flex: none; box-sizing: border-box; display: flex; align-items: center; gap: 8px; height: 48px; padding-left: 16px; border-bottom: 1px solid var(--line); color: var(--brand); }
+.waiting div { display: grid; gap: 16px; padding: 16px; }
+.waiting i { display: block; border-radius: 6px; background: var(--sunken); animation: cairn-wait 2s cubic-bezier(.4, 0, .6, 1) infinite; }
+.waiting header i { width: 120px; height: 14px; }
+.waiting .name { width: 80px; height: 12px; margin: 4px 0; border-radius: 4px; }
+.waiting .field { height: 36px; margin-top: 4px; }
+@keyframes cairn-wait { 50% { opacity: .5; } }
 .backdrop { position: fixed; inset: 0; z-index: 2147483647; background: rgba(17, 24, 39, .55); }
 @media (max-width: 640px) { .panel, .panel.wide { inset: 0; width: auto; height: auto; border-radius: 0; } }
-@media (prefers-color-scheme: dark) { .panel { background: #161b22; box-shadow: 0 0 0 1px rgba(255, 255, 255, .12), 0 24px 56px -12px rgba(0, 0, 0, .6); } }
+@media (prefers-color-scheme: dark) { .panel { --line: #2d343e; --sunken: #262d37; --brand: #a5b4fc; background: #161b22; box-shadow: 0 0 0 1px rgba(255, 255, 255, .12), 0 24px 56px -12px rgba(0, 0, 0, .6); } }
 iframe { display: block; width: 100%; height: 100%; border: 0; }
 [hidden] { display: none !important; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: .01ms !important; animation: none !important; } }
@@ -55,6 +68,12 @@ iframe { display: block; width: 100%; height: 100%; border: 0; }
     backdrop.className = 'backdrop';
     backdrop.hidden = true;
     let frame = null;
+    // What the panel shows until its frame has drawn itself: the shape of what comes, never a blank card.
+    const waiting = document.createElement('div');
+    waiting.className = 'waiting';
+    waiting.setAttribute('aria-hidden', 'true');
+    waiting.innerHTML = `<header>${MARK}<i></i></header><div>${['', '', 'height: 152px', 'width: 224px'].map((shape) => `<span><i class="name"></i><i class="field" style="${shape}"></i></span>`).join('')}</div>`;
+    panel.appendChild(waiting);
 
     const send = (message) => frame?.contentWindow?.postMessage(message, cairn);
     let pending = null;
@@ -97,15 +116,24 @@ iframe { display: block; width: 100%; height: 100%; border: 0; }
     const covering = window.matchMedia?.('(max-width: 640px)');
     const told = () => send({ type: 'cairn:layout', covered: true === covering?.matches });
 
+    // The frame, asked for as soon as the button is aimed at: it is on its way when the panel opens.
+    const ask = () => {
+        if (null !== frame) {
+            return;
+        }
+        lay();
+        frame = document.createElement('iframe');
+        // asked in the name of this site: Cairn answers no other, and lets no other frame the answer
+        frame.src = `${address}?site=${encodeURIComponent(window.location.origin)}`;
+        frame.title = label;
+        frame.allow = 'display-capture';
+        panel.appendChild(frame);
+    };
+
     const show = (open) => {
         shown = open;
-        if (open && null === frame) {
-            frame = document.createElement('iframe');
-            // asked in the name of this site: Cairn answers no other, and lets no other frame the answer
-            frame.src = `${address}?site=${encodeURIComponent(window.location.origin)}`;
-            frame.title = label;
-            frame.allow = 'display-capture';
-            panel.appendChild(frame);
+        if (open) {
+            ask();
         }
         if (open) {
             lay();
@@ -126,7 +154,7 @@ iframe { display: block; width: 100%; height: 100%; border: 0; }
             told();
         }
     };
-    const button = createButton(label, { onClick: () => show(!shown), onMove: () => { lay(); told(); } });
+    const button = createButton(label, { onClick: () => show(!shown), onMove: () => { lay(); told(); }, onAim: ask });
 
     window.addEventListener('message', (event) => {
         if (event.origin !== cairn || null === frame || event.source !== frame.contentWindow) {
@@ -134,6 +162,7 @@ iframe { display: block; width: 100%; height: 100%; border: 0; }
         }
         switch (event.data?.type) {
             case 'cairn:ready':
+                waiting.classList.add('gone');
                 send({ type: 'cairn:context', report: report() });
                 told();
                 break;

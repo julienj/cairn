@@ -1,0 +1,9 @@
+{# The shape of the form while it is on its way: nothing to read, so nothing is told to who cannot see it. #}
+<div class="animate-pulse space-y-4 p-4" aria-hidden="true">
+    {% for loadingField in ['h-9', 'h-9', 'h-38', 'h-9 w-56'] %}
+        <div>
+            <div class="my-1 h-3 w-20 rounded bg-sunken"></div>
+            <div class="mt-1 rounded-md bg-sunken {{ loadingField }}"></div>
+        </div>
+    {% endfor %}
+</div>

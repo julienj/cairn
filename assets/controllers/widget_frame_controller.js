@@ -25,7 +25,7 @@ const POLL_FOR = 5 * 60 * 1000;
  * while the screenshot is edited).
  */
 export default class extends Controller {
-    static targets = ['connect', 'alone', 'refused', 'frame', 'link', 'close', 'kept', 'waiting'];
+    static targets = ['connect', 'alone', 'refused', 'frame', 'link', 'close', 'kept', 'waiting', 'loading'];
 
     static values = {
         project: String,
@@ -41,13 +41,14 @@ export default class extends Controller {
         this.pair = null;
         this.memory = null;
         if (window.parent === window) {
+            this.loadingTarget.hidden = true;
             this.aloneTarget.hidden = false;
 
             return;
         }
         // Says it is there; the site answers with what it noted, which names it.
         window.parent.postMessage({ type: 'cairn:ready' }, '*');
-        this.waiting = setTimeout(() => { this.aloneTarget.hidden = this.linked; }, CONTEXT_WAIT);
+        this.waiting = setTimeout(() => { this.aloneTarget.hidden = this.linked; this.loadingTarget.hidden = !this.linked; }, CONTEXT_WAIT);
     }
 
     disconnect() {
@@ -142,11 +143,16 @@ export default class extends Controller {
 
     show() {
         const linked = null !== this.token;
+        this.loadingTarget.hidden = true;
         this.refusedTarget.hidden = true;
         this.connectTarget.hidden = linked;
         this.frameTarget.hidden = !linked;
         if (linked) {
             clearTimeout(this.polling);
+            if (0 === this.frameTarget.childElementCount) {
+                // the shape of the form while it is on its way, which the form replaces
+                this.frameTarget.innerHTML = this.loadingTarget.innerHTML;
+            }
             this.frameTarget.src = this.reportUrlValue;
         } else {
             this.frameTarget.removeAttribute('src');
