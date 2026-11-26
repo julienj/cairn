@@ -1,0 +1,55 @@
+{# The members of a team, one row per person; taking one out asks for a confirmation in place. The administration adds with a form closing the list, picking a person in a searchable list: internal users only when the team is internal. #}
+{% set membersList = this.members %}
+<section {{ attributes }} class="rounded-lg border border-line bg-surface" data-loading="addClass(opacity-60)">
+    {% if error %}
+        <twig:Ui:Callout tone="danger" size="sm" role="alert" class="m-3">{{ error }}</twig:Ui:Callout>
+    {% endif %}
+    {% if membersList is empty %}
+        <p class="px-4 py-6 text-center text-sm text-faint">{{ 'admin.team.members.empty'|trans }}</p>
+    {% else %}
+        <ul class="divide-y divide-line-subtle">
+            {% for member in membersList %}
+                {% set membersUser = member.user %}
+                <li class="group px-4 py-2">
+                    <div class="flex flex-wrap items-center gap-3">
+                        <twig:User:Avatar :user="membersUser" size="lg" />
+                        <div class="min-w-0 flex-1 leading-tight">
+                            <span class="flex items-center gap-2">
+                                <a href="{{ path('app_admin_user', { id: membersUser.id }) }}" class="text-sm text-strong hover:text-brand truncate">{{ membersUser.fullName }}</a>
+                                {% if not membersUser.active %}<twig:Ui:Badge tone="gray" size="sm">{{ 'admin.user.state.deactivated'|trans }}</twig:Ui:Badge>{% endif %}
+                            </span>
+                            <span class="block text-xs text-muted truncate">{{ membersUser.email }}{% if membersUser.company %} · {{ membersUser.company }}{% endif %} · {{ (membersUser.internal ? 'admin.user.type.internal' : 'admin.user.type.external')|trans }}</span>
+                        </div>
+                        <span class="hover-actions flex shrink-0 items-center justify-end gap-1">
+                            <twig:Ui:IconButton icon="x" tone="danger" :label="'admin.team.members.remove'|trans" data-action="live#action" data-live-action-param="confirmRemove" data-live-user-param="{{ membersUser.id }}" />
+                        </span>
+                    </div>
+                    {% if removing == membersUser.id %}
+                        <div class="mt-2 flex flex-wrap items-center gap-2 rounded-md border border-red-line bg-red-soft px-3 py-2 text-sm text-red" role="alertdialog">
+                            <span>{{ 'admin.team.members.remove_confirm'|trans({ '%name%': membersUser.fullName }) }}</span>
+                            <span class="ml-auto flex items-center gap-2">
+                                <twig:Ui:Button variant="danger" size="sm" data-action="live#action" data-live-action-param="remove" data-loading="addAttribute(disabled)">{{ 'admin.team.members.remove'|trans }}</twig:Ui:Button>
+                                <twig:Ui:Button variant="ghost" size="sm" data-action="live#action" data-live-action-param="cancelRemove">{{ 'admin.cancel'|trans }}</twig:Ui:Button>
+                            </span>
+                        </div>
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+    <form class="flex flex-wrap items-center gap-2 border-t border-line-subtle bg-subtle/60 px-4 py-3 rounded-b-lg" data-action="live#action:prevent" data-live-action-param="add">
+        {# `this` is read before the picker, whose blocks see their own. #}
+        {% set membersNewUser = this.newUser %}
+        {% set membersCandidates = this.candidates %}
+        <twig:Ui:Picker :label="membersNewUser ? membersNewUser.fullName : null" :placeholder="'admin.access.choose_user'|trans" :searchPlaceholder="'admin.access.search_user'|trans" :empty="'admin.access.no_match'|trans" class="min-w-0 flex-1 basis-64">
+            {% for candidate in membersCandidates %}
+                <twig:Ui:Dropdown:Item :active="candidate.id == newUserId" data-list-filter-target="item" data-text="{{ candidate.fullName }} {{ candidate.email }} {{ candidate.company }}" data-action="live#action dropdown#close" data-live-action-param="chooseUser" data-live-user-param="{{ candidate.id }}">
+                    <twig:User:Avatar :user="candidate" size="md" />
+                    <span class="min-w-0 flex-1 truncate">{{ candidate.fullName }}</span>
+                    <span class="text-xs text-faint truncate">{{ candidate.company ?? (candidate.internal ? 'admin.user.type.internal' : 'admin.user.type.external')|trans }}</span>
+                </twig:Ui:Dropdown:Item>
+            {% endfor %}
+        </twig:Ui:Picker>
+        <twig:Ui:Button type="submit" variant="primary" icon="plus" data-loading="addAttribute(disabled)">{{ 'admin.team.members.add'|trans }}</twig:Ui:Button>
+    </form>
+</section>

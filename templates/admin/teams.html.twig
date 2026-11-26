@@ -1,0 +1,34 @@
+{% extends 'layout/admin.html.twig' %}
+
+{% block page_title %}{{ 'admin.nav.teams'|trans }}{% endblock %}
+
+{% block content %}
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 py-5 space-y-4">
+        <div class="flex flex-wrap items-center gap-3">
+            <div>
+                <h1 class="text-xl font-semibold text-strong">{{ 'admin.nav.teams'|trans }}</h1>
+                <p class="text-xs text-muted">{{ 'admin.team.intro'|trans }}</p>
+            </div>
+            <twig:Ui:Button variant="primary" icon="plus" href="{{ path('app_admin_team_new') }}" class="ml-auto">{{ 'admin.team.new'|trans }}</twig:Ui:Button>
+        </div>
+
+        {% if teams is empty %}
+            <twig:Ui:EmptyState :title="'admin.team.empty'|trans" bordered />
+        {% else %}
+            <twig:Ui:Table>
+                <twig:block name="head">
+                    <th class="px-4 py-2 text-left font-medium">{{ 'admin.team.column.name'|trans }}</th>
+                    <th class="px-3 py-2 text-left font-medium w-28">{{ 'admin.team.column.nature'|trans }}</th>
+                    <th class="px-4 py-2 text-left font-medium w-32">{{ 'admin.team.column.members'|trans }}</th>
+                </twig:block>
+                {% for team in teams %}
+                    <twig:Ui:Table:Row>
+                        <td class="sm:px-4 sm:py-2.5 order-1 basis-full sm:basis-auto"><a href="{{ path('app_admin_team', { id: team.id }) }}" class="font-medium text-strong hover:text-amber">{{ team.name }}</a></td>
+                        <td class="sm:px-3 sm:py-2.5 order-2 text-xs {{ team.internal ? 'text-body' : 'text-muted' }}">{{ (team.internal ? 'admin.team.nature.internal' : 'admin.team.nature.external')|trans }}</td>
+                        <td class="sm:px-4 sm:py-2.5 order-3 ml-auto sm:ml-0 text-xs text-muted">{{ 'admin.team.members.count'|trans({ '%count%': members[team.id] ?? 0 }) }}</td>
+                    </twig:Ui:Table:Row>
+                {% endfor %}
+            </twig:Ui:Table>
+        {% endif %}
+    </div>
+{% endblock %}

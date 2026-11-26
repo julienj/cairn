@@ -5,8 +5,14 @@ declare(strict_types=1);
 namespace App\Tests\Controller\Admin;
 
 use App\Entity\Project;
+use App\Entity\Team;
 use App\Entity\User;
 use App\Entity\Workspace;
+use App\Message\Command\Membership\RevokeMembership;
+use App\Message\Command\Team\AddTeamMember;
+use App\Message\Command\Team\CreateTeam;
+use App\Message\CommandBus;
+use App\Repository\MembershipRepository;
 use App\Tests\KernelHelpers;
 use App\Tests\Scene\ShopScene;
 use Doctrine\ORM\EntityManagerInterface;
@@ -36,7 +42,7 @@ final class AdminTest extends WebTestCase
     public function testOnlyAdministratorsEnter(): void
     {
         $this->client->loginUser($this->scene->user('thomas.girard@cairn.test'));
-        foreach (['/admin/projects', '/admin/workspaces/MD', '/admin/users'] as $url) {
+        foreach (['/admin/projects', '/admin/workspaces/MD', '/admin/users', '/admin/teams', '/admin/teams/new'] as $url) {
             $this->client->request('GET', $url);
             self::assertResponseStatusCodeSame(403, $url);
         }
@@ -328,6 +334,61 @@ final class AdminTest extends WebTestCase
 
         $this->client->request('GET', \sprintf('/admin/users/%d', $this->scene->user('julie.admin@cairn.test')->getId()));
         self::assertSelectorTextNotContains('main', 'Delete the account');
+    }
+
+    public function testATeamIsCreatedRenamedAndDeleted(): void
+    {
+        $this->signInAsAdmin();
+        $this->client->request('GET', '/admin/teams');
+        self::assertSelectorTextContains('main', 'No team yet.');
+
+        $this->client->clickLink('New team');
+        $this->client->submitForm('Create', ['team[name]' => 'Hosting', 'team[nature]' => 'internal']);
+        $team = $this->entity(Team::class, ['name' => 'Hosting']);
+        self::assertNotNull($team);
+        self::assertTrue($team->isInternal());
+        self::assertResponseRedirects('/admin/teams/'.$team->getId());
+        $this->client->followRedirect();
+        self::assertSelectorTextContains('h1', 'Hosting');
+        self::assertSelectorTextContains('h1', 'Internal');
+        self::assertSelectorTextContains('main', 'This team has no member yet.');
+
+        $this->client->request('GET', '/admin/teams/new');
+        $this->client->submitForm('Create', ['team[name]' => 'hosting', 'team[nature]' => 'external']);
+        self::assertResponseStatusCodeSame(422);
+        self::assertSelectorTextContains('form[name="team"]', 'A team is already named hosting.');
+
+        $this->client->request('GET', '/admin/teams/'.$team->getId().'/settings');
+        self::assertSelectorNotExists('[name="team[nature]"]', 'whether it is internal does not change');
+        $this->client->submitForm('Save', ['team[name]' => 'Hosting & networks']);
+        self::assertResponseRedirects('/admin/teams/'.$team->getId().'/settings');
+        $crawler = $this->client->followRedirect();
+        self::assertSelectorTextContains('h1', 'Hosting & networks');
+
+        $this->client->request('GET', '/admin/teams');
+        self::assertSelectorTextContains('main', 'Hosting & networks');
+        self::assertSelectorTextContains('main', 'No member');
+
+        $this->client->submit($crawler->filter('form[action$="/delete"]')->form());
+        self::assertResponseRedirects('/admin/teams');
+        self::assertNull($this->entity(Team::class, ['name' => 'Hosting & networks']));
+    }
+
+    public function testMakingAMemberOfAnInternalTeamExternalIsRefusedWithTheReason(): void
+    {
+        $this->signInAsAdmin();
+        $marc = $this->scene->user('marc.petit@cairn.test');
+        $commands = self::getContainer()->get(CommandBus::class);
+        $team = $commands->dispatch(new CreateTeam('Hosting', true));
+        \assert($team instanceof Team);
+        $commands->dispatch(new AddTeamMember((int) $team->getId(), (int) $marc->getId()));
+        $commands->dispatch(new RevokeMembership((int) self::getContainer()->get(MembershipRepository::class)->findByUser($marc)[0]->getId()));
+
+        $crawler = $this->client->request('GET', '/admin/users/'.$marc->getId());
+        $this->client->submit($crawler->filter('form[name="user"]')->form(['user[type]' => 'external']));
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSelectorTextContains('form[name="user"]', 'Marc Petit is a member of internal teams (Hosting)');
     }
 
     public function testTheUsersAreFiltered(): void

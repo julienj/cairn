@@ -22,6 +22,7 @@ use App\Entity\Issue;
 use App\Entity\Project;
 use App\Entity\Release;
 use App\Entity\Tag;
+use App\Entity\Team;
 use App\Entity\Tracker;
 use App\Entity\User;
 use App\Entity\Workspace;
@@ -50,6 +51,8 @@ use App\Message\Command\Project\UpdateProject;
 use App\Message\Command\Release\CreateRelease;
 use App\Message\Command\Release\UpdateRelease;
 use App\Message\Command\Tag\CreateTag;
+use App\Message\Command\Team\AddTeamMember;
+use App\Message\Command\Team\CreateTeam;
 use App\Message\CommandBus;
 use App\Security\AccessControl;
 use App\Workflow\WorkflowProvider;
@@ -101,6 +104,7 @@ final class AppStory extends Story
         $this->kit->install();
 
         $this->createUsers();
+        $this->createTeams();
         $now = (new NativeClock())->now();
 
         try {
@@ -156,6 +160,24 @@ final class AppStory extends Story
                 'sso' => $factory->internal()->sso()->create(),
                 default => $factory->create(),
             };
+        }
+    }
+
+    /**
+     * An internal team and the one of a client.
+     */
+    private function createTeams(): void
+    {
+        $teams = [
+            ['Hosting', true, ['yann', 'marc']],
+            ['Maison Dupont accounting', false, ['claire']],
+        ];
+        foreach ($teams as [$name, $internal, $members]) {
+            $team = $this->commands->dispatch(new CreateTeam($name, $internal));
+            \assert($team instanceof Team);
+            foreach ($members as $member) {
+                $this->commands->dispatch(new AddTeamMember((int) $team->getId(), (int) $this->users[$member]->getId()));
+            }
         }
     }
 

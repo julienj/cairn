@@ -1,0 +1,23 @@
+{% extends 'admin/team/base.html.twig' %}
+
+{% block team_content %}
+    {{ form_start(form, { attr: { class: 'max-w-2xl rounded-lg border border-line bg-surface p-4 space-y-4' } }) }}
+        {{ form_errors(form) }}
+        {{ form_row(form.name) }}
+        <p class="text-xs text-muted">{{ (team.internal ? 'admin.team.nature.fixed_internal' : 'admin.team.nature.fixed_external')|trans }}</p>
+        <twig:Ui:Button type="submit" variant="primary" size="lg">{{ 'admin.save'|trans }}</twig:Ui:Button>
+    {{ form_end(form) }}
+    <twig:Ui:Callout tone="danger" class="max-w-2xl">
+        <h2 class="font-semibold text-strong">{{ 'admin.team.delete'|trans }}</h2>
+        <p class="text-xs text-muted">{{ 'admin.team.delete_help'|trans }}</p>
+        <twig:Ui:Disclosure :closedLabel="'admin.team.delete'|trans" :openLabel="'issue.edit.cancel'|trans" class="mt-2">
+            <div class="mt-2 flex flex-wrap items-center gap-2" role="alertdialog">
+                <span class="flex-1 text-sm">{{ 'admin.team.delete_confirm'|trans({ '%name%': team.name }) }}</span>
+                <form method="post" action="{{ path('app_admin_team_delete', { id: team.id }) }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('submit') }}" data-controller="csrf-protection">
+                    <twig:Ui:Button type="submit" size="sm" variant="danger" icon="trash-2">{{ 'admin.team.delete'|trans }}</twig:Ui:Button>
+                </form>
+            </div>
+        </twig:Ui:Disclosure>
+    </twig:Ui:Callout>
+{% endblock %}

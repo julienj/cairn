@@ -6,9 +6,11 @@ namespace App\MessageHandler\Command\User;
 
 use App\Config\ConfigRegistry;
 use App\Entity\Enum\AuthMethod;
+use App\Entity\Team;
 use App\Entity\User;
 use App\Message\Command\User\UpdateUser;
 use App\Repository\MembershipRepository;
+use App\Repository\TeamMemberRepository;
 use App\Repository\UserRepository;
 use App\Security\PasswordTokens;
 use App\Security\SingleSignOn;
@@ -19,7 +21,8 @@ use Symfony\Component\Security\Core\Exception\AccessDeniedException;
  * The rules hold on the account as the command leaves it: the email stays
  * unique, an external user keeps no internal-only role (the change is
  * refused while they hold one, the administrator decides what to grant
- * instead), the last active administrator stays one. A person acting on
+ * instead) and is part of no internal team, the last active administrator
+ * stays one. A person acting on
  * their own account changes their mail grouping and the activity they hide only. An account is told
  * to sign in through the identity provider only while the instance has
  * one; going back to a password is always possible.
@@ -30,6 +33,7 @@ final class UpdateUserHandler
     public function __construct(
         private readonly UserRepository $users,
         private readonly MembershipRepository $memberships,
+        private readonly TeamMemberRepository $teamMembers,
         private readonly ConfigRegistry $config,
         private readonly PasswordTokens $tokens,
         private readonly SingleSignOn $sso,
@@ -64,6 +68,7 @@ final class UpdateUserHandler
         }
         if ($user->isInternal() && !$internal) {
             $this->assertNoInternalRole($user);
+            $this->assertInNoInternalTeam($user);
         }
         $method = null !== $command->authMethod && $command->authMethod !== $user->getAuthMethod() ? $command->authMethod : null;
         if (AuthMethod::Sso === $method && !$this->sso->enabled()) {
@@ -106,6 +111,14 @@ final class UpdateUserHandler
         }
         if ([] !== $where) {
             throw UserException::holdsInternalRoles($user->getFullName(), $where);
+        }
+    }
+
+    private function assertInNoInternalTeam(User $user): void
+    {
+        $teams = $this->teamMembers->findInternalTeamsOf($user);
+        if ([] !== $teams) {
+            throw UserException::inInternalTeams($user->getFullName(), array_map(static fn (Team $team): string => $team->getName(), $teams));
         }
     }
 }

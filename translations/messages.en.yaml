@@ -448,6 +448,7 @@ admin:
         projects: Projects
         workspaces: Workspaces
         users: Users
+        teams: Teams
         imports: Imports
         templates: Templates
         configuration: Configuration
@@ -549,6 +550,42 @@ admin:
             projects: Projects
             access: Access
             settings: Settings
+    team:
+        label: Team
+        new: New team
+        created: 'Team "%name%" created.'
+        intro: A team groups people who work together. It is internal or external, and this choice is final.
+        empty: No team yet.
+        name: Team name
+        delete: Delete the team
+        delete_help: 'Only the team is deleted: its members keep their account.'
+        delete_confirm: 'Delete the team "%name%"?'
+        deleted: 'Team "%name%" deleted.'
+        nature:
+            label: Kind of team
+            internal: Internal
+            external: External
+            help: An internal team is for internal users only; an external team is open to everyone. This choice is final.
+            fixed_internal: Internal team, for internal users only. This choice is final.
+            fixed_external: External team, open to every user. This choice is final.
+        column:
+            name: Team
+            nature: Kind
+            members: Members
+        tab:
+            members: Members
+            settings: Settings
+        members:
+            count: '{0}No member|{1}1 member|]1,Inf[ %count% members'
+            intro_internal: Only internal users may join this team.
+            intro_external: Every user, internal or external, may join this team.
+            empty: This team has no member yet.
+            add: Add to the team
+            incomplete: Choose the person to add.
+            added: Member added.
+            remove: Remove from the team
+            remove_confirm: 'Remove %name% from the team?'
+            removed: Member removed.
     access:
         workspace_intro: Access to the workspace applies to all of its projects. Direct access to a project, granted from a person's page, may only widen that role.
         user_intro: Access to a workspace applies to all of its projects; direct access to a project may only widen the role inherited from its workspace.
@@ -1083,6 +1120,9 @@ admin:
         last_admin: At least one active administrator must remain.
         has_history: '%name% wrote or holds issues, comments or files: deactivate the account instead.'
         holds_internal_roles: '%name% holds roles for internal users only (%where%): revoke them before making this person external.'
+        in_internal_teams: '%name% is a member of internal teams (%teams%): remove this person from those teams before making them external.'
+        team_name_taken: 'A team is already named %name%.'
+        team_internal_only: '%name% is external: the team %team% is for internal users only.'
         deactivated: '%name% is deactivated: reactivate the account first.'
         already_activated: '%name% already chose a password: they can use "Forgot password?" on the sign-in page.'
         not_member: '%name% holds no role on %project%.'

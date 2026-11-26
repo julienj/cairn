@@ -47,6 +47,14 @@ final class UserException extends \DomainException implements TranslatableInterf
         return new self(\sprintf('%s holds internal roles on: %s.', $userName, implode(', ', $where)), 'admin.refused.holds_internal_roles', ['%name%' => $userName, '%where%' => implode(', ', $where)]);
     }
 
+    /**
+     * @param list<string> $teams the internal teams the person is part of
+     */
+    public static function inInternalTeams(string $userName, array $teams): self
+    {
+        return new self(\sprintf('%s is part of internal teams: %s.', $userName, implode(', ', $teams)), 'admin.refused.in_internal_teams', ['%name%' => $userName, '%teams%' => implode(', ', $teams)]);
+    }
+
     public static function deactivated(string $userName): self
     {
         return new self(\sprintf('%s is deactivated.', $userName), 'admin.refused.deactivated', ['%name%' => $userName]);

@@ -448,6 +448,7 @@ admin:
         projects: Projets
         workspaces: Espaces
         users: Utilisateurs
+        teams: Équipes
         imports: Imports
         templates: Modèles
         configuration: Configuration
@@ -549,6 +550,42 @@ admin:
             projects: Projets
             access: Accès
             settings: Paramètres
+    team:
+        label: Équipe
+        new: Nouvelle équipe
+        created: 'Équipe « %name% » créée.'
+        intro: Une équipe regroupe des personnes qui interviennent ensemble. Elle est interne ou externe, et ce choix est définitif.
+        empty: Aucune équipe pour le moment.
+        name: Nom de l'équipe
+        delete: Supprimer l'équipe
+        delete_help: 'Seule l''équipe est supprimée : ses membres conservent leur compte.'
+        delete_confirm: 'Supprimer l''équipe « %name% » ?'
+        deleted: 'Équipe « %name% » supprimée.'
+        nature:
+            label: Type d'équipe
+            internal: Interne
+            external: Externe
+            help: Une équipe interne est réservée aux utilisateurs internes ; une équipe externe est ouverte à tous. Ce choix est définitif.
+            fixed_internal: Équipe interne, réservée aux utilisateurs internes. Ce choix est définitif.
+            fixed_external: Équipe externe, ouverte à tous les utilisateurs. Ce choix est définitif.
+        column:
+            name: Équipe
+            nature: Type
+            members: Membres
+        tab:
+            members: Membres
+            settings: Paramètres
+        members:
+            count: '{0}Aucun membre|{1}1 membre|]1,Inf[ %count% membres'
+            intro_internal: Seuls les utilisateurs internes peuvent rejoindre cette équipe.
+            intro_external: Tous les utilisateurs, internes comme externes, peuvent rejoindre cette équipe.
+            empty: Cette équipe n'a pas encore de membre.
+            add: Ajouter à l'équipe
+            incomplete: Choisissez la personne à ajouter.
+            added: Membre ajouté.
+            remove: Retirer de l'équipe
+            remove_confirm: 'Retirer %name% de l''équipe ?'
+            removed: Membre retiré.
     access:
         workspace_intro: Un accès à l'espace vaut sur tous ses projets. Un accès direct à un projet, donné depuis la fiche d'une personne, ne peut qu'élargir ce rôle.
         user_intro: Un accès à un espace vaut sur tous ses projets ; un accès direct à un projet ne peut qu'élargir le rôle hérité de son espace.
@@ -1083,6 +1120,9 @@ admin:
         last_admin: Il doit rester au moins un administrateur actif.
         has_history: '%name% a écrit ou porte des demandes, des commentaires ou des fichiers : désactivez plutôt le compte.'
         holds_internal_roles: '%name% a des rôles réservés aux internes (%where%) : retirez-les avant de passer cette personne en externe.'
+        in_internal_teams: '%name% est membre d''équipes internes (%teams%) : retirez cette personne de ces équipes avant de la passer en externe.'
+        team_name_taken: 'Une équipe porte déjà le nom %name%.'
+        team_internal_only: '%name% est externe : l''équipe %team% est réservée aux utilisateurs internes.'
         deactivated: "%name% est désactivé : réactivez d'abord le compte."
         already_activated: '%name% a déjà choisi un mot de passe : « Mot de passe oublié ? » sur la page de connexion lui en donne un nouveau.'
         not_member: "%name% n'a aucun rôle sur %project%."
