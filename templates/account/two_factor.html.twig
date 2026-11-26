@@ -4,25 +4,8 @@
 
 {% block page_intro %}{{ 'account.two_factor.intro'|trans }}{% endblock %}
 
-{# The second factor of the signed-in user, in the `state` it is in: `sso` (the identity provider has its own), `setup` (scan, then a code of the app: `form`, `qrCode`, `secret`) or `enabled` (`regenerateForm`, `disableForm`).
-   The backup codes just drawn arrive once in the `two_factor_codes` flash, read here before the toaster sees the flashes. `required` says the instance holds the account to it. #}
+{# The second factor of the signed-in user, in the `state` it is in: `sso` (the identity provider has its own), `setup` (scan, then a code of the app: `form`, `qrCode`, `secret`) or `enabled` (`disableForm`). `required` says the instance holds the account to it. #}
 {% block content %}
-    {% set backupCodes = app.flashes('two_factor_codes') %}
-    {% if backupCodes %}
-        <section class="rounded-lg border border-emerald-line bg-emerald-soft/60 p-4" role="status" data-controller="clipboard">
-            <div class="flex items-center gap-2 text-emerald">
-                <twig:ux:icon name="lucide:key-round" class="h-4 w-4" />
-                <h2 class="font-semibold">{{ 'account.two_factor.codes.title'|trans }}</h2>
-            </div>
-            <p class="mt-1 text-sm text-emerald/80">{{ 'account.two_factor.codes.hint'|trans }}</p>
-            <pre class="mt-3 grid grid-cols-2 gap-x-6 gap-y-1 rounded-md bg-surface px-3 py-2 font-mono text-sm text-strong ring-1 ring-inset ring-emerald-line select-all" data-clipboard-target="source" data-test="backup-codes">{% for code in backupCodes %}<span>{{ code }}</span>{% endfor %}</pre>
-            <twig:Ui:Button variant="primary" icon="copy" class="mt-3" data-action="clipboard#copy">
-                <span data-clipboard-target="idle">{{ 'account.two_factor.codes.copy'|trans }}</span>
-                <span data-clipboard-target="done" hidden>{{ 'account.two_factor.codes.copied'|trans }}</span>
-            </twig:Ui:Button>
-        </section>
-    {% endif %}
-
     {% if state == 'sso' %}
         <div class="rounded-lg border border-line bg-surface p-4 sm:p-5">
             <h2 class="font-semibold text-strong">{{ 'account.two_factor.sso_title'|trans({ '%provider%': ssoName }) }}</h2>
@@ -54,18 +37,7 @@
                 <h2 class="font-semibold text-strong">{{ 'account.two_factor.status.title'|trans }}</h2>
                 <twig:Ui:Badge tone="emerald" icon="shield-check">{{ 'account.two_factor.status.on'|trans }}</twig:Ui:Badge>
             </div>
-            <p class="mt-1 text-sm text-muted">{{ 'account.two_factor.status.codes_left'|trans({ '%count%': user.countBackupCodes }) }}</p>
         </div>
-
-        {{ form_start(regenerateForm, { attr: { class: 'rounded-lg border border-line bg-surface p-4 sm:p-5 space-y-4' } }) }}
-            <div>
-                <h2 class="font-semibold text-strong">{{ 'account.two_factor.regenerate.title'|trans }}</h2>
-                <p class="mt-1 text-sm text-muted">{{ 'account.two_factor.regenerate.help'|trans }}</p>
-            </div>
-            {{ form_errors(regenerateForm) }}
-            <div class="sm:max-w-sm">{{ form_row(regenerateForm.code) }}</div>
-            <twig:Ui:Button type="submit" size="lg">{{ 'account.two_factor.regenerate.submit'|trans }}</twig:Ui:Button>
-        {{ form_end(regenerateForm) }}
 
         {% if required %}
             <twig:Ui:Callout tone="gray" size="sm">{{ 'account.two_factor.disable.required'|trans }}</twig:Ui:Callout>

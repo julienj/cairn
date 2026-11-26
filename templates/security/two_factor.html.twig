@@ -1,4 +1,4 @@
-{# The code of the second factor, asked between the password and the application (scheb/2fa-bundle names the variables). A backup code goes in the same field. #}
+{# The code of the second factor, asked between the password and the application (scheb/2fa-bundle names the variables). #}
 {% extends 'security/layout.html.twig' %}
 
 {% block title %}{{ 'auth.two_factor.title'|trans }} · Cairn{% endblock %}
@@ -16,8 +16,8 @@
             </twig:Ui:Callout>
         {% endif %}
 
-        <twig:Ui:Form:Field :label="'auth.two_factor.code'|trans" for="_auth_code" :help="'auth.two_factor.backup_hint'|trans" required>
-            <twig:Ui:Form:Input id="_auth_code" name="{{ authCodeParameterName }}" autocomplete="one-time-code" inputmode="text" spellcheck="false" required autofocus />
+        <twig:Ui:Form:Field :label="'auth.two_factor.code'|trans" for="_auth_code" required>
+            <twig:Ui:Form:Input id="_auth_code" name="{{ authCodeParameterName }}" autocomplete="one-time-code" inputmode="numeric" spellcheck="false" required autofocus />
         </twig:Ui:Form:Field>
 
         {% if isCsrfProtectionEnabled %}

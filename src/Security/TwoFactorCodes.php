@@ -9,7 +9,7 @@ use Scheb\TwoFactorBundle\Security\TwoFactor\Provider\Totp\TotpAuthenticatorInte
 
 /**
  * Checks a code outside the sign-in, where an account proves it holds the second factor before changing it: the
- * code of its app or a backup code, or, while it is being set up, the code of the secret it just scanned. The
+ * code of its app, or, while it is being set up, the code of the secret it just scanned. The
  * sign-in is scheb's.
  */
 final readonly class TwoFactorCodes
@@ -20,7 +20,7 @@ final readonly class TwoFactorCodes
 
     public function isValid(User $user, string $code): bool
     {
-        return ($user->isTotpAuthenticationEnabled() && $this->totp->checkCode($user, $this->clean($code))) || $user->isBackupCode($code);
+        return $user->isTotpAuthenticationEnabled() && $this->totp->checkCode($user, $this->clean($code));
     }
 
     public function isValidForSecret(string $secret, string $code): bool

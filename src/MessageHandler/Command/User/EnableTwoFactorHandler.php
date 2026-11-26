@@ -6,7 +6,6 @@ namespace App\MessageHandler\Command\User;
 
 use App\Message\Command\User\EnableTwoFactor;
 use App\Repository\UserRepository;
-use App\Security\BackupCodes;
 use App\Security\TwoFactorCodes;
 use App\Security\TwoFactorPolicy;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -38,6 +37,6 @@ final class EnableTwoFactorHandler
             throw UserException::wrongCode();
         }
 
-        $user->enableTotp($command->secret, BackupCodes::digests($command->backupCodes));
+        $user->enableTotp($command->secret);
     }
 }

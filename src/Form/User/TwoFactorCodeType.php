@@ -18,7 +18,7 @@ final class TwoFactorCodeType extends AbstractType
     {
         $builder->add('code', TextType::class, [
             'label' => $options['code_label'],
-            'attr' => ['autocomplete' => 'one-time-code', 'inputmode' => $options['numeric'] ? 'numeric' : 'text', 'spellcheck' => 'false'],
+            'attr' => ['autocomplete' => 'one-time-code', 'inputmode' => 'numeric', 'spellcheck' => 'false'],
         ]);
     }
 
@@ -27,10 +27,7 @@ final class TwoFactorCodeType extends AbstractType
         $resolver->setDefaults([
             'data_class' => TwoFactorCodeData::class,
             'code_label' => 'account.two_factor.code',
-            // Setting up asks the six digits of the app; the actions that follow also take a backup code.
-            'numeric' => true,
         ]);
         $resolver->setAllowedTypes('code_label', 'string');
-        $resolver->setAllowedTypes('numeric', 'bool');
     }
 }

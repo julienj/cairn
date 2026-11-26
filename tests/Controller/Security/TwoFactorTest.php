@@ -4,17 +4,15 @@ declare(strict_types=1);
 
 namespace App\Tests\Controller\Security;
 
-use App\Entity\User;
 use App\Factory\UserFactory;
 use App\Tests\KernelHelpers;
 use App\Tests\Security\TwoFactorHelpers;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 /**
  * The sign-in of an account that holds a second factor: the password opens nothing by itself, a code of the app
- * or a backup code finishes it, the codes are guessed at a few tries only, and "remember me" is given once the
+ * finishes it, the codes are guessed at a few tries only, and "remember me" is given once the
  * code was typed.
  */
 final class TwoFactorTest extends WebTestCase
@@ -86,23 +84,6 @@ final class TwoFactorTest extends WebTestCase
         $this->client->request('POST', '/2fa_check', ['_auth_code' => self::totpCode($this->secret)]);
 
         self::assertResponseRedirects('/login');
-    }
-
-    public function testABackupCodeFinishesTheSignInOnceAndWhateverHowItIsTyped(): void
-    {
-        $this->signIn();
-        $this->submitCode('1111 2222-3333 4444');
-        self::assertResponseRedirects('/');
-        self::assertSame(1, $this->claire()->countBackupCodes(), 'the code is spent');
-
-        $this->client->request('GET', '/logout');
-        $this->signIn();
-        $this->submitCode('1111-2222-3333-4444');
-
-        self::assertResponseRedirects('/2fa');
-        $this->client->request('GET', '/');
-        self::assertResponseRedirects('/2fa', null, 'a spent code opens nothing');
-        self::assertSame(1, $this->claire()->countBackupCodes());
     }
 
     public function testACodeIsGoodOnce(): void
@@ -193,10 +174,5 @@ final class TwoFactorTest extends WebTestCase
     {
         $crawler = $this->client->request('GET', '/2fa');
         $this->client->submit($crawler->selectButton('Verify')->form(['_auth_code' => $code]));
-    }
-
-    private function claire(): User
-    {
-        return self::getContainer()->get(EntityManagerInterface::class)->getRepository(User::class)->findOneBy(['email' => 'claire@client.test']) ?? self::fail('no account');
     }
 }

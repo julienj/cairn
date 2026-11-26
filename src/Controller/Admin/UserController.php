@@ -139,7 +139,7 @@ final class UserController extends AbstractController
     }
 
     /**
-     * Takes the second factor off an account whose person lost their phone and their backup codes.
+     * Takes the second factor off an account whose person lost their phone.
      */
     #[Route('/{id}/two-factor/reset', name: 'app_admin_user_two_factor_reset', requirements: ['id' => '\\d+'], methods: ['POST'])]
     #[IsCsrfTokenValid('submit')]

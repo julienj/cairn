@@ -9,10 +9,8 @@ use App\Form\User\TwoFactorCodeData;
 use App\Form\User\TwoFactorCodeType;
 use App\Message\Command\User\DisableTwoFactor;
 use App\Message\Command\User\EnableTwoFactor;
-use App\Message\Command\User\RegenerateBackupCodes;
 use App\Message\CommandBus;
 use App\MessageHandler\Command\User\UserException;
-use App\Security\BackupCodes;
 use App\Security\PendingTotp;
 use App\Security\SingleSignOn;
 use App\Security\TwoFactorPolicy;
@@ -33,16 +31,13 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * The second factor of the signed-in user, one page: set up (the QR code of a secret kept in the session until a
- * code of the app proves it works, then the backup codes, shown once), then kept up (new backup codes, turning
- * it off unless the instance holds the account to it). Every code typed here counts against the limit of the
- * sign-in, and is forgotten at the first that is right.
+ * code of the app proves it works), then kept up (turning it off unless the instance holds the account to it).
+ * Every code typed here counts against the limit of the sign-in, and is forgotten at the first that is right.
  */
 final class TwoFactorController extends AbstractController
 {
     /** The secret being scanned, kept from one request to the other until it is confirmed. */
     private const string SECRET = 'two_factor_secret';
-    /** The flash carrying the backup codes just drawn to the next page, read by the template only. */
-    private const string CODES_FLASH = 'two_factor_codes';
 
     public function __construct(
         private readonly CommandBus $commands,
@@ -62,7 +57,7 @@ final class TwoFactorController extends AbstractController
             return $this->render('account/two_factor.html.twig', ['state' => 'sso', 'ssoName' => $sso->name()]);
         }
         if ($user->hasTotp()) {
-            return $this->manage($user, $this->regenerateForm(), $this->disableForm());
+            return $this->manage($user, $this->disableForm());
         }
 
         $session = $request->getSession();
@@ -79,12 +74,10 @@ final class TwoFactorController extends AbstractController
                 return $this->redirectToRoute('app_account_two_factor');
             }
 
-            $codes = BackupCodes::generate();
             try {
-                $this->commands->dispatch(new EnableTwoFactor((int) $user->getId(), $secret, (string) $data->code, $codes));
+                $this->commands->dispatch(new EnableTwoFactor((int) $user->getId(), $secret, (string) $data->code));
                 $this->succeeded($user);
                 $session->remove(self::SECRET);
-                $this->showOnce($codes);
                 $this->addFlash('success', $this->translator->trans('account.two_factor.enabled'));
 
                 return $this->redirectToRoute('app_account_two_factor');
@@ -102,37 +95,6 @@ final class TwoFactorController extends AbstractController
             'secret' => implode(' ', str_split($secret, 4)),
             'required' => $this->policy->requires($user),
         ], new Response(null, $form->isSubmitted() ? 422 : 200));
-    }
-
-    #[Route('/account/two-factor/codes', name: 'app_account_two_factor_codes', methods: ['POST'])]
-    public function regenerate(#[CurrentUser] User $user, Request $request): Response
-    {
-        if (!$user->hasTotp()) {
-            return $this->redirectToRoute('app_account_two_factor');
-        }
-
-        $data = new TwoFactorCodeData();
-        $form = $this->regenerateForm($data);
-        $form->handleRequest($request);
-        if ($form->isSubmitted() && $form->isValid()) {
-            if (!$this->attempt($user)) {
-                return $this->redirectToRoute('app_account_two_factor');
-            }
-
-            $codes = BackupCodes::generate();
-            try {
-                $this->commands->dispatch(new RegenerateBackupCodes((int) $user->getId(), (string) $data->code, $codes));
-                $this->succeeded($user);
-                $this->showOnce($codes);
-                $this->addFlash('success', $this->translator->trans('account.two_factor.codes_renewed'));
-
-                return $this->redirectToRoute('app_account_two_factor');
-            } catch (UserException $e) {
-                $form->get('code')->addError(new FormError($e->trans($this->translator)));
-            }
-        }
-
-        return $this->manage($user, $form, $this->disableForm(), 422);
     }
 
     #[Route('/account/two-factor/disable', name: 'app_account_two_factor_disable', methods: ['POST'])]
@@ -161,34 +123,20 @@ final class TwoFactorController extends AbstractController
             }
         }
 
-        return $this->manage($user, $this->regenerateForm(), $form, 422);
+        return $this->manage($user, $form, 422);
     }
 
     /**
-     * @param FormInterface<TwoFactorCodeData> $regenerate
      * @param FormInterface<TwoFactorCodeData> $disable
      */
-    private function manage(User $user, FormInterface $regenerate, FormInterface $disable, int $status = 200): Response
+    private function manage(User $user, FormInterface $disable, int $status = 200): Response
     {
         return $this->render('account/two_factor.html.twig', [
             'state' => 'enabled',
             'user' => $user,
-            'regenerateForm' => $regenerate,
             'disableForm' => $disable,
             'required' => $this->policy->requires($user),
         ], new Response(null, $status));
-    }
-
-    /**
-     * @return FormInterface<TwoFactorCodeData>
-     */
-    private function regenerateForm(?TwoFactorCodeData $data = null): FormInterface
-    {
-        return $this->forms->createNamed('regenerate', TwoFactorCodeType::class, $data ?? new TwoFactorCodeData(), [
-            'action' => $this->generateUrl('app_account_two_factor_codes'),
-            'code_label' => 'account.two_factor.confirm_code',
-            'numeric' => false,
-        ]);
     }
 
     /**
@@ -199,7 +147,6 @@ final class TwoFactorController extends AbstractController
         return $this->forms->createNamed('disable', TwoFactorCodeType::class, $data ?? new TwoFactorCodeData(), [
             'action' => $this->generateUrl('app_account_two_factor_disable'),
             'code_label' => 'account.two_factor.confirm_code',
-            'numeric' => false,
         ]);
     }
 
@@ -221,15 +168,5 @@ final class TwoFactorController extends AbstractController
     private function succeeded(User $user): void
     {
         $this->limiter->create('manage:'.$user->getId())->reset();
-    }
-
-    /**
-     * @param list<string> $codes
-     */
-    private function showOnce(array $codes): void
-    {
-        foreach ($codes as $code) {
-            $this->addFlash(self::CODES_FLASH, $code);
-        }
     }
 }

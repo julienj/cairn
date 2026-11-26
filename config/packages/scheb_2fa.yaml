@@ -10,5 +10,3 @@ scheb_two_factor:
         enabled: true
         issuer: Cairn
         template: security/two_factor.html.twig
-    backup_codes:
-        enabled: true

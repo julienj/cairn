@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Tests\Security;
 
 use App\Entity\User;
-use App\Security\BackupCodes;
 use Doctrine\ORM\EntityManagerInterface;
 use OTPHP\TOTP;
 use PHPUnit\Framework\Attributes\After;
@@ -23,9 +22,6 @@ use function Symfony\Component\Clock\now;
  */
 trait TwoFactorHelpers
 {
-    /** @var list<string> */
-    private const array BACKUP_CODES = ['1111-2222-3333-4444', 'aaaa-bbbb-cccc-dddd'];
-
     /** @var array<string, string|false> */
     private array $twoFactorEnvironmentBefore = [];
 
@@ -73,7 +69,7 @@ trait TwoFactorHelpers
 
     private function enableTwoFactorOn(User $user, string $secret): void
     {
-        $user->enableTotp($secret, BackupCodes::digests(self::BACKUP_CODES));
+        $user->enableTotp($secret);
         self::getContainer()->get(EntityManagerInterface::class)->flush();
     }
 }

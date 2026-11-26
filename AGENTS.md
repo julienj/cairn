@@ -66,8 +66,7 @@ without its Doctrine bridge), `symfony/mcp-bundle`, Mercure
 - **Second factor**: optional, TOTP only, by `scheb/2fa-bundle`, on the
   `main` firewall alone (the `api` firewall has its tokens). An account
   that signs in with a password turns it on from `/account/two-factor`
-  (`EnableTwoFactor`: the code of the scanned secret proves it works, ten
-  backup codes follow, shown once and kept as digests, `Security/BackupCodes`);
+  (`EnableTwoFactor`: the code of the scanned secret proves it works);
   `CAIRN_TWO_FACTOR` (`optional`, `internal`, `all`) says who must, and
   `Security/TwoFactorPolicy` is the one place that answers: whoever must and
   has none is held on that page by `Security/TwoFactorEnrolment`, and cannot

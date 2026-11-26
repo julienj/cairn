@@ -356,7 +356,6 @@ auth:
         title: Two-factor authentication
         intro: Enter the code shown by your authentication app.
         code: Code
-        backup_hint: Lost your phone? Type one of your backup codes instead.
         submit: Verify
         cancel: Cancel and sign out
     logout: Log out
@@ -613,7 +612,7 @@ admin:
         two_factor:
             badge: 2FA
             title: Two-factor authentication
-            help: 'This account uses an authentication app. If the person lost their phone and their backup codes, reset it: they sign in with their password and set it up again.'
+            help: 'This account uses an authentication app. If the person lost their phone, reset it: they sign in with their password and set it up again.'
             reset: Reset
             reset_confirm: 'Reset the second factor of %name%?'
             reset_done: 'The second factor of %name% was reset.'
@@ -1413,10 +1412,9 @@ account:
         title: Two-factor authentication
         intro: After your password, Cairn asks for a code from an authentication app, so that a stolen password is not enough to sign in as you.
         code: Code from your app
-        confirm_code: A code from your app, or a backup code
+        confirm_code: A code from your app
         enabled: Two-factor authentication is on.
         disabled: Two-factor authentication is off.
-        codes_renewed: 'New backup codes drawn: the previous ones no longer work.'
         too_many_attempts: Too many attempts. Try again in a few minutes.
         required_notice: This instance requires two-factor authentication. Set it up to go on using Cairn.
         sso_title: 'You sign in with %provider%'
@@ -1427,19 +1425,9 @@ account:
             qr_alt: QR code to scan with your authentication app
             manual: 'Cannot scan it? Type this key in your app instead:'
             submit: Turn on
-        codes:
-            title: Your backup codes
-            hint: 'Each one works once, in place of a code from your app. They are shown only now: keep them somewhere safe.'
-            copy: Copy the codes
-            copied: Copied
         status:
             title: Authentication app
             'on': 'On'
-            codes_left: '{0}No backup code left.|{1}1 backup code left.|]1,Inf[ %count% backup codes left.'
-        regenerate:
-            title: Backup codes
-            help: Draw ten new ones; the ones you have stop working.
-            submit: Draw new codes
         disable:
             title: Turn off
             help: Sign in with your password alone again. Confirm with a code.

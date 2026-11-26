@@ -185,7 +185,7 @@ Good to know:
 
 ### Two-factor authentication
 
-Every account that signs in with a password can turn on a second factor in its account (Security > Two-factor authentication): a code from an authentication app (TOTP), asked after the password, and ten backup codes, each good once, shown a single time. `CAIRN_TWO_FACTOR` says who has to:
+Every account that signs in with a password can turn on a second factor in its account (Security > Two-factor authentication): a code from an authentication app (TOTP), asked after the password. `CAIRN_TWO_FACTOR` says who has to:
 
 | Value | Who must set it up |
 |---|---|
@@ -197,7 +197,7 @@ Someone who must and has not yet is sent to the page that sets it up as soon as 
 
 - **Accounts that sign in through single sign-on are never asked**: the provider has its own second factor.
 - **The API and the MCP server are not asked either**: a personal token signs their requests.
-- **Someone who lost their phone and their backup codes**: an administrator resets their second factor from their account in the administration; they sign in with the password and set it up again.
+- **Someone who lost their phone**: an administrator resets their second factor from their account in the administration; they sign in with the password and set it up again.
 - **"Remember me" keeps the second factor for its two weeks**: the cookie is only given once the code was typed.
 - **The TOTP secrets are stored as they are in the database**: protect it and its backups as you do for the rest.
 

@@ -14,8 +14,8 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 /**
- * The page of the second factor of one's own account: set up with the QR code of a secret and a first code, the
- * backup codes shown once, new ones, turning it off, and the limit on the codes typed there.
+ * The page of the second factor of one's own account: set up with the QR code of a secret and a first code,
+ * turning it off, and the limit on the codes typed there.
  */
 final class TwoFactorAccountTest extends WebTestCase
 {
@@ -50,14 +50,6 @@ final class TwoFactorAccountTest extends WebTestCase
         self::assertResponseIsSuccessful();
 
         return str_replace(' ', '', trim($crawler->filter('[data-test="totp-secret"]')->text()));
-    }
-
-    /**
-     * @return list<string>
-     */
-    private function shownBackupCodes(): array
-    {
-        return array_values(array_map(trim(...), $this->client->getCrawler()->filter('[data-test="backup-codes"] span')->each(static fn ($span) => $span->text())));
     }
 
     private function turnOn(): string
@@ -100,24 +92,16 @@ final class TwoFactorAccountTest extends WebTestCase
         self::assertFalse($this->account()->hasTotp());
     }
 
-    public function testTheCodeOfTheScannedSecretTurnsItOnAndTheBackupCodesAreShownOnce(): void
+    public function testTheCodeOfTheScannedSecretTurnsItOn(): void
     {
         $secret = $this->turnOn();
 
-        $shown = $this->shownBackupCodes();
-        self::assertCount(10, $shown);
         $account = $this->account();
         self::assertTrue($account->hasTotp());
         self::assertSame($secret, $account->getTotpSecret());
-        self::assertSame(10, $account->countBackupCodes());
-        foreach ($shown as $code) {
-            self::assertTrue($account->isBackupCode($code), 'what is shown is what works');
-        }
         self::assertSelectorTextContains('body', 'Two-factor authentication is on.');
 
         $this->client->request('GET', '/account/two-factor');
-        self::assertSelectorNotExists('[data-test="backup-codes"]', 'the codes are not shown again');
-        self::assertSelectorTextContains('body', '10 backup codes left.');
         self::assertSelectorNotExists('img[data-test="totp-qr"]');
     }
 
@@ -129,39 +113,6 @@ final class TwoFactorAccountTest extends WebTestCase
 
         self::assertResponseStatusCodeSame(422);
         self::assertFalse($this->account()->hasTotp());
-    }
-
-    public function testNewBackupCodesReplaceTheOnesThatWereDrawn(): void
-    {
-        $this->turnOn();
-        $old = $this->shownBackupCodes();
-        $secret = (string) $this->account()->getTotpSecret();
-
-        $this->client->request('GET', '/account/two-factor');
-        $this->client->submitForm('Draw new codes', ['regenerate[code]' => self::totpCode($secret)]);
-        self::assertResponseRedirects('/account/two-factor');
-        $this->client->followRedirect();
-
-        $new = $this->shownBackupCodes();
-        self::assertCount(10, $new);
-        self::assertSame([], array_intersect($old, $new));
-        $account = $this->account();
-        self::assertFalse($account->isBackupCode($old[0]), 'the previous ones stop working');
-        self::assertTrue($account->isBackupCode($new[0]));
-    }
-
-    public function testNewBackupCodesAreAskedWithACodeOnly(): void
-    {
-        $this->turnOn();
-        $account = $this->account();
-        $digest = $account->countBackupCodes();
-
-        $this->client->request('GET', '/account/two-factor');
-        $this->client->submitForm('Draw new codes', ['regenerate[code]' => '000000']);
-
-        self::assertResponseStatusCodeSame(422);
-        self::assertSelectorTextContains('form[action$="/two-factor/codes"]', 'That code is incorrect.');
-        self::assertSame($digest, $this->account()->countBackupCodes());
     }
 
     public function testItIsTurnedOffWithACode(): void
@@ -179,7 +130,6 @@ final class TwoFactorAccountTest extends WebTestCase
         $this->client->followRedirect();
 
         self::assertFalse($this->account()->hasTotp());
-        self::assertSame(0, $this->account()->countBackupCodes());
         self::assertSelectorTextContains('body', 'Two-factor authentication is off.');
     }
 
@@ -201,12 +151,9 @@ final class TwoFactorAccountTest extends WebTestCase
         self::assertTrue($this->account()->hasTotp(), 'even the right code waits');
     }
 
-    public function testTheManagementActionsLeadBackWhenThereIsNothingToManage(): void
+    public function testTurningItOffLeadsBackWhenThereIsNothingToTurnOff(): void
     {
         $this->client->request('POST', '/account/two-factor/disable');
-        self::assertResponseRedirects('/account/two-factor');
-
-        $this->client->request('POST', '/account/two-factor/codes');
         self::assertResponseRedirects('/account/two-factor');
     }
 

@@ -8,10 +8,8 @@ use App\Entity\Enum\ActivityKind;
 use App\Entity\Enum\AuthMethod;
 use App\Entity\Enum\MailGrouping;
 use App\Repository\UserRepository;
-use App\Security\BackupCodes;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use Scheb\TwoFactorBundle\Model\BackupCodeInterface;
 use Scheb\TwoFactorBundle\Model\Totp\TotpConfiguration;
 use Scheb\TwoFactorBundle\Model\Totp\TotpConfigurationInterface;
 use Scheb\TwoFactorBundle\Model\Totp\TwoFactorInterface;
@@ -34,13 +32,12 @@ use function Symfony\Component\Clock\now;
  * file of Attachment/AvatarStorage) and how their notification mails are
  * grouped.
  * An account that signs in with a password may also hold a TOTP secret (the
- * second factor, asked after the password) and the digests of its backup
- * codes, each good once; the identity provider has its own second factor, so
- * an account that signs in through it holds neither.
+ * second factor, asked after the password); the identity provider has its own
+ * second factor, so an account that signs in through it holds none.
  */
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: 'app_user')]
-class User implements UserInterface, PasswordAuthenticatedUserInterface, EquatableInterface, TwoFactorInterface, BackupCodeInterface
+class User implements UserInterface, PasswordAuthenticatedUserInterface, EquatableInterface, TwoFactorInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -89,11 +86,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Equatab
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $totpSecret = null;
-
-    /** @var list<string> digests of the backup codes still good, see BackupCodes */
-    // JSONB, not JSON: the lists of accounts select them with DISTINCT, which PostgreSQL does not do on a json.
-    #[ORM\Column(type: Types::JSONB, options: ['default' => '[]'])]
-    private array $backupCodes = [];
 
     #[ORM\Column]
     private \DateTimeImmutable $createdAt;
@@ -340,33 +332,21 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Equatab
     }
 
     /**
-     * Turns the second factor on, or replaces it: the secret the person
-     * scanned and the digests of the backup codes they were shown once.
-     *
-     * @param list<string> $backupCodeDigests
+     * Turns the second factor on, or replaces it, with the secret the person
+     * scanned.
      */
-    public function enableTotp(string $secret, array $backupCodeDigests): void
+    public function enableTotp(string $secret): void
     {
         if ($this->usesSso()) {
             throw new \LogicException('An account that signs in through the identity provider has its second factor there.');
         }
 
         $this->totpSecret = $secret;
-        $this->backupCodes = $backupCodeDigests;
     }
 
     public function disableTotp(): void
     {
         $this->totpSecret = null;
-        $this->backupCodes = [];
-    }
-
-    /**
-     * @param list<string> $backupCodeDigests
-     */
-    public function replaceBackupCodes(array $backupCodeDigests): void
-    {
-        $this->backupCodes = $backupCodeDigests;
     }
 
     public function hasTotp(): bool
@@ -377,11 +357,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Equatab
     public function getTotpSecret(): ?string
     {
         return $this->totpSecret;
-    }
-
-    public function countBackupCodes(): int
-    {
-        return \count($this->backupCodes);
     }
 
     public function isTotpAuthenticationEnabled(): bool
@@ -397,24 +372,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Equatab
     public function getTotpAuthenticationConfiguration(): ?TotpConfigurationInterface
     {
         return null === $this->totpSecret ? null : new TotpConfiguration($this->totpSecret, TotpConfiguration::ALGORITHM_SHA1, 30, 6);
-    }
-
-    public function isBackupCode(string $code): bool
-    {
-        $digest = BackupCodes::digest($code);
-        foreach ($this->backupCodes as $known) {
-            if (hash_equals($known, $digest)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    public function invalidateBackupCode(string $code): void
-    {
-        $digest = BackupCodes::digest($code);
-        $this->backupCodes = array_values(array_filter($this->backupCodes, static fn (string $known): bool => !hash_equals($known, $digest)));
     }
 
     public function getPassword(): ?string
