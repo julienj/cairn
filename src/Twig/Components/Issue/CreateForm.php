@@ -109,11 +109,28 @@ final class CreateForm extends AbstractController
     }
 
     /**
-     * Changing the tracker changes the form: start it afresh.
+     * Changing the tracker changes the form, not what was written: the new
+     * one is drawn with what both ask (title, description, qualification),
+     * the fields of the workflow start afresh, and what the new form does
+     * not offer is dropped. It is submitted so that the page shows what
+     * the component holds, and judged by nobody yet.
      */
     public function onTrackerChanged(): void
     {
+        $written = $this->formValues;
         $this->resetForm();
+        $kept = array_intersect_key($written, $this->formValues);
+        unset($kept['fields']);
+        if ([] === $kept) {
+            return;
+        }
+
+        $this->formValues = $kept + $this->formValues;
+        $this->resetForm(true);
+        $form = $this->getForm();
+        $form->submit($this->formValues);
+        $this->clearErrorsForNonValidatedFields($form, $form->getName());
+        $this->formValues = $this->extractFormValues($this->getFormView());
     }
 
     /**

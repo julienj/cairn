@@ -169,6 +169,32 @@ final class CreateFormTest extends KernelTestCase
         self::assertSame('', $this->issue('MD-SPT-11')->getDescription());
     }
 
+    public function testChangingTheTrackerKeepsWhatWasWritten(): void
+    {
+        $component = $this->form('nadia.benali@cairn.test')->set('trackerId', $this->bugs->getId());
+        $component
+            ->set('issue.title', 'Purge the expired sessions')
+            ->set('issue.description', 'Every night.')
+            ->set('issue.criticality', 'high')
+            ->set('issue.fields.environment', 'prod');
+
+        $rendered = (string) $component->set('trackerId', $this->tasks->getId())->render();
+
+        self::assertStringContainsString('value="Purge the expired sessions"', $rendered, 'the page shows what the component holds');
+        self::assertStringContainsString('Every night.', $rendered);
+        self::assertStringNotContainsString('issue[fields][environment]', $rendered, 'the fields are those of the new workflow');
+        self::assertStringNotContainsString('This value should not be blank.', $rendered, 'nothing is judged yet');
+
+        $component->call('save');
+
+        self::assertSame(302, $component->response()->getStatusCode(), $component->response()->getContent() ?: '');
+        $issue = $this->issue('MD-SPT-11');
+        self::assertSame('Purge the expired sessions', $issue->getTitle());
+        self::assertSame('Every night.', $issue->getDescription());
+        self::assertSame(Criticality::High, $issue->getCriticality());
+        self::assertSame($this->tasks->getId(), $issue->getTracker()->getId());
+    }
+
     public function testAnInternalUserQualifiesAtCreation(): void
     {
         $lea = $this->scene->user('lea.fontaine@cairn.test');
