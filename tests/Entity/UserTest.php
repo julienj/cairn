@@ -90,4 +90,20 @@ final class UserTest extends TestCase
         $this->expectException(\LogicException::class);
         $user->enableTotp('JBSWY3DPEHPK3PXP');
     }
+
+    public function testTurningTheSecondFactorOnOrOffEndsTheOtherSessions(): void
+    {
+        $before = new User('claire@example.com', 'Claire', 'Martin');
+        $after = clone $before;
+        self::assertTrue($after->isEqualTo($before));
+
+        $after->enableTotp('JBSWY3DPEHPK3PXP');
+        self::assertFalse($after->isEqualTo($before), 'a session opened without it is not the account any more');
+        self::assertFalse($before->isEqualTo($after));
+
+        $before->enableTotp('JBSWY3DPEHPK3PXP');
+        self::assertTrue($after->isEqualTo($before));
+        $after->disableTotp();
+        self::assertFalse($after->isEqualTo($before), 'nor the one opened with it, once it is off');
+    }
 }

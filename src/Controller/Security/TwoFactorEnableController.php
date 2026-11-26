@@ -11,11 +11,13 @@ use App\Message\Command\User\EnableTwoFactor;
 use App\Message\CommandBus;
 use App\MessageHandler\Command\User\UserException;
 use App\Security\PendingTotp;
+use App\Security\TwoFactorCondition;
 use App\Security\TwoFactorPolicy;
 use Endroid\QrCode\Builder\Builder;
 use Endroid\QrCode\Writer\SvgWriter;
 use Scheb\TwoFactorBundle\Security\TwoFactor\Provider\Totp\TotpAuthenticatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -48,7 +50,7 @@ final class TwoFactorEnableController extends AbstractController
     }
 
     #[Route('/security/2fa/enable', name: 'app_two_factor_enable', methods: ['GET', 'POST'])]
-    public function enable(#[CurrentUser] User $user, Request $request): Response
+    public function enable(#[CurrentUser] User $user, Request $request, Security $security): Response
     {
         if (!$this->policy->isAvailableTo($user) || $user->hasTotp()) {
             return $this->redirectToRoute('app_account_two_factor');
@@ -67,10 +69,13 @@ final class TwoFactorEnableController extends AbstractController
             try {
                 $this->commands->dispatch(new EnableTwoFactor((int) $user->getId(), $secret, (string) $data->code));
                 $session->remove(self::SECRET);
-                $this->addFlash('success', $this->translator->trans('account.two_factor.enabled'));
-
+                // Signing in again forgets the page that was asked.
                 $target = $this->getTargetPath($session, 'main');
-                $this->removeTargetPath($session, 'main');
+                // The secret ended every other session of the account (isEqualTo); this one went through the code
+                // just now and goes on.
+                $request->attributes->set(TwoFactorCondition::SKIP, true);
+                $security->login($user, 'form_login', 'main');
+                $this->addFlash('success', $this->translator->trans('account.two_factor.enabled'));
 
                 return null !== $target ? $this->redirect($target) : $this->redirectToRoute('app_account_two_factor');
             } catch (UserException $e) {

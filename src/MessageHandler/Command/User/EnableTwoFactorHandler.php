@@ -12,7 +12,7 @@ use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 /**
  * The code must be the one of the secret the person scanned, so that a second factor is never turned on without
- * working. The open sessions go on: the person just proved the code, and nothing else changed.
+ * working. The other open sessions of the account end (User::isEqualTo): whoever turns it on may fear a leak.
  */
 #[AsMessageHandler(bus: 'command.bus')]
 final class EnableTwoFactorHandler

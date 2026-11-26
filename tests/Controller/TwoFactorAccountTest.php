@@ -69,6 +69,17 @@ final class TwoFactorAccountTest extends WebTestCase
         self::assertSelectorNotExists('img[data-test="totp-qr"]', 'the page that sets it up is the sign-in\'s');
     }
 
+    public function testASessionOpenedBeforeItWasTurnedOnIsClosed(): void
+    {
+        $this->client->request('GET', '/account');
+        self::assertResponseIsSuccessful();
+
+        $this->enableTwoFactorOn($this->claire, self::totpSecret());
+
+        $this->client->request('GET', '/account');
+        self::assertResponseRedirects('http://localhost/login', null, 'someone who fears a leaked password turns it on: the session of the thief ends');
+    }
+
     public function testItShowsItIsOnWhenThereIsOne(): void
     {
         $this->turnedOn();
@@ -95,6 +106,9 @@ final class TwoFactorAccountTest extends WebTestCase
 
         self::assertFalse($this->account()->hasTotp());
         self::assertSelectorTextContains('body', 'Two-factor authentication is off.');
+
+        $this->client->request('GET', '/account');
+        self::assertResponseIsSuccessful('the session that turned it off goes on, without a code');
     }
 
     public function testTheCodesAreTriedAtAFewTimesOnly(): void

@@ -11,8 +11,10 @@ use App\Message\Command\User\DisableTwoFactor;
 use App\Message\CommandBus;
 use App\MessageHandler\Command\User\UserException;
 use App\Security\SingleSignOn;
+use App\Security\TwoFactorCondition;
 use App\Security\TwoFactorPolicy;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\Attribute\Target;
 use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\FormFactoryInterface;
@@ -55,7 +57,7 @@ final class TwoFactorController extends AbstractController
     }
 
     #[Route('/account/two-factor/disable', name: 'app_account_two_factor_disable', methods: ['POST'])]
-    public function disable(#[CurrentUser] User $user, Request $request): Response
+    public function disable(#[CurrentUser] User $user, Request $request, Security $security): Response
     {
         if (!$user->hasTotp()) {
             return $this->redirectToRoute('app_account_two_factor');
@@ -72,6 +74,9 @@ final class TwoFactorController extends AbstractController
             try {
                 $this->commands->dispatch(new DisableTwoFactor((int) $user->getId(), (string) $data->code));
                 $this->succeeded($user);
+                // Taking the secret off ended every other session of the account (isEqualTo); this one goes on.
+                $request->attributes->set(TwoFactorCondition::SKIP, true);
+                $security->login($user, 'form_login', 'main');
                 $this->addFlash('success', $this->translator->trans('account.two_factor.disabled'));
 
                 return $this->redirectToRoute('app_account_two_factor');

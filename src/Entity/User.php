@@ -388,7 +388,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Equatab
     /**
      * Whether the user of an open session is still the one in database.
      * Symfony compares password, identifier and roles on its own; `active`
-     * is added so that deactivating an account ends its sessions.
+     * is added so that deactivating an account ends its sessions, and the
+     * second factor's secret so that turning it on or off does the same.
      */
     public function isEqualTo(UserInterface $user): bool
     {
@@ -396,6 +397,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Equatab
             && $user->getId() === $this->getId()
             && $user->email === $this->email
             && $user->password === $this->password
+            && $user->totpSecret === $this->totpSecret
             && $user->active === $this->active
             && $user->getRoles() === $this->getRoles();
     }

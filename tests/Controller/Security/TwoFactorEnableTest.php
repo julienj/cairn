@@ -84,6 +84,7 @@ final class TwoFactorEnableTest extends WebTestCase
         self::assertSame($secret, $account->getTotpSecret());
         $this->client->followRedirect();
         self::assertSelectorTextContains('body', 'Two-factor authentication is on.');
+        self::assertResponseIsSuccessful('the session that set it up goes on, without being asked for the code again');
     }
 
     public function testItGoesBackToThePageThatWasAsked(): void
