@@ -42,15 +42,15 @@
                 {% endif %}
 
                 <section class="space-y-2">
-                    <div class="flex items-center justify-between gap-2">
-                        <h2 class="text-sm font-medium text-body">{{ 'widget.capture.title'|trans }}</h2>
-                        <label class="cursor-pointer text-xs font-medium text-brand hover:underline">
-                            {{ 'widget.form.attach'|trans }}
-                            <input type="file" multiple class="sr-only" data-action="change->widget-report#chosen">
-                        </label>
-                    </div>
-                    <div data-controller="widget-capture" data-widget-capture-failed-value="{{ 'widget.capture.failed'|trans }}" data-action="widget:annotate@window->widget-capture#annotate keydown@window->widget-capture#key">
-                        <twig:Ui:Button icon="camera" data-action="widget-capture#take" data-widget-capture-target="take" hidden>{{ 'widget.capture.take'|trans }}</twig:Ui:Button>
+                    <h2 class="text-sm font-medium text-body">{{ 'widget.form.attachments'|trans }} <span class="font-normal text-faint">{{ 'form.optional'|trans }}</span></h2>
+                    {# One zone for what goes with the issue: the screenshot where the browser allows it, the files chosen, and those dropped anywhere on the panel. #}
+                    <div class="rounded-md border border-dashed border-line-strong bg-subtle px-3 py-4" data-controller="widget-capture" data-widget-capture-failed-value="{{ 'widget.capture.failed'|trans }}" data-action="widget:annotate@window->widget-capture#annotate keydown@window->widget-capture#key">
+                        <div class="flex flex-wrap items-center justify-center gap-2">
+                            <twig:Ui:Button icon="camera" data-action="widget-capture#take" data-widget-capture-target="take" hidden>{{ 'widget.capture.take'|trans }}</twig:Ui:Button>
+                            <twig:Ui:Button icon="paperclip" data-action="widget-report#choose">{{ 'widget.form.attach'|trans }}</twig:Ui:Button>
+                            <input type="file" multiple hidden data-widget-report-target="picker" data-action="change->widget-report#chosen">
+                        </div>
+                        <p class="mt-2 text-center text-xs text-faint">{{ 'widget.form.drop_hint'|trans }}</p>
                         {# The editor of the screenshot, over the whole frame, which the panel makes a dialog over the page meanwhile. #}
                         <div class="fixed inset-0 z-50 flex flex-col bg-sunken" role="dialog" aria-modal="true" aria-labelledby="widget-editor-title" data-widget-capture-target="editor" hidden>
                             <header class="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2 border-b border-line bg-surface px-3 py-2">
@@ -88,23 +88,21 @@
                         {{ include('widget/_file.html.twig', { uuid: '__uuid__', name: '__name__' }) }}
                     </template>
                 </section>
-
-                <section class="flex items-center gap-3 rounded-md border border-line bg-subtle px-3 py-2.5" data-widget-report-target="box" hidden>
-                    <twig:ux:icon name="lucide:file" class="h-4 w-4 shrink-0 text-faint" />
-                    <div class="min-w-0 flex-1">
-                        <div class="text-sm font-medium text-strong">{{ 'widget.report.attached'|trans }}</div>
-                        <div class="text-xs text-muted">{{ 'widget.report.summary'|trans }}</div>
-                    </div>
-                    <twig:Ui:Button variant="ghost" size="sm" data-action="widget-report#view">{{ 'widget.report.view'|trans }}</twig:Ui:Button>
-                </section>
             </div>
             <footer class="sticky bottom-0 flex flex-col gap-2 border-t border-line bg-surface px-4 py-3">
+                {# The report of the site goes with the issue: said in a line with what is sent, apart from the files, and read in the second view. #}
+                <p class="flex items-center gap-1.5 text-xs text-muted" title="{{ 'widget.report.summary'|trans }}" data-widget-report-target="box" hidden>
+                    <twig:ux:icon name="lucide:file-text" class="h-3.5 w-3.5 shrink-0 text-faint" />
+                    <span>{{ 'widget.report.attached'|trans }}</span>
+                    <span aria-hidden="true">·</span>
+                    <button type="button" class="cursor-pointer rounded font-medium text-brand hover:underline" data-action="widget-report#view">{{ 'widget.report.view'|trans }}</button>
+                </p>
                 {% set reportVisibility = private ? 'widget.form.private_tracker'|trans : (form.private is defined ? '' : 'widget.form.visible'|trans) %}
                 {% if reportVisibility %}
                     <p class="text-xs text-muted">{{ reportVisibility }}</p>
                 {% endif %}
                 <div class="flex items-center justify-between gap-3" data-widget-report-target="actions">
-                    <twig:Ui:Button variant="ghost" size="lg" data-action="widget-report#ask" data-widget-report-target="discard">{{ 'widget.form.discard'|trans }}</twig:Ui:Button>
+                    <twig:Ui:Button size="lg" data-action="widget-report#ask" data-widget-report-target="discard">{{ 'widget.form.discard'|trans }}</twig:Ui:Button>
                     <twig:Ui:Button type="submit" variant="primary" size="lg" data-widget-report-target="submit">{{ 'widget.form.submit'|trans }}</twig:Ui:Button>
                 </div>
                 <div class="flex items-center justify-between gap-3" role="alertdialog" aria-labelledby="widget-discard-question" data-widget-report-target="confirm" data-action="keydown.esc@window->widget-report#dismiss" hidden>
@@ -117,14 +115,15 @@
             </footer>
         </div>
 
-        <div class="flex flex-1 flex-col" data-widget-report-target="detail" hidden>
-            <div class="flex-1 space-y-4 p-4">
+        {# A page under the form: the way back is where it is looked for, an arrow before its title, which stays in view. Escape goes back too. #}
+        <div class="flex flex-1 flex-col" data-widget-report-target="detail" data-action="keydown.esc@window->widget-report#back" hidden>
+            <header class="sticky top-0 z-10 flex items-center gap-1 border-b border-line bg-surface py-2 pl-2 pr-4">
+                <twig:Ui:IconButton icon="arrow-left" :label="'widget.report.back'|trans" data-action="widget-report#back" />
                 <h2 class="font-semibold text-strong">{{ 'widget.report.title'|trans }}</h2>
-                <div data-widget-report-target="body"></div>
-            </div>
-            <footer class="sticky bottom-0 flex items-center justify-between gap-3 border-t border-line bg-surface px-4 py-3">
+            </header>
+            <div class="flex-1 p-4" data-widget-report-target="body"></div>
+            <footer class="sticky bottom-0 border-t border-line bg-surface px-4 py-3">
                 {{ form_widget(form.includeReport) }}
-                <twig:Ui:Button data-action="widget-report#back">{{ 'widget.report.back'|trans }}</twig:Ui:Button>
             </footer>
         </div>
         {# Over the whole panel while files are dragged over it: dropped anywhere, they are attached. #}

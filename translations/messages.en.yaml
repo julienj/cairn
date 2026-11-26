@@ -1433,6 +1433,7 @@ widget:
         text: Sign in to report a problem on this site.
         action: Sign in
         kept: You stay signed in for 30 days.
+        waiting: "Finish signing in in the window that just opened."
     link:
         title: Link your Cairn account to this site?
         text: You will be able to report problems from this site without signing in again, for 30 days.
@@ -1444,6 +1445,7 @@ widget:
     form:
         tracker: Category
         title: Title
+        title_placeholder: The problem in a few words
         description: Description
         criticality: Criticality
         tags: Tags
@@ -1452,6 +1454,8 @@ widget:
         private_tracker: 'Private category: hidden from external users.'
         files: Files
         attach: Attach a file
+        attachments: Screenshot and files
+        drop_hint: "or drop files anywhere on this panel"
         drop: Drop your files to attach them
         remove_file: 'Remove %name%'
         upload_failed: This file could not be sent.

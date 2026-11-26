@@ -4,7 +4,7 @@ const KEY = 'cairn-widget-open';
 /* How long what is noted waits before going to the frame, so that a burst goes as one message, in milliseconds. */
 const NOTED_WAIT = 300;
 /* The panel beside its button: how wide and how tall it gets, and what it leaves between them, in pixels. */
-const WIDTH = 400;
+const WIDTH = 480;
 const HEIGHT = 760;
 const GAP = 12;
 
@@ -26,7 +26,8 @@ const GAP = 12;
  * again whenever it notes more (the function returned, which waits for
  * a burst to end), closes the panel when asked to, takes the whole widget out of the
  * picture while the frame takes a screenshot, and makes the panel a dialog over the
- * page while the screenshot is edited.
+ * page while the screenshot is edited. It also tells the frame whether
+ * the panel covers the button (`cairn:layout`), which otherwise closes it.
  */
 export function createPanel({ cairn, address, label, report }) {
     const host = document.createElement('div');
@@ -37,11 +38,12 @@ export function createPanel({ cairn, address, label, report }) {
     style.textContent = `
 :host { all: initial; }
 ${buttonStyles}
-.panel { position: fixed; left: var(--left); top: var(--top); z-index: 2147483647; width: var(--width); height: var(--height); overflow: hidden; border-radius: 14px; background: #fff; box-shadow: 0 0 0 1px rgba(17, 24, 39, .1), 0 2px 6px rgba(17, 24, 39, .08), 0 24px 56px -12px rgba(17, 24, 39, .35); transform-origin: var(--origin); opacity: 0; scale: .96; visibility: hidden; transition: opacity .15s, scale .15s, visibility 0s .15s; }
+.panel { position: fixed; left: var(--left); top: var(--top); z-index: 2147483647; width: var(--width); height: var(--height); overflow: hidden; border-radius: 14px; background: #fff; color-scheme: light dark; box-shadow: 0 0 0 1px rgba(17, 24, 39, .1), 0 2px 6px rgba(17, 24, 39, .08), 0 24px 56px -12px rgba(17, 24, 39, .35); transform-origin: var(--origin); opacity: 0; scale: .96; visibility: hidden; transition: opacity .15s, scale .15s, visibility 0s .15s; }
 .panel.open { opacity: 1; scale: 1; visibility: visible; transition: opacity .18s, scale .3s cubic-bezier(.2, 1.15, .3, 1); }
 .panel.wide { top: 32px; right: 32px; bottom: 32px; left: 32px; width: auto; height: auto; border-radius: 12px; box-shadow: 0 24px 64px rgba(17, 24, 39, .35); }
 .backdrop { position: fixed; inset: 0; z-index: 2147483647; background: rgba(17, 24, 39, .55); }
 @media (max-width: 640px) { .panel, .panel.wide { inset: 0; width: auto; height: auto; border-radius: 0; } }
+@media (prefers-color-scheme: dark) { .panel { background: #161b22; box-shadow: 0 0 0 1px rgba(255, 255, 255, .12), 0 24px 56px -12px rgba(0, 0, 0, .6); } }
 iframe { display: block; width: 100%; height: 100%; border: 0; }
 [hidden] { display: none !important; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: .01ms !important; animation: none !important; } }
@@ -91,6 +93,9 @@ iframe { display: block; width: 100%; height: 100%; border: 0; }
         panel.style.setProperty('--origin', `${clamp(x - left, 0, wide)}px ${clamp(y - top, 0, tall)}px`);
     };
     let shown = false;
+    // Whether the panel covers its button (a narrow window): the frame then offers its own way to close.
+    const covering = window.matchMedia?.('(max-width: 640px)');
+    const told = () => send({ type: 'cairn:layout', covered: true === covering?.matches });
 
     const show = (open) => {
         shown = open;
@@ -118,9 +123,10 @@ iframe { display: block; width: 100%; height: 100%; border: 0; }
         } catch { /* no storage: the panel closes with the page */ }
         if (open) {
             send({ type: 'cairn:context', report: report() });
+            told();
         }
     };
-    const button = createButton(label, { onClick: () => show(!shown), onMove: lay });
+    const button = createButton(label, { onClick: () => show(!shown), onMove: () => { lay(); told(); } });
 
     window.addEventListener('message', (event) => {
         if (event.origin !== cairn || null === frame || event.source !== frame.contentWindow) {
@@ -129,6 +135,7 @@ iframe { display: block; width: 100%; height: 100%; border: 0; }
         switch (event.data?.type) {
             case 'cairn:ready':
                 send({ type: 'cairn:context', report: report() });
+                told();
                 break;
             case 'cairn:close':
                 show(false);

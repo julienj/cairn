@@ -49,10 +49,13 @@ final class ReportType extends AbstractType
                 'choice_translation_domain' => false,
                 'label' => 'widget.form.tracker',
             ])
-            ->add('title', TextType::class, ['label' => 'widget.form.title'])
+            ->add('title', TextType::class, [
+                'label' => 'widget.form.title',
+                'attr' => ['placeholder' => 'widget.form.title_placeholder'],
+            ])
             ->add('description', MarkdownType::class, [
                 'label' => 'widget.form.description',
-                'attr' => ['rows' => 4],
+                'attr' => ['rows' => 4, 'placeholder' => 'issue.field.description_placeholder'],
             ])
             ->add('fields', IssueFieldsType::class, [
                 'workflow' => $workflow,
