@@ -1,0 +1,28 @@
+{# Base of the pages of a team: its name, whether it is internal, its tabs (one route each: members, accesses, settings). Pages fill `team_content`. #}
+{% extends 'layout/admin.html.twig' %}
+
+{% block page_title %}{{ team.name }}{% endblock %}
+
+{% block breadcrumb %}
+    <twig:ux:icon name="lucide:chevron-right" class="h-3 w-3 text-ghost shrink-0" />
+    <a href="{{ path('app_admin_teams') }}" class="hover:text-strong">{{ 'admin.nav.teams'|trans }}</a>
+{% endblock %}
+
+{% block content %}
+    {% set teamRoute = { id: team.id } %}
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 py-5 space-y-4">
+        <div>
+            <p class="text-xs text-muted">{{ 'admin.team.label'|trans }}</p>
+            <h1 class="text-xl font-semibold text-strong flex items-center gap-2">
+                {{ team.name }}
+                <twig:Ui:Badge>{{ (team.internal ? 'admin.team.nature.internal' : 'admin.team.nature.external')|trans }}</twig:Ui:Badge>
+            </h1>
+        </div>
+        <nav class="flex items-center gap-1 border-b border-line">
+            <twig:Ui:Tab href="{{ path('app_admin_team', teamRoute) }}" :active="app.current_route == 'app_admin_team'">{{ 'admin.team.tab.members'|trans }}</twig:Ui:Tab>
+            <twig:Ui:Tab href="{{ path('app_admin_team_access', teamRoute) }}" :active="app.current_route == 'app_admin_team_access'">{{ 'admin.team.tab.access'|trans }}</twig:Ui:Tab>
+            <twig:Ui:Tab href="{{ path('app_admin_team_settings', teamRoute) }}" icon="settings" right :active="app.current_route == 'app_admin_team_settings'">{{ 'admin.team.tab.settings'|trans }}</twig:Ui:Tab>
+        </nav>
+        {% block team_content %}{% endblock %}
+    </div>
+{% endblock %}

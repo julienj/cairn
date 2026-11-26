@@ -1,0 +1,63 @@
+{# The roles a project template gives to teams: one row per team, its role a select bound to `roles` and applied on change, taken back after a confirmation in place. A form closing the list adds a team, picked in a searchable list, with a role among those it may hold. #}
+{% set teamAccessesSelectClasses = 'h-8 rounded-md border border-line-strong bg-surface py-0 pl-2 pr-8 text-sm text-body focus:border-focus focus:outline-none focus:ring-0' %}
+{% set teamAccessesList = this.accesses %}
+<section {{ attributes }} class="rounded-lg border border-line bg-surface" data-loading="addClass(opacity-60)">
+    {% if error %}
+        <twig:Ui:Callout tone="danger" size="sm" role="alert" class="m-3">{{ error }}</twig:Ui:Callout>
+    {% endif %}
+    {% if teamAccessesList is empty %}
+        <p class="px-4 py-6 text-center text-sm text-faint">{{ 'admin.template.access.empty'|trans }}</p>
+    {% else %}
+        <ul class="divide-y divide-line-subtle">
+            {% for access in teamAccessesList %}
+                {% set teamAccessesTeam = access.team %}
+                {% set teamAccessesRowRoles = this.rolesFor(teamAccessesTeam) %}
+                <li class="group px-4 py-2">
+                    <div class="flex flex-wrap items-center gap-3">
+                        <twig:Team:Avatar :team="teamAccessesTeam" size="lg" />
+                        <div class="min-w-0 flex-1 leading-tight">
+                            <a href="{{ path('app_admin_team', { id: teamAccessesTeam.id }) }}" class="block text-sm text-strong hover:text-brand truncate">{{ teamAccessesTeam.name }}</a>
+                            <span class="block text-xs text-muted">{{ (teamAccessesTeam.internal ? 'admin.team.nature.internal' : 'admin.team.nature.external')|trans }}</span>
+                        </div>
+                        <select data-model="norender|roles.{{ access.id }}" data-action="change->live#action" data-live-action-param="changeRole" data-live-access-param="{{ access.id }}" aria-label="{{ 'admin.access.role'|trans }}" class="{{ teamAccessesSelectClasses }}">
+                            {% for roleId, roleLabel in teamAccessesRowRoles %}
+                                <option value="{{ roleId }}" {{ roles[access.id] is defined and roles[access.id] == roleId ? 'selected' }}>{{ roleLabel }}</option>
+                            {% endfor %}
+                            {% if teamAccessesRowRoles[access.role] is not defined %}
+                                <option value="{{ access.role }}" selected disabled>{{ this.roleLabel(access.role) }}</option>
+                            {% endif %}
+                        </select>
+                        <span class="hover-actions flex shrink-0 items-center justify-end gap-1">
+                            <twig:Ui:IconButton icon="x" tone="danger" :label="'admin.access.revoke'|trans" data-action="live#action" data-live-action-param="confirmRevoke" data-live-access-param="{{ access.id }}" />
+                        </span>
+                    </div>
+                    {% if revoking == access.id %}
+                        {{ include('components/_revoke_confirm.html.twig') }}
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+    <form class="flex flex-wrap items-center gap-2 border-t border-line-subtle bg-subtle/60 px-4 py-3 rounded-b-lg" data-action="live#action:prevent" data-live-action-param="grant">
+        {# `this` is read before the picker, whose blocks see their own. #}
+        {% set teamAccessesNewTeam = this.newTeam %}
+        {% set teamAccessesCandidates = this.candidates %}
+        {% set teamAccessesRoles = this.rolesFor(teamAccessesNewTeam) %}
+        <twig:Ui:Picker :label="teamAccessesNewTeam ? teamAccessesNewTeam.name : null" :placeholder="'admin.team.access.choose_team'|trans" :searchPlaceholder="'admin.team.access.search_team'|trans" :empty="'admin.access.no_match'|trans" class="min-w-0 flex-1 basis-64">
+            {% for candidate in teamAccessesCandidates %}
+                <twig:Ui:Dropdown:Item :active="candidate.id == newTeamId" data-list-filter-target="item" data-text="{{ candidate.name }}" data-action="live#action dropdown#close" data-live-action-param="chooseTeam" data-live-team-param="{{ candidate.id }}">
+                    <twig:Team:Avatar :team="candidate" size="md" />
+                    <span class="min-w-0 flex-1 truncate">{{ candidate.name }}</span>
+                    <span class="text-xs text-faint truncate">{{ (candidate.internal ? 'admin.team.nature.internal' : 'admin.team.nature.external')|trans }}</span>
+                </twig:Ui:Dropdown:Item>
+            {% endfor %}
+        </twig:Ui:Picker>
+        <select data-model="newRole" aria-label="{{ 'admin.access.role'|trans }}" class="{{ teamAccessesSelectClasses }}">
+            <option value="">{{ 'admin.access.choose_role'|trans }}</option>
+            {% for roleId, roleLabel in teamAccessesRoles %}
+                <option value="{{ roleId }}" {{ roleId == newRole ? 'selected' }}>{{ roleLabel }}</option>
+            {% endfor %}
+        </select>
+        <twig:Ui:Button type="submit" variant="primary" icon="plus" data-loading="addAttribute(disabled)">{{ 'admin.access.grant'|trans }}</twig:Ui:Button>
+    </form>
+</section>

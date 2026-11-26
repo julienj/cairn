@@ -22,6 +22,7 @@ use App\Entity\Issue;
 use App\Entity\Project;
 use App\Entity\Release;
 use App\Entity\Tag;
+use App\Entity\Team;
 use App\Entity\Tracker;
 use App\Entity\User;
 use App\Entity\Workspace;
@@ -50,6 +51,9 @@ use App\Message\Command\Project\UpdateProject;
 use App\Message\Command\Release\CreateRelease;
 use App\Message\Command\Release\UpdateRelease;
 use App\Message\Command\Tag\CreateTag;
+use App\Message\Command\Team\AddTeamMember;
+use App\Message\Command\Team\CreateTeam;
+use App\Message\Command\Team\GrantTeamAccess;
 use App\Message\CommandBus;
 use App\Security\AccessControl;
 use App\Workflow\WorkflowProvider;
@@ -84,6 +88,9 @@ final class AppStory extends Story
 
     /** @var array<string, User> */
     private array $users = [];
+
+    /** @var array<string, Team> by name */
+    private array $teams = [];
 
     public function __construct(
         private readonly StarterKit $kit,
@@ -124,6 +131,7 @@ final class AppStory extends Story
                 }
             }
             $this->createLinks($now);
+            $this->assignToTeams($now);
             $this->createCode($now);
             $this->entityManager->flush();
         } finally {
@@ -146,6 +154,8 @@ final class AppStory extends Story
             'ines' => ['ines.garnier@vallier.test', 'Inès', 'Garnier', 'external', 'Vallier'],
             'remi' => ['remi.colin@natura.test', 'Rémi', 'Colin', 'external', 'Natura'],
             'sophie' => ['sophie.bernard@travelia.test', 'Sophie', 'Bernard', 'external', 'Travelia'],
+            // Holds no role of her own: she sees Maison Dupont through its accounting team only.
+            'lucie' => ['lucie.morel@maison-dupont.test', 'Lucie', 'Morel', 'external', 'Maison Dupont'],
         ];
         foreach ($people as $key => $person) {
             [$email, $firstName, $lastName, $kind] = $person;
@@ -160,6 +170,31 @@ final class AppStory extends Story
     }
 
     /**
+     * An internal team, which works for two clients, and the team of a
+     * client, through which one of its members sees the workspace.
+     *
+     * @param array<string, Workspace> $workspaces by key
+     */
+    private function createTeams(array $workspaces): void
+    {
+        $teams = [
+            ['Hosting', true, ['yann', 'marc'], ['MD' => 'developer', 'NC' => 'developer']],
+            ['Maison Dupont accounting', false, ['claire', 'lucie'], ['MD' => 'client']],
+        ];
+        foreach ($teams as [$name, $internal, $members, $accesses]) {
+            $team = $this->commands->dispatch(new CreateTeam($name, $internal));
+            \assert($team instanceof Team);
+            $this->teams[$name] = $team;
+            foreach ($members as $member) {
+                $this->commands->dispatch(new AddTeamMember((int) $team->getId(), (int) $this->users[$member]->getId()));
+            }
+            foreach ($accesses as $key => $role) {
+                $this->commands->dispatch(new GrantTeamAccess((int) $team->getId(), (int) $workspaces[$key]->getId(), null, $role));
+            }
+        }
+    }
+
+    /**
      * @return iterable<array{project: Project, people: array{manager: string, developers: list<string>, client: ?string}, issues: list<array{0: string, 1: string, 2: string, 3: Criticality, 4?: ?string, 5?: bool}>, tags?: list<array{0: string, 1: TagColour, 2: list<int>}>, releases?: list<array{0: string, 1: int, 2: string, 3: ReleaseStatus, 4: list<int>}>, budgets?: list<array{0: string, 1: int, 2: list<array{0: ?int, 1: ?string, 2: BudgetLineStatus, 3: float|int|null}>}>, archived?: bool}>
      */
     private function projects(): iterable
@@ -169,6 +204,7 @@ final class AppStory extends Story
         $vallier = $this->workspace('Vallier Group', 'GV', notes: 'Two projects, a single IT contact.', manager: 'thomas', clients: ['ines' => 'client']);
         $natura = $this->workspace('Natura Cosmetics', 'NC', notes: 'Redesign delivered in November, back office under maintenance.', manager: 'yann', clients: ['remi' => 'client']);
         $travelia = $this->workspace('Travelia', 'TR', notes: 'Contract ended in August 2026.', manager: 'yann', clients: ['sophie' => 'client']);
+        $this->createTeams(['MD' => $dupont, 'NC' => $natura]);
 
         // [tracker, title, target place, criticality, assignee, private]
         yield ['project' => $this->project($dupont, 'Online shop', 'SPT', 'Online shop and checkout.', developers: ['nadia', 'lea']), 'people' => ['manager' => 'thomas', 'developers' => ['nadia', 'lea'], 'client' => 'claire'], 'issues' => [
@@ -387,6 +423,15 @@ final class AppStory extends Story
     /**
      * Links between issues, made by the manager of Maison Dupont.
      */
+    /**
+     * An issue waits for the hosting team, whoever of it takes it.
+     */
+    private function assignToTeams(\DateTimeImmutable $now): void
+    {
+        Clock::set(new MockClock($now->modify('-20 minutes')));
+        $this->commands->dispatch(new UpdateIssue((int) $this->users['thomas']->getId(), 'MD-SPT-18', assigneeTeamId: $this->teams['Hosting']->getId()));
+    }
+
     private function createLinks(\DateTimeImmutable $now): void
     {
         Clock::set(new MockClock($now->modify('-30 minutes')));

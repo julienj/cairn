@@ -8,6 +8,7 @@ use App\Config\ConfigRegistry;
 use App\Entity\Enum\PlaceStatus;
 use App\Entity\Issue;
 use App\Entity\IssueTag;
+use App\Entity\TeamMember;
 use App\Entity\User;
 use App\Message\Query\Issue\IssueGrouping;
 use App\Message\Query\Issue\IssueSort;
@@ -25,7 +26,7 @@ use Symfony\Component\Messenger\Attribute\AsMessageHandler;
  * Lists issues in the order of every list (Repository/IssueOrder), grouped
  * and sorted as asked, restricted to what the viewer may see
  * (Security/Visibility). Two queries per page: the total, then the rows
- * with tracker, project, workspace and assignee loaded; a third one counts
+ * with tracker, project, workspace, assignee and team loaded; a third one counts
  * the groups when the list is grouped.
  */
 #[AsMessageHandler(bus: 'query.bus')]
@@ -55,7 +56,7 @@ final class SearchIssuesHandler
 
         $placeRanks = IssueGrouping::Place === $query->group || IssueSort::Place === $query->sort ? $this->placeRanks() : [];
         $issues = EntityList::of(
-            IssueOrder::apply($this->filtered($viewer, $query)->addSelect('t', 'p', 'w', 'a', 'r'), $query->group, $query->sort, $query->order, $placeRanks)
+            IssueOrder::apply($this->filtered($viewer, $query)->addSelect('t', 'p', 'w', 'a', 'at', 'r'), $query->group, $query->sort, $query->order, $placeRanks)
                 ->setFirstResult(($query->page - 1) * $query->perPage)
                 ->setMaxResults($query->perPage)
                 ->getQuery(),
@@ -108,6 +109,7 @@ final class SearchIssuesHandler
             ->join('i.project', 'p')
             ->join('p.workspace', 'w')
             ->leftJoin('i.assignee', 'a')
+            ->leftJoin('i.assigneeTeam', 'at')
             ->leftJoin('i.release', 'r');
 
         $this->visibility->restrictIssues($queryBuilder, $viewer);
@@ -144,15 +146,25 @@ final class SearchIssuesHandler
         if ([] !== $query->criticality) {
             $queryBuilder->andWhere('i.criticality IN (:criticality)')->setParameter('criticality', $query->criticality);
         }
-        if ([] !== $query->assignee) {
+        if (null !== $query->teamMemberId) {
+            $queryBuilder
+                ->andWhere(\sprintf('IDENTITY(i.assigneeTeam) IN (SELECT IDENTITY(tm.team) FROM %s tm WHERE tm.user = :teamMemberId)', TeamMember::class))
+                ->setParameter('teamMemberId', $query->teamMemberId);
+        }
+        if ([] !== $query->assignee || [] !== $query->team) {
             $people = array_values(array_filter($query->assignee, static fn (int $id): bool => 0 !== $id));
             $conditions = [];
             if ([] !== $people) {
                 $conditions[] = 'a.id IN (:assignee)';
                 $queryBuilder->setParameter('assignee', $people);
             }
+            if ([] !== $query->team) {
+                $conditions[] = 'at.id IN (:team)';
+                $queryBuilder->setParameter('team', $query->team);
+            }
+            // Given to nobody: neither a person nor a team.
             if (\in_array(0, $query->assignee, true)) {
-                $conditions[] = 'a.id IS NULL';
+                $conditions[] = 'a.id IS NULL AND at.id IS NULL';
             }
             $queryBuilder->andWhere($queryBuilder->expr()->orX(...$conditions));
         }

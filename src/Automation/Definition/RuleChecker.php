@@ -96,6 +96,7 @@ final class RuleChecker
                 null => false,
                 Target::REFERENT => isset($context->roles[$target->argument]),
                 Target::USER => isset($context->people[(int) $target->argument]),
+                Target::TEAM => isset($context->teams[(int) $target->argument]),
                 // an issue is assigned to nobody; nobody cannot follow one
                 Target::NOBODY => ActionType::Assign === $owner,
                 default => true,

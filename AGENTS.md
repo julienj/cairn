@@ -124,6 +124,7 @@ translation keys. Never mix them.
 | `Project`        | Project           | Projet           |                                                                  |
 | `Role`           | Role              | Rôle             | Managed in the administration, with its permissions and how it moves issues: freely, or by the actions of the workflows. |
 | `Membership`     | Access            | Accès            | Role of a user on a project or a workspace.                      |
+| `Team`           | Team              | Équipe           | People who answer as one, internal or external for good; holds a role on a project or a workspace as a user does (`TeamAccess`). |
 | `internal` flag  | Internal/External | Interne/Externe  | Internal user (who runs the instance) vs external user (a client). |
 | `company`        | Company           | Société          | Free text on a user.                                             |
 | `private`        | Private           | Privé            | Hidden from external users.                                      |
@@ -137,7 +138,7 @@ translation keys. Never mix them.
 | `AutomationRule` | Rule (Automations) | Règle (Automatisations) | A trigger, conditions, actions, on the issues of a project. |
 | `AutomationRun`  | Execution         | Exécution        | What a rule did on an issue, once.                               |
 | `referent`       | Referent          | Référent         | The member a role answers through on a project.                  |
-| `ProjectTemplate` | Template         | Modèle           | Trackers and rules copied into a new project.                    |
+| `ProjectTemplate` | Template         | Modèle           | Trackers, rules and roles of teams copied into a new project.    |
 | `Budget`         | Budget            | Budget           | An amount of time a client committed to on a project.            |
 | `BudgetLine`     | Line              | Ligne            | What a budget is debited of, written by hand.                    |
 
@@ -246,8 +247,9 @@ src/
 ### Authorization and visibility
 
 - **One authorization service.** `Security/AccessControl` takes the acting
-  user as an explicit argument and resolves the effective role (project or
-  workspace membership, the broadest wins). Handlers call it directly;
+  user as an explicit argument and resolves the effective role (a
+  membership or the access of a team, on the project or its workspace, the
+  broadest wins). Handlers call it directly;
   voters are thin adapters for `#[IsGranted]` and Twig. The signed-in user
   is read from `Security/Viewer`.
 - **The account says what one sees, the role what one does.** Being
@@ -278,6 +280,23 @@ src/
   workflow only: a role that is freed leaves those that named it, for
   good (`UpdateRoleHandler`), which its dialog says before it is done. An
   action may name no role: nobody takes it, and the diagram leaves it out.
+- **A team holds a role as a person does, and nothing else.**
+  `AccessControl::roleOn()` reads the accesses of the teams someone is
+  part of with their memberships (`RoleGrant`): the broadest wins,
+  whoever it was granted to, and a team never narrows what a member
+  holds. The SQL side is in `Visibility::restrictProjects()` and
+  `ListProjectMembersHandler`. A team is internal or external for good:
+  an internal team takes internal users only, and an internal-only role
+  goes to an internal team only, so the rule is read on the team and
+  nobody walks its members. On a project its role must widen the one the
+  team holds on the workspace; it is compared with itself only, never
+  with what its members hold. Teams are the administration's, and a
+  project manager grants one a role on their project. The teams of a
+  project are asked of `ListProjectTeams`, as its people of
+  `ListProjectMembers`; `TeamAccessRepository::holdsRoleOn()` asks it of
+  one team. `Repository/RoleUsage` is the one place that counts where a
+  role is in use: people, teams, templates. A referent stays a
+  person: `Membership` alone carries the mark.
 - **Four permissions are internal-only** (`Permission::internalOnly()`):
   those that show what external users never see. What is only risky goes
   to any role an administrator chooses.
@@ -309,6 +328,13 @@ src/
   with the roles that trigger it, read from the configuration: no role is
   named in code. `aside` is read by the diagram and by the
   step menu of an issue, which draws the same path, and holds nobody.
+- **An issue is given to a person or to a team, never both**
+  (`Issue::assignTo()`, `assignToTeam()`): giving it to one takes it from
+  the other, and `UpdateIssue::NOBODY` from both. A team is assignable
+  where it holds a role (`IssueHandlerSupport::assigneeTeam()`), as a
+  person is. "Unassigned" means neither, everywhere it is asked: the filter,
+  the group, the condition of a rule. The journal keeps the name, of the
+  person or of the team. A team that holds issues is not deleted.
 - **`journal_label`** (`Twig/JournalLabelExtension`) is the only place that
   reads what each journal type recorded, for the thread and the mails.
 - **Releases are optional, without a setting**: a project without any
@@ -361,7 +387,25 @@ src/
 - **Notifications are subscriptions, and the events are the policy.** The
   `#[AsEventListener]`s of `NotificationDispatcher::collect()` are the
   whole list of what notifies; `Notification/SubscriptionRules` never
-  subscribes someone who cannot see the issue.
+  subscribes someone who may not follow the issue.
+- **A team follows an issue as one** (`IssueTeamSubscription`), from the
+  moment it is given the issue and afterwards, as a person does. Nobody
+  is subscribed for it: `NotifyIssueChangeHandler` reads who is part of
+  the team when the change leaves, so whoever joins is told and whoever
+  leaves is not. Any member unsubscribes the team, for all of it
+  (`UnfollowIssueAsTeam`); nobody opts out alone of what their team
+  follows. An external team follows nothing private, as an external
+  person, and a team follows only where it holds a role.
+- **Following takes a role on the project**
+  (`AccessControl::canFollow()`): an internal user reads every project
+  and an administrator acts on each, but neither is written to about a
+  project they hold no role on, as neither can be given its issues. It
+  is asked when someone is subscribed and again when a mail is built,
+  as what they may read is: whoever loses their role stops receiving,
+  with nothing to delete, and receives again with a role. A team follows
+  on the same terms, asked each time its subscription is read
+  (`IssueTeamSubscriptionRepository`). Whoever is written to through a
+  team reads which on the page of the issue (`Issue:Follow`).
 - **A mail is queued, then grouped.** `NotifyIssueChange` (ids only) writes
   a `PendingNotification` per recipient; `ProjectMailSender` (Scheduler)
   sends a group once things calmed down. `ChangeFilter` says what one
@@ -389,7 +433,10 @@ src/
   form: the `ParameterKind` alone decides the check and the field.
 - **A rule names roles, not people** (`Target`, resolved by
   `Automation/Targets` through the referents), so a template copies it as
-  it is. Where a rule is written is a `RuleContext` (a project or a
+  it is. It may name a team as well (`team:<id>`), which is the same on
+  every project and needs no referent: a team that holds no role on the
+  project is skipped like a role without a referent, and the page of the
+  rules says so first (`TeamsWithoutAccess`). Where a rule is written is a `RuleContext` (a project or a
   template); the checker, the form and `RuleSentence` know nothing else.
 - **A rule acts without an author, through the usual doors**: intent
   methods, journal entries and comments signed with its name, then
@@ -403,8 +450,8 @@ src/
   (`Issue::$lastActivityAt`), never from a rule; "due" is written once, in
   `AutomationRuleRepository::findDueIssues()`.
 - A rule keeps what it says as data: `Automation/RuleReferences` finds the
-  rules that name a step, an action or a role before a change leaves them
-  without their object.
+  rules that name a step, an action, a role or a team before a change
+  leaves them without their object.
 
 ### Forges and imports
 
@@ -464,7 +511,10 @@ src/
   workspace membership, never archiving. Keys never change once created.
 - A project template is a copy and nothing more (`TemplateCopy`): the
   project keeps no trace of it, and a template is never applied to a
-  project that exists.
+  project that exists. It copies trackers, rules and the roles it gives
+  to teams (`TemplateTeamAccess`), so that a rule aiming at a team finds
+  it on the project; a team that holds as much on the workspace already
+  is given nothing more.
 
 ## Frontend
 
@@ -514,8 +564,10 @@ src/
 - **Text users write is markdown**, edited in `Ui:Form:Editor`
   (`Form/Type/MarkdownType`) and displayed with the `markdown` filter,
   never raw. `#MD-SPT-12` links an issue only for a reader who may see it,
-  and a mention names a member of the project only. An address shown as a
-  link is one of the web (`http://`, `https://`), checked where it enters.
+  and a mention names a member of the project only, or a team that holds
+  a role on it (`@[Name](team:3)`), which then follows the issue. An
+  address shown as a link is one of the web (`http://`, `https://`),
+  checked where it enters.
 - **Files are attachments**: pending while what they go with is being
   written, then claimed by the command that saves the text
   (`IssueHandlerSupport::claimAttachments()`). A file follows what it goes

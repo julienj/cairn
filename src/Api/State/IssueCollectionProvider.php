@@ -95,6 +95,7 @@ final class IssueCollectionProvider implements ProviderInterface
             sort: $sort,
             order: $order,
             perPage: $perPage,
+            team: array_map(static fn (string $value): int => self::id($value, 'assigneeTeam'), self::list($filters, 'assigneeTeam')),
         ));
 
         return new Page($this->issues->summaries($found->items), $found->total, $found->page, $found->perPage);

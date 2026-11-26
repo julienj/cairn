@@ -12,6 +12,7 @@
 {% set selectionPlaces = this.places %}
 {% set selectionChangeTrackers = this.changeTrackers %}
 {% set selectionAssignee = this.assignee %}
+{% set selectionAssigneeTeam = this.assigneeTeam %}
 {% set selectionRelease = this.release %}
 {% set selectionTag = this.tag %}
 {% set selectionArrivals = {} %}
@@ -66,8 +67,11 @@
                         </td>
                         <td class="sm:px-3 sm:py-2.5 order-5 whitespace-nowrap">
                             <span class="inline-flex items-center gap-1">
-                                <twig:User:Avatar :user="issue.assignee" size="md" />
-                                {% if report is null and assigneeId is not null and assigneeId != (issue.assignee ? issue.assignee.id : 0) %}
+                                <twig:Issue:Assignee :issue="issue" size="md" />
+                                {% if report is null and selectionAssigneeTeam and selectionAssigneeTeam != issue.assigneeTeam %}
+                                    <twig:ux:icon name="lucide:chevron-right" class="h-3 w-3 text-faint" />
+                                    <twig:Team:Avatar :team="selectionAssigneeTeam" size="md" />
+                                {% elseif report is null and assigneeId is not null and (issue.assigneeTeam or assigneeId != (issue.assignee ? issue.assignee.id : 0)) %}
                                     <twig:ux:icon name="lucide:chevron-right" class="h-3 w-3 text-faint" />
                                     <twig:User:Avatar :user="selectionAssignee" size="md" />
                                 {% endif %}
@@ -176,7 +180,10 @@
                                     <div class="{{ selectionLabelClasses }}">{{ 'issue.show.assignee'|trans }}</div>
                                     <div class="min-w-0 flex-1">
                                         <button type="button" class="{{ selectionValueClasses }}" aria-expanded="false" aria-haspopup="menu" aria-label="{{ 'issue.show.change_property'|trans({ '%property%': 'issue.show.assignee'|trans }) }}" data-action="dropdown#toggle">
-                                            {% if assigneeId is null %}
+                                            {% if selectionAssigneeTeam %}
+                                                <twig:Team:Avatar :team="selectionAssigneeTeam" size="md" />
+                                                <span class="truncate text-body">{{ selectionAssigneeTeam.name }}</span>
+                                            {% elseif assigneeId is null %}
                                                 {{ selectionUnchanged }}
                                             {% else %}
                                                 <twig:User:Avatar :user="selectionAssignee" size="md" />
@@ -189,7 +196,7 @@
                             </twig:block>
                             <twig:block name="content">
                                 <div data-controller="list-filter">
-                                    {% if selectionActions.assignees|length > 8 %}
+                                    {% if selectionActions.assignees|length + selectionActions.assigneeTeams|length > 8 %}
                                         <div class="-mt-1 flex items-center gap-2 border-b border-line-subtle px-3 py-2 text-faint">
                                             <twig:ux:icon name="lucide:search" class="h-3.5 w-3.5 shrink-0" />
                                             <input type="search" data-dropdown-target="search" data-action="input->list-filter#filter" placeholder="{{ 'issue.show.search_member'|trans }}" aria-label="{{ 'issue.show.search_member'|trans }}" autocomplete="off" class="w-full border-0 bg-transparent p-0 text-sm text-body placeholder:text-faint focus:outline-none focus:ring-0">
@@ -207,6 +214,15 @@
                                                 <twig:User:Avatar :user="member" size="md" />
                                                 <span class="truncate">{{ member.fullName }}</span>
                                                 {% if member.id == assigneeId %}{{ selectionCheck }}{% endif %}
+                                            </twig:Ui:Dropdown:Item>
+                                        {% endfor %}
+                                        {# The teams that hold a role on every project of the selection, after the people: one or the other. #}
+                                        {% for selectionTeam in selectionActions.assigneeTeams %}
+                                            <twig:Ui:Dropdown:Item :active="selectionTeam.id == assigneeTeamId" data-list-filter-target="item" data-text="{{ selectionTeam.name }}" data-action="live#action dropdown#close" data-live-action-param="change" data-live-property-param="assigneeTeam" data-live-value-param="{{ selectionTeam.id }}">
+                                                <twig:Team:Avatar :team="selectionTeam" size="md" />
+                                                <span class="truncate">{{ selectionTeam.name }}</span>
+                                                <span class="text-xs text-faint">{{ 'issue.show.team'|trans }}</span>
+                                                {% if selectionTeam.id == assigneeTeamId %}{{ selectionCheck }}{% endif %}
                                             </twig:Ui:Dropdown:Item>
                                         {% endfor %}
                                     </div>

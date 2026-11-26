@@ -70,6 +70,11 @@ final class IssueException extends \DomainException
         return new self(\sprintf('%s holds no role on project "%s".', $userName, $projectName));
     }
 
+    public static function teamWithoutAccess(string $teamName, string $projectName): self
+    {
+        return new self(\sprintf('The team "%s" holds no role on project "%s".', $teamName, $projectName));
+    }
+
     public static function deactivatedUser(string $userName): self
     {
         return new self(\sprintf('%s is deactivated.', $userName));

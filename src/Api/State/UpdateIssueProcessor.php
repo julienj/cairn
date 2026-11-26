@@ -12,11 +12,12 @@ use App\Api\Resource\UpdateIssueInput;
 use App\Message\Command\Issue\UpdateIssue;
 use App\Security\Viewer;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 /**
  * PATCH /issues/{key}. UpdateIssue reads null as "keep", the merge patch
  * reads it as "empty": the properties the request names tell them apart,
- * so `"assignee": null` unassigns and a property left out changes
+ * so `"assignee": null` unassigns, from a person as from a team, and a property left out changes
  * nothing, nor asks for its right.
  *
  * @implements ProcessorInterface<UpdateIssueInput, IssueResource>
@@ -45,16 +46,22 @@ final class UpdateIssueProcessor implements ProcessorInterface
      */
     public function update(string $key, UpdateIssueInput $data, array $sent): IssueResource
     {
+        if (\array_key_exists('assigneeTeam', $sent) && null === $data->assigneeTeam) {
+            throw new UnprocessableEntityHttpException('assigneeTeam: the id of a team. Send "assignee": null to unassign the issue.');
+        }
+
         $this->commands->dispatch(new UpdateIssue(
             actorId: (int) $this->viewer->get()->getId(),
             issueKey: $key,
             title: $data->title,
             description: $data->description,
             fields: $data->fields,
-            assigneeId: \array_key_exists('assignee', $sent) ? $data->assignee ?? UpdateIssue::NOBODY : null,
+            // "assignee": null unassigns, from a person as from a team; sent with a team, the team is given the issue.
+            assigneeId: \array_key_exists('assignee', $sent) && (null !== $data->assignee || null === $data->assigneeTeam) ? $data->assignee ?? UpdateIssue::NOBODY : null,
             criticality: $data->criticality,
             private: $data->private,
             releaseId: \array_key_exists('release', $sent) ? $data->release ?? UpdateIssue::NOBODY : null,
+            assigneeTeamId: $data->assigneeTeam,
         ));
 
         return $this->issues->detail($this->lookup->detail($key));

@@ -9,8 +9,11 @@ use App\Entity\Enum\TagColour;
 use App\Entity\Issue;
 use App\Entity\JournalEntry;
 use App\Entity\Tag;
+use App\Entity\Team;
 use App\Entity\User;
 use App\Message\Command\Issue\ApplyTransition;
+use App\Message\Command\Team\CreateTeam;
+use App\Message\Command\Team\GrantTeamAccess;
 use App\Message\CommandBus;
 use App\Repository\IssueTagRepository;
 use App\Tests\Scene\ShopScene;
@@ -66,6 +69,32 @@ final class PropertiesTest extends KernelTestCase
         self::assertNotNull($component->getEmittedEvent($render, 'issue:changed'));
         self::assertNotNull($component->getDispatchedBrowserEvent($render, 'toast:show'));
         self::assertSame('lea.fontaine@cairn.test', $this->reloaded()->getAssignee()?->getEmail());
+    }
+
+    public function testAManagerGivesTheIssueToATeamThatHoldsARoleOnTheProject(): void
+    {
+        $commands = self::getContainer()->get(CommandBus::class);
+        $hosting = $commands->dispatch(new CreateTeam('Hosting', true));
+        $support = $commands->dispatch(new CreateTeam('Support', true));
+        self::assertInstanceOf(Team::class, $hosting);
+        self::assertInstanceOf(Team::class, $support);
+        $commands->dispatch(new GrantTeamAccess((int) $hosting->getId(), $this->scene->dupont->getId(), null, 'developer'));
+        $component = $this->properties('thomas.girard@cairn.test');
+
+        $render = (string) $component->render();
+        self::assertStringContainsString('data-live-property-param="assigneeTeam" data-live-value-param="'.$hosting->getId().'"', $render);
+        self::assertStringNotContainsString('data-live-property-param="assigneeTeam" data-live-value-param="'.$support->getId().'"', $render, 'no role on the project');
+
+        $rendered = $component->call('change', ['property' => 'assigneeTeam', 'value' => (string) $hosting->getId()])->render();
+        $render = (string) $rendered;
+
+        self::assertNotNull($component->getEmittedEvent($rendered, 'issue:changed'));
+        self::assertSame('Hosting', $this->reloaded()->getAssigneeTeam()?->getName());
+        self::assertNull($this->reloaded()->getAssignee());
+        self::assertStringContainsString('title="Hosting"', $render, 'drawn as a team');
+
+        $component->call('change', ['property' => 'assigneeTeam', 'value' => (string) $support->getId()]);
+        self::assertSame('Hosting', $this->reloaded()->getAssigneeTeam()?->getName(), 'whatever the request says');
     }
 
     public function testTheMenuOffersTheMembersOfTheProjectAndNobody(): void

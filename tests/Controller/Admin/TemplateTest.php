@@ -7,10 +7,14 @@ namespace App\Tests\Controller\Admin;
 use App\Entity\AutomationRule;
 use App\Entity\Project;
 use App\Entity\ProjectTemplate;
+use App\Entity\Team;
 use App\Entity\TemplateRule;
 use App\Entity\TemplateTracker;
 use App\Entity\Tracker;
+use App\Message\Command\Team\CreateTeam;
+use App\Message\Command\Template\CreateTemplate;
 use App\Message\Command\Template\CreateTemplateRule;
+use App\Message\Command\Template\GrantTemplateTeamAccess;
 use App\Message\CommandBus;
 use App\Tests\Scene\ShopScene;
 use Doctrine\ORM\EntityManagerInterface;
@@ -100,6 +104,25 @@ final class TemplateTest extends WebTestCase
         self::assertResponseRedirects('/admin/templates');
         self::assertNull($this->entity(ProjectTemplate::class, ['name' => 'Web project']));
         self::assertNotNull($this->entity(Tracker::class, ['project' => $project]), 'the project keeps what it was given');
+    }
+
+    public function testTheAccessTabOfATemplateListsTheRolesItGivesToTeams(): void
+    {
+        $commands = self::getContainer()->get(CommandBus::class);
+        $template = $commands->dispatch(new CreateTemplate('Web project'));
+        $hosting = $commands->dispatch(new CreateTeam('Hosting', true));
+        self::assertInstanceOf(ProjectTemplate::class, $template);
+        self::assertInstanceOf(Team::class, $hosting);
+        $this->client->loginUser($this->scene->user('julie.admin@cairn.test'));
+
+        $this->client->request('GET', '/admin/templates/'.$template->getId());
+        $this->client->clickLink('Access');
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('main', 'This template gives no team a role.');
+
+        $commands->dispatch(new GrantTemplateTeamAccess((int) $template->getId(), (int) $hosting->getId(), 'developer'));
+        $this->client->request('GET', '/admin/templates/'.$template->getId().'/access');
+        self::assertSelectorTextContains('main ul', 'Hosting');
     }
 
     public function testATrackerOrARuleOfAnotherTemplateIsNotFound(): void

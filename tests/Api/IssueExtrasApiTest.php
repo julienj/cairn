@@ -98,8 +98,13 @@ final class IssueExtrasApiTest extends ApiTestCase
 
     public function testAnIssueIsFollowedAndLeft(): void
     {
-        $secret = $this->tokenFor(self::OUTSIDER)->secret;
+        // Marc reads the shop as any internal user, and holds no role on it: following is for who works on the project.
+        $outsider = $this->tokenFor(self::OUTSIDER)->secret;
+        $this->api('PUT', '/api/issues/MD-SPT-1/subscription', $outsider);
+        self::assertResponseStatusCodeSame(403);
+        self::assertFalse($this->api('GET', '/api/issues/MD-SPT-1/subscription', $outsider)['following']);
 
+        $secret = $this->tokenFor(self::DEVELOPER)->secret;
         self::assertFalse($this->api('GET', '/api/issues/MD-SPT-1/subscription', $secret)['following']);
 
         $followed = $this->api('PUT', '/api/issues/MD-SPT-1/subscription', $secret);

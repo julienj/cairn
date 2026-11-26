@@ -78,7 +78,7 @@ final class GrantsTest extends KernelTestCase
         $component->set('roles.'.$membership->getId(), 'client')->call('changeRole', ['membership' => $membership->getId()]);
         self::assertSame('client', $this->roleOf($paul, 'MD'));
 
-        $component->call('confirmRevoke', ['membership' => $membership->getId()]);
+        $component->call('confirmRevoke', ['access' => $membership->getId()]);
         self::assertStringContainsString('Revoke this access?', (string) $component->render());
         $component->call('revoke');
 

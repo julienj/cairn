@@ -8,7 +8,11 @@ use App\Entity\Comment;
 use App\Entity\Enum\Criticality;
 use App\Entity\Issue;
 use App\Entity\Tag;
+use App\Entity\Team;
 use App\Entity\User;
+use App\Message\Command\Team\CreateTeam;
+use App\Message\Command\Team\GrantTeamAccess;
+use App\Message\CommandBus;
 use App\Repository\IssueSubscriptionRepository;
 use App\Repository\IssueTagRepository;
 use App\Tests\Scene\ShopScene;
@@ -80,6 +84,68 @@ final class SelectionTest extends KernelTestCase
             self::assertCount(1, $comments, 'one comment on each issue');
             self::assertSame('Reproduced, to fix in the next batch.', $comments[0]->getBody());
         }
+    }
+
+    public function testSeveralIssuesAreGivenToATeamOrToAPersonTheLastChoiceWins(): void
+    {
+        $commands = self::getContainer()->get(CommandBus::class);
+        $hosting = $commands->dispatch(new CreateTeam('Hosting', true));
+        $support = $commands->dispatch(new CreateTeam('Support', true));
+        self::assertInstanceOf(Team::class, $hosting);
+        self::assertInstanceOf(Team::class, $support);
+        $commands->dispatch(new GrantTeamAccess((int) $hosting->getId(), $this->scene->dupont->getId(), null, 'developer'));
+        $lea = $this->user('lea.fontaine@cairn.test');
+        $component = $this->selection('thomas.girard@cairn.test', 'MD-SPT-1', 'MD-SPT-2');
+
+        $render = (string) $component->render();
+        self::assertStringContainsString('data-live-property-param="assigneeTeam" data-live-value-param="'.$hosting->getId().'"', $render);
+        self::assertStringNotContainsString('data-live-property-param="assigneeTeam" data-live-value-param="'.$support->getId().'"', $render, 'no role on the project');
+
+        $render = (string) $component
+            ->call('change', ['property' => 'assignee', 'value' => (string) $lea->getId()])
+            ->call('change', ['property' => 'assigneeTeam', 'value' => (string) $support->getId()])
+            ->call('change', ['property' => 'assigneeTeam', 'value' => (string) $hosting->getId()])
+            ->render();
+        self::assertStringContainsString('title="Hosting"', $render, 'the team chosen shows, and where each issue goes');
+        $component->call('apply');
+
+        self::assertStringContainsString('2 issues updated', (string) $component->render());
+        foreach (['MD-SPT-1', 'MD-SPT-2'] as $key) {
+            self::assertSame('Hosting', $this->reloaded($key)->getAssigneeTeam()?->getName());
+            self::assertNull($this->reloaded($key)->getAssignee(), 'the person chosen first was forgotten');
+        }
+
+        $component = $this->selection('thomas.girard@cairn.test', 'MD-SPT-1', 'MD-SPT-2');
+        $component->call('change', ['property' => 'assigneeTeam', 'value' => (string) $hosting->getId()])
+            ->call('change', ['property' => 'assignee', 'value' => (string) $lea->getId()])
+            ->call('apply');
+        self::assertSame('lea.fontaine@cairn.test', $this->reloaded('MD-SPT-1')->getAssignee()?->getEmail());
+        self::assertNull($this->reloaded('MD-SPT-1')->getAssigneeTeam());
+    }
+
+    public function testIssuesOfTwoProjectsAreOfferedTheTeamsThatHoldARoleOnBoth(): void
+    {
+        $commands = self::getContainer()->get(CommandBus::class);
+        $hosting = $commands->dispatch(new CreateTeam('Hosting', true));
+        $support = $commands->dispatch(new CreateTeam('Support', true));
+        self::assertInstanceOf(Team::class, $hosting);
+        self::assertInstanceOf(Team::class, $support);
+        // Hosting works on the shop only, Support on the whole workspace.
+        $commands->dispatch(new GrantTeamAccess((int) $hosting->getId(), null, $this->scene->shop->getId(), 'developer'));
+        $commands->dispatch(new GrantTeamAccess((int) $support->getId(), $this->scene->dupont->getId(), null, 'developer'));
+        $elsewhere = $this->scene->intranetBug()->getKey();
+        $offered = static fn (Team $team): string => 'data-live-property-param="assigneeTeam" data-live-value-param="'.$team->getId().'"';
+
+        $render = (string) $this->selectionOf('thomas.girard@cairn.test', false, 'MD-SPT-1', $elsewhere)->render();
+        self::assertStringContainsString($offered($support), $render);
+        self::assertStringNotContainsString($offered($hosting), $render, 'no role on the intranet: it could not be given its issue');
+
+        $component = $this->selectionOf('thomas.girard@cairn.test', false, 'MD-SPT-1', $elsewhere);
+        $component->call('change', ['property' => 'assigneeTeam', 'value' => (string) $hosting->getId()])->call('apply');
+        self::assertNull($this->reloaded('MD-SPT-1')->getAssigneeTeam(), 'whatever the request says');
+
+        $render = (string) $this->selection('thomas.girard@cairn.test', 'MD-SPT-1', 'MD-SPT-2')->render();
+        self::assertStringContainsString($offered($hosting), $render, 'offered again once every issue is of the shop');
     }
 
     public function testEachIssueReachesTheStepInItsTrackerOrChangesCategory(): void

@@ -10,7 +10,7 @@ use App\Config\Definition\WorkflowDefinition;
 /**
  * Where a rule is written, and so what it may name: the trackers it can
  * be limited to, each with its workflow, the roles whose referent it can
- * aim at, and the people it can name. A project gives one
+ * aim at, and the people and teams it can name. A project gives one
  * (RuleContexts::ofProject()); a project template gives its own
  * (ofTemplate()), without people. The checker and the form read nothing
  * else, so a rule is edited the same way in both.
@@ -23,6 +23,8 @@ final readonly class RuleContext
      * @param array<string, PlaceDefinition>       $places    those of the instance, by id, in its order
      * @param array<string, string>                $roles     role id => label
      * @param array<int, string>                   $people    user id => full name; empty where nobody can be named
+     * @param array<int, string>                   $teams     team id => name: those a rule may aim at
+     * @param list<int>                            $idleTeams those of them that hold no role on the project: a rule already names them, and what it gives them is skipped until they do
      */
     public function __construct(
         public array $trackers,
@@ -30,6 +32,8 @@ final readonly class RuleContext
         public array $places,
         public array $roles,
         public array $people = [],
+        public array $teams = [],
+        public array $idleTeams = [],
     ) {
     }
 

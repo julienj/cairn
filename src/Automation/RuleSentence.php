@@ -112,6 +112,7 @@ final class RuleSentence
             null => self::BLANK,
             Target::REFERENT => $this->translator->trans('automation.sentence.target.referent', ['%role%' => $context->roles[$parsed->argument] ?? self::BLANK]),
             Target::USER => $context->people[(int) $parsed->argument] ?? self::BLANK,
+            Target::TEAM => $this->translator->trans('automation.sentence.target.team', ['%team%' => $context->teams[(int) $parsed->argument] ?? self::BLANK]),
             default => $this->translator->trans('automation.sentence.target.'.$parsed->kind),
         };
     }

@@ -11,11 +11,12 @@ use App\Entity\BudgetLine;
 use App\Entity\Comment;
 use App\Entity\Enum\BudgetLineStatus;
 use App\Entity\Issue;
-use App\Entity\Membership;
 use App\Entity\Project;
+use App\Entity\RoleGrant;
 use App\Entity\User;
 use App\Entity\Workspace;
 use App\Repository\MembershipRepository;
+use App\Repository\TeamAccessRepository;
 use Symfony\Contracts\Service\ResetInterface;
 
 /**
@@ -38,19 +39,21 @@ use Symfony\Contracts\Service\ResetInterface;
  */
 final class AccessControl implements ResetInterface
 {
-    /** @var array<int, list<Membership>> user id => memberships */
-    private array $memberships = [];
+    /** @var array<int, list<RoleGrant>> user id => the roles granted to them and to their teams */
+    private array $grants = [];
 
     public function __construct(
         private readonly MembershipRepository $membershipRepository,
+        private readonly TeamAccessRepository $teamAccessRepository,
         private readonly ConfigRegistry $config,
     ) {
     }
 
     /**
      * The effective role of a user on a project or a workspace: the broadest
-     * of the roles granted directly and inherited from the workspace. A grant
-     * may only widen what is inherited, never narrow it. Being
+     * of the roles granted directly and inherited from the workspace, to
+     * them or to a team they are part of. A grant may only widen what is
+     * inherited, never narrow it. Being
      * internal grants no role: it only opens every project to reading.
      */
     public function roleOn(User $user, Project|Workspace $scope): ?string
@@ -58,10 +61,10 @@ final class AccessControl implements ResetInterface
         $definition = $this->config->definition();
         $best = null;
 
-        foreach ($this->membershipsOf($user) as $membership) {
-            $applies = $scope instanceof Project ? $membership->appliesTo($scope) : $membership->isOn($scope);
+        foreach ($this->grantsOf($user) as $grant) {
+            $applies = $scope instanceof Project ? $grant->appliesTo($scope) : $grant->isOn($scope);
             if ($applies) {
-                $best = self::broadest($definition->roleRank(...), $best, $membership->getRole());
+                $best = self::broadest($definition->roleRank(...), $best, $grant->getRole());
             }
         }
 
@@ -151,6 +154,20 @@ final class AccessControl implements ResetInterface
         }
 
         return !$issue->isPrivate() && $this->canView($user, $issue->getProject());
+    }
+
+    /**
+     * Following an issue is for whoever works on its project: someone who
+     * sees it and holds a role there. An internal user reads every project
+     * and an administrator acts on each, but neither is written to about a
+     * project they hold no role on, as neither can be given its issues.
+     * The one place that says so, asked when someone is subscribed and
+     * again when a mail is built: whoever loses their role stops
+     * receiving, and receives again with a role.
+     */
+    public function canFollow(User $user, Issue $issue): bool
+    {
+        return $this->canSee($user, $issue) && null !== $this->roleOn($user, $issue->getProject());
     }
 
     /**
@@ -297,15 +314,15 @@ final class AccessControl implements ResetInterface
 
     public function reset(): void
     {
-        $this->memberships = [];
+        $this->grants = [];
     }
 
     /**
-     * @return list<Membership>
+     * @return list<RoleGrant>
      */
-    private function membershipsOf(User $user): array
+    private function grantsOf(User $user): array
     {
-        return $this->memberships[(int) $user->getId()] ??= $this->membershipRepository->findByUser($user);
+        return $this->grants[(int) $user->getId()] ??= [...$this->membershipRepository->findByUser($user), ...$this->teamAccessRepository->findByMember($user)];
     }
 
     /**

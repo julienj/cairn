@@ -15,6 +15,7 @@ use App\Entity\Issue;
 use App\Entity\IssueFieldValue;
 use App\Entity\JournalEntry;
 use App\Entity\Project;
+use App\Entity\Team;
 use App\Entity\User;
 use App\Event\IssueEvent;
 use App\Event\IssueTransitioned;
@@ -22,6 +23,8 @@ use App\Repository\AttachmentRepository;
 use App\Repository\CommentRepository;
 use App\Repository\IssueFieldValueRepository;
 use App\Repository\IssueRepository;
+use App\Repository\TeamAccessRepository;
+use App\Repository\TeamRepository;
 use App\Repository\UserRepository;
 use App\Security\AccessControl;
 use App\Security\Permission;
@@ -49,6 +52,8 @@ final class IssueHandlerSupport
         private readonly WorkflowProvider $workflows,
         private readonly IssueFieldValueRepository $fieldValues,
         private readonly ConfigRegistry $config,
+        private readonly TeamRepository $teams,
+        private readonly TeamAccessRepository $teamAccesses,
     ) {
     }
 
@@ -163,6 +168,24 @@ final class IssueHandlerSupport
         }
 
         return $assignee;
+    }
+
+    /**
+     * The team an issue is given to: one that holds a role on the project,
+     * directly or through its workspace, as a person does. The same rule
+     * at creation and on reassignment.
+     */
+    public function assigneeTeam(?int $teamId, Project $project): ?Team
+    {
+        if (null === $teamId) {
+            return null;
+        }
+        $team = $this->teams->find($teamId) ?? throw IssueException::notFound('Team', $teamId);
+        if (!$this->teamAccesses->holdsRoleOn($team, $project)) {
+            throw IssueException::teamWithoutAccess($team->getName(), $project->getName());
+        }
+
+        return $team;
     }
 
     /**

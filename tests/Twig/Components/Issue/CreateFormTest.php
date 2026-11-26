@@ -9,7 +9,11 @@ use App\Entity\Enum\Criticality;
 use App\Entity\Issue;
 use App\Entity\Project;
 use App\Entity\Tag;
+use App\Entity\Team;
 use App\Entity\Tracker;
+use App\Message\Command\Team\CreateTeam;
+use App\Message\Command\Team\GrantTeamAccess;
+use App\Message\CommandBus;
 use App\Repository\AttachmentRepository;
 use App\Repository\IssueFieldValueRepository;
 use App\Repository\IssueRepository;
@@ -175,6 +179,30 @@ final class CreateFormTest extends KernelTestCase
         self::assertSame('lea.fontaine@cairn.test', $issue->getAssignee()?->getEmail());
         self::assertTrue($issue->isPrivate(), 'private through its tracker');
         self::assertSame('new', $issue->getPlace());
+    }
+
+    public function testAnIssueIsCreatedForATeamOfTheProject(): void
+    {
+        $commands = self::getContainer()->get(CommandBus::class);
+        $hosting = $commands->dispatch(new CreateTeam('Hosting', true));
+        self::assertInstanceOf(Team::class, $hosting);
+        $commands->dispatch(new GrantTeamAccess((int) $hosting->getId(), $this->scene->dupont->getId(), null, 'developer'));
+        $component = $this->form('nadia.benali@cairn.test')->set('trackerId', $this->tasks->getId());
+
+        $rendered = (string) $component->render();
+        self::assertStringContainsString('<optgroup label="Teams">', $rendered, 'after the people, under their own heading');
+        self::assertStringContainsString('<option value="team-'.$hosting->getId().'">Hosting</option>', $rendered);
+
+        $component->submitForm(['issue' => [
+            'title' => 'Renew the certificate',
+            'description' => 'It expires on Friday.',
+            'assignee' => 'team-'.$hosting->getId(),
+        ]], 'save');
+
+        self::assertSame(302, $component->response()->getStatusCode(), $component->response()->getContent() ?: '');
+        $issue = $this->issue('MD-SPT-11');
+        self::assertSame('Hosting', $issue->getAssigneeTeam()?->getName());
+        self::assertNull($issue->getAssignee());
     }
 
     public function testATrackerTheViewerMayNotUseIsIgnored(): void

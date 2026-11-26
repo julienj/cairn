@@ -1,0 +1,141 @@
+{# The roles granted to teams: of a workspace or a project (one row per team, with its members) or of a team (one row per workspace or project). The role of a row is a select bound to `roles`, applied on change; removing a row asks for a confirmation in place. A form closing the list grants a role, picking a team, or a workspace or a project, in a searchable list. On a project come first the roles the teams hold on its workspace, read-only. #}
+{% set accessesSelectClasses = 'h-8 rounded-md border border-line-strong bg-surface py-0 pl-2 pr-8 text-sm text-body focus:border-focus focus:outline-none focus:ring-0' %}
+{% set accessesList = this.accesses %}
+{% set accessesInherited = this.inherited %}
+{% set accessesAdmin = is_granted('ROLE_ADMIN') %}
+<div {{ attributes }} class="space-y-4">
+{% if project and accessesInherited is not empty %}
+    <section class="rounded-lg border border-line bg-surface" data-loading="addClass(opacity-60)">
+        <header class="flex flex-wrap items-center gap-2 px-4 py-3 border-b border-line-subtle bg-subtle/60 rounded-t-lg">
+            <h2 class="font-semibold text-strong">{{ 'project.access.teams_inherited'|trans({ '%workspace%': project.workspace.name }) }}</h2>
+            <span class="text-xs text-faint">{{ accessesInherited|length }}</span>
+            {% if accessesAdmin %}
+                <a href="{{ path('app_admin_workspace_access', { key: project.workspace.key }) }}" class="ml-auto text-xs text-brand hover:underline">{{ 'project.access.edit_in_workspace'|trans }}</a>
+            {% endif %}
+        </header>
+        <ul class="divide-y divide-line-subtle">
+            {% for access in accessesInherited %}
+                {% set accessesMembers = this.membersOf(access.team) %}
+                {% set accessesRoleLabel = this.roleLabel(access.role) %}
+                <li class="flex items-center gap-3 px-4 py-2">
+                    <twig:ux:icon name="lucide:users-round" class="h-5 w-5 shrink-0 text-faint" />
+                    <div class="min-w-0 flex-1 leading-tight">
+                        <span class="block text-sm text-strong truncate">{{ access.team.name }}</span>
+                        <span class="block text-xs text-muted truncate">{{ (access.team.internal ? 'admin.team.nature.internal' : 'admin.team.nature.external')|trans }} · {{ accessesMembers ?: 'admin.team.members.count'|trans({ '%count%': 0 }) }}</span>
+                    </div>
+                    <twig:Ui:Badge>{{ accessesRoleLabel }}</twig:Ui:Badge>
+                </li>
+            {% endfor %}
+        </ul>
+    </section>
+{% endif %}
+<section class="rounded-lg border border-line bg-surface" data-loading="addClass(opacity-60)">
+    {% if not team %}
+        <header class="flex flex-wrap items-baseline gap-2 px-4 py-3 border-b border-line-subtle rounded-t-lg">
+            <h2 class="font-semibold text-strong">{{ 'admin.team.access.title'|trans }}</h2>
+            <span class="text-xs text-faint">{{ accessesList|length }}</span>
+            <span class="text-xs text-muted">{{ (project ? 'admin.team.access.help_project' : 'admin.team.access.help_workspace')|trans }}</span>
+        </header>
+    {% endif %}
+    {% if error %}
+        <twig:Ui:Callout tone="danger" size="sm" role="alert" class="m-3">{{ error }}</twig:Ui:Callout>
+    {% endif %}
+    {% if accessesList is empty %}
+        <p class="px-4 py-6 text-center text-sm text-faint">{{ (team ? 'admin.team.access.empty_team' : project ? 'admin.team.access.empty_project' : 'admin.team.access.empty_workspace')|trans }}</p>
+    {% else %}
+        <ul class="divide-y divide-line-subtle">
+            {% for access in accessesList %}
+                {% set accessesTeam = access.team %}
+                <li class="group px-4 py-2">
+                    <div class="flex flex-wrap items-center gap-3">
+                        {% if team %}
+                            <div class="min-w-0 flex-1 flex items-center gap-2 text-sm">
+                                {% if access.project %}
+                                    <twig:Ui:Chip>{{ access.project.issuePrefix }}</twig:Ui:Chip>
+                                    <span class="text-strong truncate">{{ access.project.name }}</span>
+                                {% else %}
+                                    <twig:Ui:Chip>{{ access.workspace.key }}</twig:Ui:Chip>
+                                    <a href="{{ path('app_admin_workspace_access', { key: access.workspace.key }) }}" class="text-strong hover:text-brand truncate">{{ 'admin.access.whole_workspace'|trans({ '%name%': access.workspace.name }) }}</a>
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            {% set accessesMembers = this.membersOf(accessesTeam) %}
+                            {% set accessesHeld = accessesInherited[accessesTeam.id] ?? null %}
+                            <twig:ux:icon name="lucide:users-round" class="h-5 w-5 shrink-0 text-faint" />
+                            <div class="min-w-0 flex-1 leading-tight">
+                                {% if accessesAdmin %}
+                                    <a href="{{ path('app_admin_team', { id: accessesTeam.id }) }}" class="block text-sm text-strong hover:text-brand truncate">{{ accessesTeam.name }}</a>
+                                {% else %}
+                                    <span class="block text-sm text-strong truncate">{{ accessesTeam.name }}</span>
+                                {% endif %}
+                                <span class="block text-xs text-muted truncate">{{ (accessesTeam.internal ? 'admin.team.nature.internal' : 'admin.team.nature.external')|trans }} · {{ accessesMembers ?: 'admin.team.members.count'|trans({ '%count%': 0 }) }}{% if accessesHeld %} · {{ 'project.access.inherits'|trans({ '%role%': this.roleLabel(accessesHeld.role) }) }}{% endif %}</span>
+                            </div>
+                        {% endif %}
+                        {% set accessesRowRoles = this.rolesFor(accessesTeam) %}
+                        <select data-model="norender|roles.{{ access.id }}" data-action="change->live#action" data-live-action-param="changeRole" data-live-access-param="{{ access.id }}" aria-label="{{ 'admin.access.role'|trans }}" class="{{ accessesSelectClasses }}">
+                            {% for roleId, roleLabel in accessesRowRoles %}
+                                <option value="{{ roleId }}" {{ roles[access.id] is defined and roles[access.id] == roleId ? 'selected' }}>{{ roleLabel }}</option>
+                            {% endfor %}
+                            {% if accessesRowRoles[access.role] is not defined %}
+                                <option value="{{ access.role }}" selected disabled>{{ this.roleLabel(access.role) }}</option>
+                            {% endif %}
+                        </select>
+                        <span class="hover-actions flex shrink-0 items-center justify-end gap-1">
+                            <twig:Ui:IconButton icon="x" tone="danger" :label="'admin.access.revoke'|trans" data-action="live#action" data-live-action-param="confirmRevoke" data-live-access-param="{{ access.id }}" />
+                        </span>
+                    </div>
+                    {% if revoking == access.id %}
+                        {{ include('components/_revoke_confirm.html.twig') }}
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+    <form class="flex flex-wrap items-center gap-2 border-t border-line-subtle bg-subtle/60 px-4 py-3 rounded-b-lg" data-action="live#action:prevent" data-live-action-param="grant">
+        {# `this` is read before the pickers, whose blocks see their own. #}
+        {% if team %}
+            {% set accessesTargets = this.targets %}
+            {% set accessesTargetLabel = this.targetLabel %}
+            <twig:Ui:Picker :label="accessesTargetLabel" :placeholder="'admin.access.choose_target'|trans" :searchPlaceholder="'admin.access.search_target'|trans" :empty="'admin.access.no_match'|trans" class="min-w-0 flex-1 basis-64">
+                {% for target in accessesTargets %}
+                    {% set accessesWorkspace = target.workspace %}
+                    <twig:Ui:Picker:Group :label="accessesWorkspace.name">
+                        <twig:Ui:Dropdown:Item :active="newTarget == 'workspace-' ~ accessesWorkspace.id" data-list-filter-target="item" data-text="{{ accessesWorkspace.name }} {{ accessesWorkspace.key }}" data-action="live#action dropdown#close" data-live-action-param="chooseTarget" data-live-target-param="workspace-{{ accessesWorkspace.id }}">
+                            <twig:Ui:Chip class="shrink-0">{{ accessesWorkspace.key }}</twig:Ui:Chip>
+                            <span class="truncate">{{ 'admin.access.whole_workspace'|trans({ '%name%': accessesWorkspace.name }) }}</span>
+                        </twig:Ui:Dropdown:Item>
+                        {% for accessesProject in target.projects %}
+                            <twig:Ui:Dropdown:Item :active="newTarget == 'project-' ~ accessesProject.id" data-list-filter-target="item" data-text="{{ accessesProject.name }} {{ accessesProject.issuePrefix }} {{ accessesWorkspace.name }}" data-action="live#action dropdown#close" data-live-action-param="chooseTarget" data-live-target-param="project-{{ accessesProject.id }}">
+                                <twig:Ui:Chip class="shrink-0">{{ accessesProject.issuePrefix }}</twig:Ui:Chip>
+                                <span class="truncate">{{ accessesProject.name }}</span>
+                                {% if accessesProject.readOnly %}<twig:ux:icon name="lucide:archive" class="ml-auto h-3.5 w-3.5 shrink-0 text-faint" />{% endif %}
+                            </twig:Ui:Dropdown:Item>
+                        {% endfor %}
+                    </twig:Ui:Picker:Group>
+                {% endfor %}
+            </twig:Ui:Picker>
+            {% set accessesRoles = this.rolesFor(team) %}
+        {% else %}
+            {% set accessesNewTeam = this.newTeam %}
+            {% set accessesCandidates = this.candidates %}
+            {% set accessesRoles = this.rolesFor(accessesNewTeam) %}
+            <twig:Ui:Picker :label="accessesNewTeam ? accessesNewTeam.name : null" :placeholder="'admin.team.access.choose_team'|trans" :searchPlaceholder="'admin.team.access.search_team'|trans" :empty="'admin.access.no_match'|trans" class="min-w-0 flex-1 basis-64">
+                {% for candidate in accessesCandidates %}
+                    <twig:Ui:Dropdown:Item :active="candidate.id == newTeamId" data-list-filter-target="item" data-text="{{ candidate.name }}" data-action="live#action dropdown#close" data-live-action-param="chooseTeam" data-live-team-param="{{ candidate.id }}">
+                        <twig:ux:icon name="lucide:users-round" class="h-4 w-4 shrink-0 text-faint" />
+                        <span class="min-w-0 flex-1 truncate">{{ candidate.name }}</span>
+                        <span class="text-xs text-faint truncate">{{ (candidate.internal ? 'admin.team.nature.internal' : 'admin.team.nature.external')|trans }}</span>
+                    </twig:Ui:Dropdown:Item>
+                {% endfor %}
+            </twig:Ui:Picker>
+        {% endif %}
+        <select data-model="newRole" aria-label="{{ 'admin.access.role'|trans }}" class="{{ accessesSelectClasses }}">
+            <option value="">{{ 'admin.access.choose_role'|trans }}</option>
+            {% for roleId, roleLabel in accessesRoles %}
+                <option value="{{ roleId }}" {{ roleId == newRole ? 'selected' }}>{{ roleLabel }}</option>
+            {% endfor %}
+        </select>
+        <twig:Ui:Button type="submit" variant="primary" icon="plus" data-loading="addAttribute(disabled)">{{ 'admin.access.grant'|trans }}</twig:Ui:Button>
+    </form>
+</section>
+</div>

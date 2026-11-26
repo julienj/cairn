@@ -8,6 +8,7 @@ use App\Entity\Issue;
 use App\Entity\Project;
 use App\Entity\User;
 use App\Message\Query\Project\ListProjectMembers;
+use App\Message\Query\Project\ListProjectTeams;
 use App\Message\QueryBus;
 use App\Repository\IssueRepository;
 use App\Security\AccessControl;
@@ -36,7 +37,8 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
  * becomes a link when the reader may see that issue and stays text
  * otherwise, so that a private issue cannot be probed; `@[Name](user:12)`
  * shows the current name of a member of the project the text belongs to,
- * and stays the text typed for anyone else: an id written by hand must
+ * `@[Name](team:3)` that of a team with a role on it, and both stay the
+ * text typed for anyone else: an id written by hand must
  * not tell who holds an account. Links and images are paths of the site,
  * as the pages need them; a text read away from it, in a mail, asks for
  * absolute URLs and gets them from the request context, like `absolute_url()`.
@@ -68,6 +70,7 @@ final class MarkdownRenderer
         $environment->addInlineParser(new IssueReferenceParser());
         $environment->addInlineParser(new MentionParser());
         $environment->addRenderer(Mention::class, new MentionRenderer());
+        $environment->addRenderer(TeamMention::class, new MentionRenderer());
 
         $this->parser = new MarkdownParser($environment);
         $this->renderer = new HtmlRenderer($environment);
@@ -115,6 +118,21 @@ final class MarkdownRenderer
         return array_values($ids);
     }
 
+    /**
+     * The teams a text mentions, by id, without rendering it.
+     *
+     * @return list<int>
+     */
+    public function mentionedTeamIds(string $markdown): array
+    {
+        $ids = [];
+        foreach ($this->nodes($this->parser->parse($markdown), TeamMention::class) as $mention) {
+            $ids[$mention->teamId] = $mention->teamId;
+        }
+
+        return array_values($ids);
+    }
+
     private function resolveIssueReferences(Document $document, User $reader): void
     {
         $references = $this->nodes($document, IssueReference::class);
@@ -153,25 +171,31 @@ final class MarkdownRenderer
         }
     }
 
+    /**
+     * The people and the teams the editor offers, and nobody else: a
+     * member of the project, a team that holds a role on it. Each shows
+     * its current name; anything else stays the text typed.
+     */
     private function resolveMentions(Document $document, Project $project): void
     {
-        $mentions = $this->nodes($document, Mention::class);
-        if ([] === $mentions) {
-            return;
+        $people = $this->nodes($document, Mention::class);
+        $teams = $this->nodes($document, TeamMention::class);
+
+        $names = ['user' => [], 'team' => []];
+        foreach ([] === $people ? [] : $this->queries->ask(new ListProjectMembers($project)) as $user) {
+            $names['user'][(int) $user->getId()] = $user->getFullName();
+        }
+        foreach ([] === $teams ? [] : $this->queries->ask(new ListProjectTeams($project)) as $team) {
+            $names['team'][(int) $team->getId()] = $team->getName();
         }
 
-        // The people the editor offers, and nobody else.
-        $mentioned = array_column($mentions, 'userId');
-        $names = [];
-        foreach ($this->queries->ask(new ListProjectMembers($project)) as $user) {
-            if (\in_array($user->getId(), $mentioned, true)) {
-                $names[$user->getId()] = $user->getFullName();
-            }
-        }
-
-        foreach ($mentions as $mention) {
-            $name = $names[$mention->userId] ?? null;
-            $mention->replaceWith(null === $name ? new Text('@'.$mention->name) : new Mention($mention->userId, $name));
+        foreach ([...$people, ...$teams] as $mention) {
+            $name = $mention instanceof TeamMention ? $names['team'][$mention->teamId] ?? null : $names['user'][$mention->userId] ?? null;
+            $mention->replaceWith(match (true) {
+                null === $name => new Text('@'.$mention->name),
+                $mention instanceof TeamMention => new TeamMention($mention->teamId, $name),
+                default => new Mention($mention->userId, $name),
+            });
         }
     }
 

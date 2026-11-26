@@ -51,6 +51,11 @@ final class UpdateIssueHandler
             $this->support->denyUnless($this->access->isGranted($actor, Permission::IssueAssign, $project), 'assign issues');
             $assignee = $this->support->assignee(UpdateIssue::NOBODY === $command->assigneeId ? null : $command->assigneeId, $project);
         }
+        $assigneeTeam = null;
+        if (null !== $command->assigneeTeamId) {
+            $this->support->denyUnless($this->access->isGranted($actor, Permission::IssueAssign, $project), 'assign issues');
+            $assigneeTeam = $this->support->assigneeTeam($command->assigneeTeamId, $project);
+        }
         if (null !== $command->criticality) {
             $this->support->denyUnless($this->access->isGranted($actor, Permission::IssueSetCriticality, $project), 'set the criticality');
         }
@@ -68,6 +73,7 @@ final class UpdateIssueHandler
 
         $entries = [];
         $newAssignee = null;
+        $newAssigneeTeam = null;
         $descriptionChanged = false;
         if (null !== $command->title && $issue->getTitle() !== trim($command->title)) {
             $previous = $issue->getTitle();
@@ -88,11 +94,18 @@ final class UpdateIssueHandler
                 $entries[] = JournalEntry::fieldChanged($issue, $actor, $this->config->definition()->fields[$fieldId], $held[$fieldId] ?? null, $value);
             }
         }
-        if (null !== $command->assigneeId && $issue->getAssignee()?->getId() !== $assignee?->getId()) {
-            $previous = $issue->getAssignee();
+        // A person or a team, one or the other: giving the issue to one takes it from the other, and to nobody from both.
+        if (null !== $command->assigneeId && ($issue->getAssignee() !== $assignee || null !== $issue->getAssigneeTeam())) {
+            $previous = $issue->getAssigneeName();
             $issue->assignTo($assignee);
-            $entries[] = JournalEntry::changed($issue, $actor, 'assignee', $previous?->getFullName(), $assignee?->getFullName());
+            $entries[] = JournalEntry::changed($issue, $actor, 'assignee', $previous, $issue->getAssigneeName());
             $newAssignee = $assignee;
+        }
+        if (null !== $assigneeTeam && $issue->getAssigneeTeam() !== $assigneeTeam) {
+            $previous = $issue->getAssigneeName();
+            $issue->assignToTeam($assigneeTeam);
+            $entries[] = JournalEntry::changed($issue, $actor, 'assignee', $previous, $issue->getAssigneeName());
+            $newAssigneeTeam = $assigneeTeam;
         }
         if (null !== $command->criticality && $issue->getCriticality() !== $command->criticality) {
             $previous = $issue->getCriticality();
@@ -111,7 +124,7 @@ final class UpdateIssueHandler
 
         // Nothing changed, nothing to tell.
         if ([] !== $entries) {
-            $this->support->record(new IssueUpdated($issue, $actor, $entries, $newAssignee, $descriptionChanged));
+            $this->support->record(new IssueUpdated($issue, $actor, $entries, $newAssignee, $descriptionChanged, newAssigneeTeam: $newAssigneeTeam));
         }
     }
 

@@ -22,11 +22,16 @@ issue:
         unfollow: Ne plus suivre
         follow_help: Recevoir un mail à chaque changement de cette demande
         following_help: Vous suivez cette demande et recevez un mail à chaque changement
+        through_team: 'Suivie par %teams%'
+        through_team_help: 'Votre équipe suit cette demande : vous recevez un mail à chaque changement. Un membre désabonne l''équipe depuis les abonnés.'
         followed: Vous suivez cette demande.
         unfollowed: Vous ne suivez plus cette demande.
     subscribers:
         title: Abonnés
         none: Personne ne suit cette demande.
+        team: '{0}aucun membre|{1}1 membre|]1,Inf[ %count% membres'
+        team_unfollow: 'Désabonner %team% de cette demande'
+        team_unfollowed: L'équipe ne suit plus cette demande.
     board:
         title: Kanban
         list: Liste
@@ -91,6 +96,7 @@ issue:
         change_property: 'Modifier « %property% »'
         workflow: Voir le workflow
         search_member: Rechercher un membre…
+        team: Équipe
         no_member: Aucun membre ne correspond.
         system: Cairn
         'true': Oui
@@ -211,6 +217,7 @@ issue:
         tags: Étiquettes
         assignee: Assigné
         assignee_none: Personne
+        assignee_teams: Équipes
         private: Demande privée
         private_help: Invisible pour les externes.
     list:
@@ -323,6 +330,7 @@ nav:
     issues:
         all: Toutes
         assigned: Assignées à moi
+        teams: Assignées à mes équipes
         created: Créées par moi
 
 theme:
@@ -405,6 +413,7 @@ my_issues:
     title:
         all: Mes demandes · toutes
         assigned: Mes demandes · assignées à moi
+        teams: Mes demandes · assignées à mes équipes
         created: Mes demandes · créées par moi
 
 projects:
@@ -454,6 +463,7 @@ admin:
         projects: Projets
         workspaces: Espaces
         users: Utilisateurs
+        teams: Équipes
         imports: Imports
         templates: Modèles
         configuration: Configuration
@@ -481,17 +491,22 @@ admin:
         created: 'Modèle « %name% » créé.'
         deleted: 'Modèle « %name% » supprimé.'
         empty: Aucun modèle pour l'instant
-        empty_hint: Un modèle donne à un nouveau projet ses catégories et ses automatisations.
+        empty_hint: Un modèle donne à un nouveau projet ses catégories, ses automatisations et les équipes qui y travaillent.
         name: Nom
         description: Description
         description_help: 'Pour les administrateurs : à quel genre de projet il est destiné.'
         delete: Supprimer le modèle
-        delete_help: Ses catégories et ses règles partent avec lui. Les projets qui en viennent gardent ce qu'ils ont reçu.
+        delete_help: Ses catégories, ses règles et les rôles qu'il donne aux équipes partent avec lui. Les projets qui en viennent gardent ce qu'ils ont reçu.
         delete_confirm: Supprimer ce modèle définitivement ?
         tab:
             trackers: Catégories
             automations: Automatisations
+            access: Accès
             settings: Réglages
+        access:
+            intro: 'Les équipes qui tiennent un rôle sur chaque projet créé depuis ce modèle, pour qu''une règle qui vise une équipe l''y trouve. Une équipe qui tient déjà autant sur l''espace du projet ne reçoit rien de plus.'
+            empty: Ce modèle ne donne de rôle à aucune équipe.
+            incomplete: Choisissez l'équipe et son rôle.
         tracker:
             empty: Aucune catégorie pour l'instant
             empty_hint: Ajoutez les catégories avec lesquelles démarreront les projets créés depuis ce modèle.
@@ -555,6 +570,54 @@ admin:
             projects: Projets
             access: Accès
             settings: Paramètres
+    team:
+        label: Équipe
+        new: Nouvelle équipe
+        created: 'Équipe « %name% » créée.'
+        intro: Une équipe regroupe des personnes qui interviennent ensemble. Elle est interne ou externe, et ce choix est définitif.
+        empty: Aucune équipe pour le moment.
+        name: Nom de l'équipe
+        delete: Supprimer l'équipe
+        delete_help: 'Seule l''équipe est supprimée : ses membres conservent leur compte.'
+        delete_confirm: 'Supprimer l''équipe « %name% » ?'
+        deleted: 'Équipe « %name% » supprimée.'
+        nature:
+            label: Type d'équipe
+            internal: Interne
+            external: Externe
+            help: Une équipe interne est réservée aux utilisateurs internes ; une équipe externe est ouverte à tous. Ce choix est définitif.
+            fixed_internal: Équipe interne, réservée aux utilisateurs internes. Ce choix est définitif.
+            fixed_external: Équipe externe, ouverte à tous les utilisateurs. Ce choix est définitif.
+        column:
+            name: Équipe
+            nature: Type
+            members: Membres
+        tab:
+            members: Membres
+            access: Accès
+            settings: Paramètres
+        access:
+            title: Équipes
+            intro: Chaque membre de l'équipe tient le rôle accordé ici. L'accès à un espace vaut pour tous ses projets ; un accès direct à un projet ne peut que l'élargir.
+            help_workspace: chaque membre d'une équipe tient son rôle sur tous les projets de l'espace
+            help_project: chaque membre d'une équipe tient son rôle sur ce projet
+            empty_team: Cette équipe n'a pas encore d'accès.
+            empty_workspace: Aucune équipe n'a encore accès à cet espace.
+            empty_project: Aucune équipe ne tient de rôle directement sur ce projet.
+            choose_team: Choisir une équipe…
+            search_team: Rechercher une équipe…
+            incomplete: Choisissez l'équipe ou l'endroit où accorder l'accès, et le rôle.
+        members:
+            count: '{0}Aucun membre|{1}1 membre|]1,Inf[ %count% membres'
+            intro_internal: Seuls les utilisateurs internes peuvent rejoindre cette équipe.
+            intro_external: Tous les utilisateurs, internes comme externes, peuvent rejoindre cette équipe.
+            empty: Cette équipe n'a pas encore de membre.
+            add: Ajouter à l'équipe
+            incomplete: Choisissez la personne à ajouter.
+            added: Membre ajouté.
+            remove: Retirer de l'équipe
+            remove_confirm: 'Retirer %name% de l''équipe ?'
+            removed: Membre retiré.
     access:
         workspace_intro: Un accès à l'espace vaut sur tous ses projets. Un accès direct à un projet, donné depuis la fiche d'une personne, ne peut qu'élargir ce rôle.
         user_intro: Un accès à un espace vaut sur tous ses projets ; un accès direct à un projet ne peut qu'élargir le rôle hérité de son espace.
@@ -1096,6 +1159,13 @@ admin:
         last_admin: Il doit rester au moins un administrateur actif.
         has_history: '%name% a écrit ou porte des demandes, des commentaires ou des fichiers : désactivez plutôt le compte.'
         holds_internal_roles: '%name% a des rôles réservés aux internes (%where%) : retirez-les avant de passer cette personne en externe.'
+        in_internal_teams: '%name% est membre d''équipes internes (%teams%) : retirez cette personne de ces équipes avant de la passer en externe.'
+        team_name_taken: 'Une équipe porte déjà le nom %name%.'
+        team_internal_only: '%name% est externe : l''équipe %team% est réservée aux utilisateurs internes.'
+        team_internal_only_role: 'L''équipe %team% est externe : le rôle « %role% » est réservé aux équipes internes.'
+        team_named_by_rules: 'Des règles d''automatisation visent l''équipe %name% (%rules%) : modifiez-les d''abord.'
+        team_holds_issues: '{1}Une demande est affectée à l''équipe %name% : affectez-la d''abord à quelqu''un d''autre.|]1,Inf[ %count% demandes sont affectées à l''équipe %name% : affectez-les d''abord à quelqu''un d''autre.'
+        team_not_wider: 'Le rôle « %role% » n''élargit pas le rôle « %inherited% » que l''équipe tient sur l''espace.'
         deactivated: "%name% est désactivé : réactivez d'abord le compte."
         already_activated: '%name% a déjà choisi un mot de passe : « Mot de passe oublié ? » sur la page de connexion lui en donne un nouveau.'
         not_member: "%name% n'a aucun rôle sur %project%."
@@ -1104,7 +1174,7 @@ admin:
         external_only_from_project: Un compte créé depuis un projet est externe.
         config:
             permission_internal_only: 'Le rôle « %role% » est ouvert aux externes : ce droit est pour les rôles réservés aux internes.'
-            role_held_by_externals: '{1}Un utilisateur externe porte le rôle « %role% » : révoquez d''abord cet accès.|]1,Inf[ %count% accès d''utilisateurs externes portent le rôle « %role% » : révoquez-les d''abord.'
+            role_held_by_externals: '{1}Un utilisateur ou une équipe externe porte le rôle « %role% » : révoquez d''abord cet accès.|]1,Inf[ %count% accès d''utilisateurs ou d''équipes externes portent le rôle « %role% » : révoquez-les d''abord.'
             role_has_internal_permissions: 'Le rôle « %role% » a des droits réservés aux internes : retirez-les d''abord.'
             role_held: '{1}Un accès porte le rôle « %role% » : révoquez-le ou donnez-lui d''abord un autre rôle.|]1,Inf[ %count% accès portent le rôle « %role% » : révoquez-les ou donnez-leur d''abord un autre rôle.'
             role_in_actions: 'Le rôle « %role% » déclenche des actions : %actions%. Retirez-le d''abord de ces actions.'
@@ -1234,6 +1304,7 @@ project:
         invite_hint: Une invitation sera envoyée par e-mail.
         intro: "Les rôles détenus sur l'espace %workspace% valent pour tous ses projets. Un rôle accordé ici ne vaut que pour ce projet et ne peut qu'élargir le rôle hérité."
         inherited: "Hérités de l'espace %workspace%"
+        teams_inherited: "Équipes de l'espace %workspace%"
         edit_in_workspace: "Modifier dans l'espace →"
         no_inherited: "Personne n'a de rôle sur l'espace."
         direct: Accès du projet
@@ -1715,6 +1786,8 @@ automation:
         deactivated: "Le référent %role%, %name%, a un compte désactivé : ce qu'une règle lui destine est sauté tant que le compte n'est pas réactivé ou qu'un autre référent n'est pas désigné."
         other_role: "%name% a été désigné référent %role% mais porte aujourd'hui un autre rôle sur ce projet : ce qu'une règle lui destine est sauté tant qu'un référent n'est pas désigné."
     designate: Désigner un référent
+    team_without_access: 'L''équipe %team% n''a aucun rôle sur ce projet : ce qu''une règle lui assigne est ignoré tant qu''elle n''en a pas.'
+    grant_team: Donner un rôle à l'équipe
     form:
         name: Nom
         name_help: "Les externes le lisent aussi : ce nom signe ce que fait la règle, dans l'historique des demandes et dans les mails."
@@ -1797,8 +1870,10 @@ automation:
         group:
             referents: Référents du projet
             issue: Selon la demande
+            teams: Une équipe
             people: Un membre du projet
         referent: 'Le référent %role%'
+        team_without_role: '%team% (sans rôle sur ce projet)'
         author: L'auteur de la demande
         last_internal: Le dernier utilisateur interne intervenu
         nobody: Personne (retirer l'assignation)
@@ -1840,6 +1915,7 @@ automation:
             author: son auteur
             last_internal: le dernier utilisateur interne intervenu
             nobody: personne
+            team: 'l''équipe %team%'
         join:
             if: ', si '
             and: ' et '
@@ -1879,6 +1955,7 @@ automation:
             no_referent: 'aucun référent %value%'
             no_internal: aucun interne n'est intervenu
             unknown_user: "cette personne n'existe plus"
+            unknown_team: "cette équipe n'existe plus"
             deactivated: 'le compte de %value% est désactivé'
             not_a_member: "%value% n'a pas de rôle sur le projet"
             unknown_place: "l'étape « %value% » n'existe plus"

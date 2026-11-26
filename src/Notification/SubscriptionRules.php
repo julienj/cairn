@@ -8,6 +8,8 @@ use App\Config\ConfigRegistry;
 use App\Entity\Comment;
 use App\Entity\Issue;
 use App\Entity\IssueSubscription;
+use App\Entity\IssueTeamSubscription;
+use App\Entity\Team;
 use App\Entity\User;
 use App\Event\CommentAdded;
 use App\Event\CommentEdited;
@@ -15,8 +17,11 @@ use App\Event\IssueCreated;
 use App\Event\IssueTransitioned;
 use App\Event\IssueUpdated;
 use App\Markdown\MarkdownRenderer;
+use App\Message\Query\Project\ListProjectMembers;
+use App\Message\Query\Project\ListProjectTeams;
+use App\Message\QueryBus;
 use App\Repository\IssueSubscriptionRepository;
-use App\Repository\MembershipRepository;
+use App\Repository\IssueTeamSubscriptionRepository;
 use App\Repository\UserRepository;
 use App\Security\AccessControl;
 use Doctrine\ORM\EntityManagerInterface;
@@ -27,7 +32,9 @@ use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
  * inside the transaction: the author at creation, with the members whose
  * role on the project follows new issues (`followsNewIssues` in the
  * configuration), the assignee when assigned, the author of a comment and
- * the people a text mentions. Nobody is subscribed to what they cannot
+ * the people a text mentions. A team the issue is given to, or a text
+ * mentions, follows it as one (IssueTeamSubscription), and keeps following it afterwards, as
+ * a person does. Nobody is subscribed to what they cannot
  * see: a private issue for an external user, a mention in a private
  * comment. Unsubscribing deletes the row, and the next of these actions
  * subscribes again: whoever takes part follows the conversation.
@@ -36,7 +43,8 @@ final class SubscriptionRules
 {
     public function __construct(
         private readonly IssueSubscriptionRepository $subscriptions,
-        private readonly MembershipRepository $memberships,
+        private readonly IssueTeamSubscriptionRepository $teamSubscriptions,
+        private readonly QueryBus $queries,
         private readonly UserRepository $users,
         private readonly AccessControl $access,
         private readonly ConfigRegistry $config,
@@ -53,6 +61,9 @@ final class SubscriptionRules
         if (null !== $issue->getAssignee()) {
             $this->subscribe($issue, $issue->getAssignee());
         }
+        if (null !== $issue->getAssigneeTeam()) {
+            $this->subscribeTeam($issue, $issue->getAssigneeTeam());
+        }
         foreach ($this->followers($issue) as $follower) {
             $this->subscribe($issue, $follower);
         }
@@ -64,6 +75,9 @@ final class SubscriptionRules
     {
         if (null !== $event->newAssignee) {
             $this->subscribe($event->issue, $event->newAssignee);
+        }
+        if (null !== $event->newAssigneeTeam) {
+            $this->subscribeTeam($event->issue, $event->newAssigneeTeam);
         }
         if ($event->descriptionChanged) {
             $this->subscribeMentioned($event->issue, $event->issue->getDescription());
@@ -92,18 +106,60 @@ final class SubscriptionRules
 
     /**
      * Subscribes the user to the issue, unless they already follow it,
-     * are deactivated or may not see it.
+     * are deactivated or may not follow it (AccessControl::canFollow()).
      *
      * @return bool whether a subscription was made
      */
     public function subscribe(Issue $issue, User $user): bool
     {
-        if (!$user->isActive() || !$this->access->canSee($user, $issue) || $this->isSubscribed($issue, $user)) {
+        if (!$user->isActive() || !$this->access->canFollow($user, $issue) || $this->isSubscribed($issue, $user)) {
             return false;
         }
         $this->entityManager->persist(new IssueSubscription($issue, $user));
 
         return true;
+    }
+
+    /**
+     * Subscribes the team to the issue, unless it follows it already or,
+     * external, would follow a private issue: as an external person, who
+     * is never subscribed to what they cannot see. A team is subscribed
+     * as one; what each of its members may read is decided again when a
+     * mail is built, for whoever is part of it then.
+     *
+     * @return bool whether a subscription was made
+     */
+    public function subscribeTeam(Issue $issue, Team $team): bool
+    {
+        if ((!$team->isInternal() && $issue->isPrivate()) || $this->followsAsTeam($issue, $team)) {
+            return false;
+        }
+        $this->entityManager->persist(new IssueTeamSubscription($issue, $team));
+
+        return true;
+    }
+
+    public function followsAsTeam(Issue $issue, Team $team): bool
+    {
+        if (null !== $issue->getId() && null !== $this->teamSubscriptions->findOne($issue, $team)) {
+            return true;
+        }
+        // Made earlier in the same command, not flushed yet.
+        foreach ($this->entityManager->getUnitOfWork()->getScheduledEntityInsertions() as $entity) {
+            if ($entity instanceof IssueTeamSubscription && $entity->getIssue() === $issue && $entity->getTeam() === $team) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function unsubscribeTeam(Issue $issue, Team $team): void
+    {
+        $subscription = $this->teamSubscriptions->findOne($issue, $team);
+        if (null !== $subscription) {
+            $this->entityManager->remove($subscription);
+        }
     }
 
     public function unsubscribe(Issue $issue, User $user): void
@@ -130,8 +186,8 @@ final class SubscriptionRules
     }
 
     /**
-     * The members of the project, directly or through its workspace, whose
-     * effective role follows new issues.
+     * The members of the project, directly, through its workspace or
+     * through a team, whose effective role follows new issues.
      *
      * @return list<User>
      */
@@ -140,15 +196,14 @@ final class SubscriptionRules
         $project = $issue->getProject();
         $definition = $this->config->definition();
         $followers = [];
-        foreach ([...$this->memberships->findOnProject($project), ...$this->memberships->findOnWorkspace($project->getWorkspace())] as $membership) {
-            $user = $membership->getUser();
+        foreach ($this->queries->ask(new ListProjectMembers($project)) as $user) {
             $role = $this->access->roleOn($user, $project);
             if (null !== $role && $definition->role($role)->followsNewIssues) {
-                $followers[(int) $user->getId()] = $user;
+                $followers[] = $user;
             }
         }
 
-        return array_values($followers);
+        return $followers;
     }
 
     private function onComment(Comment $comment): void
@@ -160,11 +215,21 @@ final class SubscriptionRules
     }
 
     /**
-     * The people the text mentions, if they may read it: the comment when
+     * The teams the text mentions, and the people it mentions if they may read it: the comment when
      * it came with one, the issue otherwise.
      */
     private function subscribeMentioned(Issue $issue, string $text, ?Comment $comment = null): void
     {
+        $teamIds = $this->markdown->mentionedTeamIds($text);
+        if ([] !== $teamIds) {
+            // Only a team with a role on the project is mentioned, as the editor offers; it then follows the issue as one.
+            foreach ($this->queries->ask(new ListProjectTeams($issue->getProject())) as $team) {
+                // A private comment is for internal users: mentioning an external team there subscribes nobody.
+                if (\in_array($team->getId(), $teamIds, true) && ($team->isInternal() || true !== $comment?->isPrivate())) {
+                    $this->subscribeTeam($issue, $team);
+                }
+            }
+        }
         $ids = $this->markdown->mentionedUserIds($text);
         if ([] === $ids) {
             return;

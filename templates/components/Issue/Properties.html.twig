@@ -5,6 +5,7 @@
 {% set propertiesValueClasses = '-mx-1.5 inline-flex min-h-7 max-w-full items-center gap-1.5 rounded-md px-1.5 py-0.5 text-left hover:bg-sunken aria-expanded:bg-sunken' %}
 {% set propertiesBackClasses = '-mt-1 mb-1 border-b border-line-subtle font-medium text-strong' %}
 {% set propertiesMembers = this.canAssign ? this.members : [] %}
+{% set propertiesTeams = this.canAssign ? this.teams : [] %}
 {% set propertiesReleases = this.canSetRelease ? this.releaseChoices : [] %}
 {% set propertiesCanChangePlace = this.canChangePlace %}
 {% set propertiesMoves = propertiesCanChangePlace ? this.moves : [] %}
@@ -192,8 +193,8 @@
             {% endif %}
 
             {% set propertiesAssignee %}
-                <twig:User:Avatar :user="issue.assignee" size="md" />
-                <span class="truncate {{ issue.assignee ? 'text-body' : 'text-faint' }}">{{ issue.assignee ? issue.assignee.fullName : 'issue.show.nobody'|trans }}</span>
+                <twig:Issue:Assignee :issue="issue" size="md" />
+                <span class="truncate {{ issue.assigneeName ? 'text-body' : 'text-faint' }}">{{ issue.assigneeName ?? 'issue.show.nobody'|trans }}</span>
             {% endset %}
             {% if propertiesCanAssign %}
                 <twig:Ui:Dropdown width="sm" class="block">
@@ -211,17 +212,17 @@
                     <twig:block name="content">
                         {# Many members: a field narrows the list as one types. #}
                         <div data-controller="list-filter">
-                            {% if propertiesMembers|length > 8 %}
+                            {% if propertiesMembers|length + propertiesTeams|length > 8 %}
                                 <div class="-mt-1 flex items-center gap-2 border-b border-line-subtle px-3 py-2 text-faint">
                                     <twig:ux:icon name="lucide:search" class="h-3.5 w-3.5 shrink-0" />
                                     <input type="search" data-dropdown-target="search" data-action="input->list-filter#filter" placeholder="{{ 'issue.show.search_member'|trans }}" aria-label="{{ 'issue.show.search_member'|trans }}" autocomplete="off" class="w-full border-0 bg-transparent p-0 text-sm text-body placeholder:text-faint focus:outline-none focus:ring-0">
                                 </div>
                             {% endif %}
                             <div class="max-h-72 overflow-y-auto">
-                                <twig:Ui:Dropdown:Item :active="issue.assignee is null" data-list-filter-target="item" data-text="{{ 'issue.show.nobody'|trans }}" data-action="live#action dropdown#close" data-live-action-param="change" data-live-property-param="assignee" data-live-value-param="">
+                                <twig:Ui:Dropdown:Item :active="issue.assigneeName is null" data-list-filter-target="item" data-text="{{ 'issue.show.nobody'|trans }}" data-action="live#action dropdown#close" data-live-action-param="change" data-live-property-param="assignee" data-live-value-param="">
                                     <twig:Ui:Avatar size="md" />
                                     <span class="truncate text-muted">{{ 'issue.show.nobody'|trans }}</span>
-                                    {% if issue.assignee is null %}<twig:ux:icon name="lucide:check" class="ml-auto h-4 w-4 shrink-0 text-brand" />{% endif %}
+                                    {% if issue.assigneeName is null %}<twig:ux:icon name="lucide:check" class="ml-auto h-4 w-4 shrink-0 text-brand" />{% endif %}
                                 </twig:Ui:Dropdown:Item>
                                 {% for member in propertiesMembers %}
                                     {% set propertiesMemberActive = issue.assignee and member.id == issue.assignee.id %}
@@ -229,6 +230,16 @@
                                         <twig:User:Avatar :user="member" size="md" />
                                         <span class="truncate">{{ member.fullName }}</span>
                                         {% if propertiesMemberActive %}<twig:ux:icon name="lucide:check" class="ml-auto h-4 w-4 shrink-0 text-brand" />{% endif %}
+                                    </twig:Ui:Dropdown:Item>
+                                {% endfor %}
+                                {# The teams that hold a role on the project, after the people: the issue is given to one or the other. #}
+                                {% for propertiesTeam in propertiesTeams %}
+                                    {% set propertiesTeamActive = issue.assigneeTeam and propertiesTeam.id == issue.assigneeTeam.id %}
+                                    <twig:Ui:Dropdown:Item :active="propertiesTeamActive" data-list-filter-target="item" data-text="{{ propertiesTeam.name }}" data-action="live#action dropdown#close" data-live-action-param="change" data-live-property-param="assigneeTeam" data-live-value-param="{{ propertiesTeam.id }}">
+                                        <twig:Team:Avatar :team="propertiesTeam" size="md" />
+                                        <span class="truncate">{{ propertiesTeam.name }}</span>
+                                        <span class="text-xs text-faint">{{ 'issue.show.team'|trans }}</span>
+                                        {% if propertiesTeamActive %}<twig:ux:icon name="lucide:check" class="ml-auto h-4 w-4 shrink-0 text-brand" />{% endif %}
                                     </twig:Ui:Dropdown:Item>
                                 {% endfor %}
                             </div>

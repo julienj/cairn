@@ -22,12 +22,19 @@ enum IssueGrouping: string
     /** The key of the issues nobody is assigned to, or in no release. */
     public const string NOBODY = 'none';
 
+    /** What starts the key of the issues given to a team, before its id: a person's key is their id alone. */
+    public const string TEAM = 'team-';
+
     public function keyOf(Issue $issue): string
     {
         return match ($this) {
             self::Place => $issue->getPlace(),
             self::Criticality => $issue->getCriticality()->value,
-            self::Assignee => null === $issue->getAssignee() ? self::NOBODY : (string) $issue->getAssignee()->getId(),
+            self::Assignee => match (true) {
+                null !== $issue->getAssigneeTeam() => self::TEAM.$issue->getAssigneeTeam()->getId(),
+                null !== $issue->getAssignee() => (string) $issue->getAssignee()->getId(),
+                default => self::NOBODY,
+            },
             self::Project => (string) $issue->getProject()->getId(),
             self::Release => null === $issue->getRelease() ? self::NOBODY : (string) $issue->getRelease()->getId(),
         };

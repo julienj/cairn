@@ -14,6 +14,7 @@ use App\Entity\IssueFieldValue;
 use App\Entity\IssueLink;
 use App\Entity\IssueSubscription;
 use App\Entity\IssueTag;
+use App\Entity\IssueTeamSubscription;
 use App\Entity\JournalEntry;
 use App\Entity\PendingNotification;
 use App\Entity\Project;
@@ -44,6 +45,7 @@ final class IssueEraser
         [IssueLink::class, 'source'],
         [IssueLink::class, 'target'],
         [IssueSubscription::class, 'issue'],
+        [IssueTeamSubscription::class, 'issue'],
         [IssueFieldValue::class, 'issue'],
         [IssueTag::class, 'issue'],
         [CodeReference::class, 'issue'],

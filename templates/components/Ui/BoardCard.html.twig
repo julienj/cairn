@@ -1,5 +1,5 @@
 {# A card of the kanban: the key and title linking to the issue, a left edge in the colour of the criticality, the release, its tags (block `tags`), a lock when private, the assignee. The drag and drop data goes on the list item around it. #}
-{% props key, title, href = '#', criticality = 'normal', assignee = null, assigneeKind = 'internal', assigneeAvatar = null, private = false, release = null %}
+{% props key, title, href = '#', criticality = 'normal', assignee = null, assigneeKind = 'internal', assigneeAvatar = null, assigneeShape = 'round', private = false, release = null %}
 {% set boardCardClasses = html_cva(
     base: 'block rounded-md border border-line border-l-4 bg-surface p-2.5 shadow-sm hover:border-line-strong',
     variants: {
@@ -17,7 +17,7 @@
         <twig:Ui:IssueKey :key="key" size="sm" :href="href" />
         {% if private %}<twig:ux:icon name="lucide:lock" class="h-3 w-3 text-amber" />{% endif %}
         {% if criticality in ['blocking', 'high'] %}<twig:Ui:Criticality:Badge :criticality="criticality" iconOnly />{% endif %}
-        {% if assignee %}<twig:Ui:Avatar :name="assignee" :kind="assigneeKind" :src="assigneeAvatar" size="md" class="ml-auto -my-1" />{% endif %}
+        {% if assignee %}<twig:Ui:Avatar :name="assignee" :kind="assigneeKind" :src="assigneeAvatar" :shape="assigneeShape" size="md" class="ml-auto -my-1" />{% endif %}
     </div>
     <a href="{{ href }}" class="mt-1 block text-sm leading-snug text-strong hover:text-brand">{{ title }}</a>
     {% set boardCardTags %}{% block tags %}{% endblock %}{% endset %}

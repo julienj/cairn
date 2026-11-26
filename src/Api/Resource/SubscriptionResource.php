@@ -9,12 +9,14 @@ use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Put;
+use App\Api\Resource\Value\NamedRef;
 use App\Api\State\SubscriptionProcessor;
 use App\Api\State\SubscriptionProvider;
 
 /**
  * Whether the user follows an issue, that is receives a mail for what
- * happens to it. PUT follows, DELETE stops; both may be repeated.
+ * happens to it. PUT follows, which takes a role on the project of the
+ * issue, DELETE stops; both may be repeated.
  */
 #[ApiResource(
     shortName: 'Subscription',
@@ -42,8 +44,16 @@ final readonly class SubscriptionResource
         /** Key of the issue. */
         #[ApiProperty(identifier: true)]
         public string $issue,
+        /** Whether a mail comes for what happens to the issue: by following it oneself, or through a team. */
         public bool $following,
+        /** Since when the user follows it themselves; absent when they only do through a team. */
         public ?\DateTimeImmutable $since = null,
+        /**
+         * The teams of the user that follow the issue: DELETE does not stop those.
+         *
+         * @var list<NamedRef>
+         */
+        public array $teams = [],
     ) {
     }
 }

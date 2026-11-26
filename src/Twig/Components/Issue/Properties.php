@@ -9,6 +9,7 @@ use App\Entity\Enum\Criticality;
 use App\Entity\Issue;
 use App\Entity\Release;
 use App\Entity\Tag;
+use App\Entity\Team;
 use App\Entity\Tracker;
 use App\Entity\User;
 use App\Message\Command\Issue\ChangeTracker;
@@ -18,6 +19,7 @@ use App\Message\Command\Issue\UntagIssue;
 use App\Message\Command\Issue\UpdateIssue;
 use App\Message\CommandBus;
 use App\Message\Query\Project\ListProjectMembers;
+use App\Message\Query\Project\ListProjectTeams;
 use App\Message\Query\Project\ListTrackers;
 use App\Message\QueryBus;
 use App\Repository\IssueTagRepository;
@@ -274,8 +276,20 @@ final class Properties
     }
 
     /**
+     * The teams the issue may be given to: those that hold a role on its
+     * project.
+     *
+     * @return list<Team>
+     */
+    public function getTeams(): array
+    {
+        return $this->queries->ask(new ListProjectTeams($this->issue->getProject()));
+    }
+
+    /**
      * Applies the choice made in the menu of a property: an id or nothing
-     * for the assignee and the release, a level, `public` or `private`.
+     * for the assignee and the release, the id of a team, a level,
+     * `public` or `private`.
      */
     #[LiveAction]
     public function change(CommandBus $commands, #[LiveArg] string $property, #[LiveArg] string $value): void
@@ -285,6 +299,7 @@ final class Properties
         $criticality = Criticality::tryFrom($value);
         $command = match ($property) {
             'assignee' => new UpdateIssue($actorId, $key, assigneeId: self::idOrNobody($value)),
+            'assigneeTeam' => ctype_digit($value) && (int) $value > 0 ? new UpdateIssue($actorId, $key, assigneeTeamId: (int) $value) : null,
             'criticality' => null === $criticality ? null : new UpdateIssue($actorId, $key, criticality: $criticality),
             'release' => new UpdateIssue($actorId, $key, releaseId: self::idOrNobody($value)),
             'visibility' => new UpdateIssue($actorId, $key, private: 'private' === $value),

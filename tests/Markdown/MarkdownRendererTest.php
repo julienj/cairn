@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 namespace App\Tests\Markdown;
 
+use App\Entity\Team;
 use App\Entity\User;
 use App\Markdown\MarkdownRenderer;
+use App\Message\Command\Team\CreateTeam;
+use App\Message\Command\Team\GrantTeamAccess;
+use App\Message\CommandBus;
 use App\Tests\Scene\ShopScene;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
@@ -106,6 +110,26 @@ final class MarkdownRendererTest extends KernelTestCase
 
         self::assertStringContainsString('For <span class="mention">@Thomas Girard</span>', $html);
         self::assertStringContainsString('and @Former', $html, 'an unknown user stays text');
+    }
+
+    public function testATeamIsMentionedByItsCurrentNameWhereItHoldsARole(): void
+    {
+        $commands = self::getContainer()->get(CommandBus::class);
+        $hosting = $commands->dispatch(new CreateTeam('Hosting', true));
+        $support = $commands->dispatch(new CreateTeam('Support', true));
+        self::assertInstanceOf(Team::class, $hosting);
+        self::assertInstanceOf(Team::class, $support);
+        $commands->dispatch(new GrantTeamAccess((int) $hosting->getId(), $this->scene->dupont->getId(), null, 'developer'));
+        $markdown = \sprintf('For @[the hosts](team:%d), not @[the others](team:%d) nor @[nobody](team:999999)', $hosting->getId(), $support->getId());
+
+        $html = $this->renderer->render($markdown, $this->user('claire.martin@maison-dupont.test'), $this->scene->shop);
+
+        self::assertStringContainsString('For <span class="mention">@Hosting</span>', $html);
+        self::assertStringContainsString('not @the others', $html, 'a team without a role on the project stays text');
+        self::assertStringNotContainsString('Support', $html);
+        self::assertStringContainsString('nor @nobody', $html);
+        self::assertSame([$hosting->getId(), $support->getId(), 999999], $this->renderer->mentionedTeamIds($markdown));
+        self::assertSame([], $this->renderer->mentionedUserIds($markdown), 'a team is not a person');
     }
 
     public function testOnlyAMemberOfTheProjectIsNamed(): void

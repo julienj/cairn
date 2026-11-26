@@ -34,7 +34,7 @@ final class SearchIssuesVisibilityTest extends KernelTestCase
         $access = self::getContainer()->get(AccessControl::class);
         $issues = self::getContainer()->get(IssueRepository::class)->findAll();
         $users = self::getContainer()->get(EntityManagerInterface::class)->getRepository(User::class)->findAll();
-        self::assertCount(11, $users);
+        self::assertCount(12, $users);
 
         $partialViews = 0;
         foreach ($users as $user) {

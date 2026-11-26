@@ -1,9 +1,13 @@
-{# The one notification setting: follow the issue, or stop. `this` is read before the nested components. #}
+{# The one notification setting: follow the issue, or stop. Whoever is written to through a team reads which, instead of a button that would offer what they have; whoever holds no role on the project is offered nothing. `this` is read before the nested components. #}
 {% set followFollowing = this.following %}
+{% set followTeams = followFollowing ? [] : this.teams %}
+{% set followAllowed = this.canFollow %}
 <div {{ attributes }} data-loading="addClass(opacity-60)">
     {% if followFollowing %}
         <twig:Ui:Button size="sm" icon="bell-off" title="{{ 'issue.follow.following_help'|trans }}" data-action="live#action" data-live-action-param="unfollow" data-loading="addAttribute(disabled)">{{ 'issue.follow.unfollow'|trans }}</twig:Ui:Button>
-    {% else %}
+    {% elseif followTeams is not empty %}
+        <twig:Ui:Badge icon="bell" title="{{ 'issue.follow.through_team_help'|trans }}">{{ 'issue.follow.through_team'|trans({ '%teams%': followTeams|join(', ') }) }}</twig:Ui:Badge>
+    {% elseif followAllowed %}
         <twig:Ui:Button size="sm" icon="bell" title="{{ 'issue.follow.follow_help'|trans }}" data-action="live#action" data-live-action-param="follow" data-loading="addAttribute(disabled)">{{ 'issue.follow.follow'|trans }}</twig:Ui:Button>
     {% endif %}
     {% if error %}<twig:Ui:Callout tone="danger" size="sm" role="alert" class="mt-2">{{ error }}</twig:Ui:Callout>{% endif %}

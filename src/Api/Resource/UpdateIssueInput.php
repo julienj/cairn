@@ -24,9 +24,13 @@ final class UpdateIssueInput
 
     public ?Criticality $criticality = null;
 
-    /** Id of a member of the project, null to unassign. */
+    /** Id of a member of the project, null to unassign: from a person as from a team. */
     #[Assert\Positive]
     public ?int $assignee = null;
+
+    /** Id of a team with a role on the project: the issue is given to it instead of a person. `assignee` sent as null unassigns. */
+    #[Assert\Positive]
+    public ?int $assigneeTeam = null;
 
     public ?bool $private = null;
 

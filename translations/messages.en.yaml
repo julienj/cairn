@@ -22,11 +22,16 @@ issue:
         unfollow: Unfollow
         follow_help: Get a mail for every change of this issue
         following_help: You follow this issue and get a mail for every change
+        through_team: 'Followed by %teams%'
+        through_team_help: 'Your team follows this issue: you get a mail for every change. A member stops the team following from the followers.'
         followed: You now follow this issue.
         unfollowed: You no longer follow this issue.
     subscribers:
         title: Followers
         none: Nobody follows this issue.
+        team: '{0}no member|{1}1 member|]1,Inf[ %count% members'
+        team_unfollow: 'Stop %team% following this issue'
+        team_unfollowed: The team no longer follows this issue.
     board:
         title: Kanban
         list: List
@@ -91,6 +96,7 @@ issue:
         change_property: 'Change %property%'
         workflow: View the workflow
         search_member: Search a member…
+        team: Team
         no_member: No member matches.
         system: Cairn
         'true': Yes
@@ -211,6 +217,7 @@ issue:
         tags: Tags
         assignee: Assignee
         assignee_none: Nobody
+        assignee_teams: Teams
         private: Private issue
         private_help: Hidden from external users.
     list:
@@ -323,6 +330,7 @@ nav:
     issues:
         all: All
         assigned: Assigned to me
+        teams: Assigned to my teams
         created: Created by me
 
 theme:
@@ -405,6 +413,7 @@ my_issues:
     title:
         all: My issues · all
         assigned: My issues · assigned to me
+        teams: My issues · assigned to my teams
         created: My issues · created by me
 
 projects:
@@ -454,6 +463,7 @@ admin:
         projects: Projects
         workspaces: Workspaces
         users: Users
+        teams: Teams
         imports: Imports
         templates: Templates
         configuration: Configuration
@@ -481,17 +491,22 @@ admin:
         created: 'Template "%name%" created.'
         deleted: 'Template "%name%" deleted.'
         empty: No template yet
-        empty_hint: A template gives a new project its categories and its automations.
+        empty_hint: 'A template gives a new project its categories, its automations and the teams that work on it.'
         name: Name
         description: Description
         description_help: 'For the administrators: what kind of project it is meant for.'
         delete: Delete the template
-        delete_help: Its categories and its rules go with it. The projects made from it keep what they were given.
+        delete_help: Its categories, its rules and the roles it gives to teams go with it. The projects made from it keep what they were given.
         delete_confirm: Delete this template for good?
         tab:
             trackers: Categories
             automations: Automations
+            access: Access
             settings: Settings
+        access:
+            intro: 'The teams that hold a role on each project made from this template, so that a rule that aims at a team finds it there. A team that already holds as much on the workspace of the project is given nothing more.'
+            empty: This template gives no team a role.
+            incomplete: Choose the team and its role.
         tracker:
             empty: No category yet
             empty_hint: Add the categories the projects made from this template will start with.
@@ -555,6 +570,54 @@ admin:
             projects: Projects
             access: Access
             settings: Settings
+    team:
+        label: Team
+        new: New team
+        created: 'Team "%name%" created.'
+        intro: A team groups people who work together. It is internal or external, and this choice is final.
+        empty: No team yet.
+        name: Team name
+        delete: Delete the team
+        delete_help: 'Only the team is deleted: its members keep their account.'
+        delete_confirm: 'Delete the team "%name%"?'
+        deleted: 'Team "%name%" deleted.'
+        nature:
+            label: Kind of team
+            internal: Internal
+            external: External
+            help: An internal team is for internal users only; an external team is open to everyone. This choice is final.
+            fixed_internal: Internal team, for internal users only. This choice is final.
+            fixed_external: External team, open to every user. This choice is final.
+        column:
+            name: Team
+            nature: Kind
+            members: Members
+        tab:
+            members: Members
+            access: Access
+            settings: Settings
+        access:
+            title: Teams
+            intro: Every member of the team holds the role granted here. Access to a workspace applies to all of its projects; direct access to a project may only widen it.
+            help_workspace: every member of a team holds its role on all the projects of the workspace
+            help_project: every member of a team holds its role on this project
+            empty_team: This team has no access yet.
+            empty_workspace: No team has access to this workspace yet.
+            empty_project: No team holds a role on this project directly.
+            choose_team: Choose a team…
+            search_team: Search for a team…
+            incomplete: Choose the team or where to grant access, and the role.
+        members:
+            count: '{0}No member|{1}1 member|]1,Inf[ %count% members'
+            intro_internal: Only internal users may join this team.
+            intro_external: Every user, internal or external, may join this team.
+            empty: This team has no member yet.
+            add: Add to the team
+            incomplete: Choose the person to add.
+            added: Member added.
+            remove: Remove from the team
+            remove_confirm: 'Remove %name% from the team?'
+            removed: Member removed.
     access:
         workspace_intro: Access to the workspace applies to all of its projects. Direct access to a project, granted from a person's page, may only widen that role.
         user_intro: Access to a workspace applies to all of its projects; direct access to a project may only widen the role inherited from its workspace.
@@ -1096,6 +1159,13 @@ admin:
         last_admin: At least one active administrator must remain.
         has_history: '%name% wrote or holds issues, comments or files: deactivate the account instead.'
         holds_internal_roles: '%name% holds roles for internal users only (%where%): revoke them before making this person external.'
+        in_internal_teams: '%name% is a member of internal teams (%teams%): remove this person from those teams before making them external.'
+        team_name_taken: 'A team is already named %name%.'
+        team_internal_only: '%name% is external: the team %team% is for internal users only.'
+        team_internal_only_role: 'The team %team% is external: the role "%role%" is for internal teams only.'
+        team_named_by_rules: 'Automation rules aim at the team %name% (%rules%): change them first.'
+        team_holds_issues: '{1}An issue is assigned to the team %name%: give it to someone else first.|]1,Inf[ %count% issues are assigned to the team %name%: give them to someone else first.'
+        team_not_wider: 'The role "%role%" does not widen the role "%inherited%" the team holds on the workspace.'
         deactivated: '%name% is deactivated: reactivate the account first.'
         already_activated: '%name% already chose a password: they can use "Forgot password?" on the sign-in page.'
         not_member: '%name% holds no role on %project%.'
@@ -1104,7 +1174,7 @@ admin:
         external_only_from_project: An account created from a project is external.
         config:
             permission_internal_only: 'The role "%role%" is open to external users: this right is for the roles reserved to internal users.'
-            role_held_by_externals: '{1}An external user holds the role "%role%": revoke that access first.|]1,Inf[ %count% accesses of external users carry the role "%role%": revoke them first.'
+            role_held_by_externals: '{1}An external user or team holds the role "%role%": revoke that access first.|]1,Inf[ %count% accesses of external users or teams carry the role "%role%": revoke them first.'
             role_has_internal_permissions: 'The role "%role%" holds rights reserved to internal users: take them away first.'
             role_held: '{1}An access carries the role "%role%": revoke it or give it another role first.|]1,Inf[ %count% accesses carry the role "%role%": revoke them or give them another role first.'
             role_in_actions: 'The role "%role%" triggers actions: %actions%. Take it out of them first.'
@@ -1234,6 +1304,7 @@ project:
         invite_hint: An invitation will be sent by email.
         intro: 'Roles held on the workspace %workspace% apply to all of its projects. A role granted here applies to this project only and may only widen the inherited one.'
         inherited: 'Inherited from the workspace %workspace%'
+        teams_inherited: 'Teams of the workspace %workspace%'
         edit_in_workspace: Edit in the workspace →
         no_inherited: Nobody holds a role on the workspace.
         direct: Access to the project
@@ -1715,6 +1786,8 @@ automation:
         deactivated: 'The %role% referent, %name%, has a deactivated account: what a rule aims at them is skipped until the account is reactivated or someone else is designated.'
         other_role: '%name% was designated as the %role% referent but holds another role on this project now: what a rule aims at them is skipped until someone is designated.'
     designate: Designate a referent
+    team_without_access: 'The team %team% holds no role on this project: what a rule assigns to it is skipped until it is given one.'
+    grant_team: Give the team a role
     form:
         name: Name
         name_help: 'External users read it too: this name signs what the rule does, in the history of the issues and in the mails.'
@@ -1797,8 +1870,10 @@ automation:
         group:
             referents: Referents of the project
             issue: From the issue
+            teams: A team
             people: A member of the project
         referent: 'The %role% referent'
+        team_without_role: '%team% (no role on this project)'
         author: The author of the issue
         last_internal: The last internal user who acted
         nobody: Nobody (remove the assignee)
@@ -1840,6 +1915,7 @@ automation:
             author: its author
             last_internal: the last internal user who acted
             nobody: nobody
+            team: 'the team %team%'
         join:
             if: ', if '
             and: ' and '
@@ -1879,6 +1955,7 @@ automation:
             no_referent: 'no %value% referent'
             no_internal: no internal user acted on it
             unknown_user: this person no longer exists
+            unknown_team: this team no longer exists
             deactivated: 'the account of %value% is deactivated'
             not_a_member: '%value% has no role on the project'
             unknown_place: 'the step “%value%” no longer exists'

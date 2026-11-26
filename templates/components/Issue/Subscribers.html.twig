@@ -1,8 +1,10 @@
-{# The people following the issue, a card of the side panel, folded at first: their avatars on the header, the list when open. `this` is read before the nested components. #}
+{# The people following the issue, a card of the side panel, folded at first: their avatars on the header, the list when open. The teams that follow it come first, one line each with how many people they count: a member of a team stops it following, for the whole team. `this` is read before the nested components. #}
 {% set subscribersList = this.subscribers %}
+{% set subscribersTeams = this.teams %}
 <div {{ attributes }} data-loading="addClass(opacity-60)">
-    <twig:Ui:Section :title="'issue.subscribers.title'|trans" icon="bell" tone="amber" :count="subscribersList|length" :open="false">
+    <twig:Ui:Section :title="'issue.subscribers.title'|trans" icon="bell" tone="amber" :count="subscribersList|length + subscribersTeams|length" :open="false">
         <twig:block name="summary">
+            {% for subscribersRow in subscribersTeams|slice(0, 2) %}<twig:Team:Avatar :team="subscribersRow.team" size="sm" class="ml-1" />{% endfor %}
             {% if subscribersList is not empty %}
                 <twig:Ui:AvatarStack :overflow="max(0, subscribersList|length - 4)" class="ml-1 -space-x-1 [&>*]:h-5 [&>*]:w-5 [&>*]:text-[9px]">
                     {% for subscriber in subscribersList|slice(0, 4) %}
@@ -12,8 +14,23 @@
             {% endif %}
         </twig:block>
         <twig:block name="content">
+            {% if error %}<twig:Ui:Callout tone="danger" size="sm" role="alert" class="mb-2">{{ error }}</twig:Ui:Callout>{% endif %}
+            {% if subscribersTeams is not empty %}
+                <ul class="mb-1 space-y-1 text-[13px] text-body">
+                    {% for subscribersRow in subscribersTeams %}
+                        <li class="group flex items-center gap-2">
+                            <twig:Team:Avatar :team="subscribersRow.team" size="sm" />
+                            <span class="truncate">{{ subscribersRow.team.name }}</span>
+                            <span class="shrink-0 text-xs text-faint">{{ 'issue.subscribers.team'|trans({ '%count%': subscribersRow.size }) }}</span>
+                            {% if subscribersRow.mine %}
+                                <span class="hover-actions ml-auto"><twig:Ui:IconButton icon="bell-off" :label="'issue.subscribers.team_unfollow'|trans({ '%team%': subscribersRow.team.name })" data-action="live#action" data-live-action-param="unfollowTeam" data-live-team-param="{{ subscribersRow.team.id }}" /></span>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
             {% if subscribersList is empty %}
-                <p class="text-xs text-faint">{{ 'issue.subscribers.none'|trans }}</p>
+                {% if subscribersTeams is empty %}<p class="text-xs text-faint">{{ 'issue.subscribers.none'|trans }}</p>{% endif %}
             {% else %}
                 <ul class="space-y-1 text-[13px] text-body">
                     {% for subscriber in subscribersList %}

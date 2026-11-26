@@ -9,6 +9,7 @@ use App\Config\Definition\PlaceDefinition;
 use App\Entity\Issue;
 use App\Entity\Release;
 use App\Entity\Tag;
+use App\Entity\Team;
 use App\Entity\Tracker;
 use App\Entity\User;
 use App\Form\Issue\IssueListFilters;
@@ -16,6 +17,7 @@ use App\Message\Query\Issue\IssueGrouping;
 use App\Message\Query\Issue\IssueSort;
 use App\Message\Query\Issue\SearchIssues;
 use App\Message\Query\Project\ListProjectMembers;
+use App\Message\Query\Project\ListProjectTeams;
 use App\Message\Query\Project\ListTrackers;
 use App\Message\Query\Project\ListVisibleProjects;
 use App\Message\Query\Project\ProjectSummary;
@@ -71,11 +73,13 @@ final class ListChoices
             viewer: $this->viewer->get(),
             projectId: $scope->project?->getId(),
             assigneeId: $scope->assigneeId,
+            teamMemberId: $scope->teamMemberId,
             authorId: $scope->authorId,
             place: $scope->offers('place') ? $this->knownPlaces($scope, $filters) : [],
             project: $scope->offers('project') ? $filters->projects : [],
             tracker: null !== $scope->tracker ? [(int) $scope->tracker->getId()] : ($scope->offers('tracker') ? $filters->trackers : []),
             assignee: $scope->offers('assignee') ? $filters->assignees : [],
+            team: $scope->offers('assignee') ? $filters->teams : [],
             criticality: $scope->offers('criticality') ? $filters->criticality : [],
             release: [] !== $filters->releases && $this->offersReleases($scope) ? $filters->releases : [],
             tag: $this->knownTags($scope, $filters),
@@ -101,10 +105,12 @@ final class ListChoices
             viewer: $this->viewer->get(),
             projectId: $tracker->getProject()->getId(),
             assigneeId: $scope->assigneeId,
+            teamMemberId: $scope->teamMemberId,
             authorId: $scope->authorId,
             place: [$placeId],
             tracker: [(int) $tracker->getId()],
             assignee: $scope->offers('assignee') ? $filters->assignees : [],
+            team: $scope->offers('assignee') ? $filters->teams : [],
             criticality: $scope->offers('criticality') ? $filters->criticality : [],
             release: [] !== $filters->releases && $this->offersReleases($scope) ? $filters->releases : [],
             tag: $this->knownTags($scope, $filters),
@@ -200,6 +206,17 @@ final class ListChoices
     public function members(ListScope $scope): array
     {
         return null === $scope->project ? [] : $this->queries->ask(new ListProjectMembers($scope->project));
+    }
+
+    /**
+     * The teams the assignee filter offers with the people: those that
+     * hold a role on the project.
+     *
+     * @return list<Team>
+     */
+    public function teams(ListScope $scope): array
+    {
+        return null === $scope->project ? [] : $this->queries->ask(new ListProjectTeams($scope->project));
     }
 
     /**

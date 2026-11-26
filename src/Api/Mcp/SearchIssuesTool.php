@@ -36,6 +36,13 @@ final class SearchIssuesTool
      */
     public array $assignee = [];
 
+    /**
+     * Ids of teams (get_project lists them): the issues given to one of them.
+     *
+     * @var list<int>
+     */
+    public array $assigneeTeam = [];
+
     /** Id of a user, or `me`. */
     public ?string $author = null;
 

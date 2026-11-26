@@ -7,7 +7,10 @@ namespace App\Api\State;
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProviderInterface;
 use App\Api\Resource\SubscriptionResource;
+use App\Api\Resource\Value\NamedRef;
+use App\Entity\Team;
 use App\Repository\IssueSubscriptionRepository;
+use App\Repository\IssueTeamSubscriptionRepository;
 use App\Security\Viewer;
 
 /**
@@ -19,6 +22,7 @@ final class SubscriptionProvider implements ProviderInterface
         private readonly Lookup $lookup,
         private readonly Viewer $viewer,
         private readonly IssueSubscriptionRepository $subscriptions,
+        private readonly IssueTeamSubscriptionRepository $teamSubscriptions,
     ) {
     }
 
@@ -27,6 +31,8 @@ final class SubscriptionProvider implements ProviderInterface
         $issue = $this->lookup->issue((string) $uriVariables['issue']);
         $subscription = $this->subscriptions->findOne($issue, $this->viewer->get());
 
-        return new SubscriptionResource($issue->getKey(), null !== $subscription, $subscription?->getSince());
+        $teams = array_map(static fn (Team $team): NamedRef => new NamedRef((int) $team->getId(), $team->getName()), $this->teamSubscriptions->findTeamsOf($issue, $this->viewer->get()));
+
+        return new SubscriptionResource($issue->getKey(), null !== $subscription || [] !== $teams, $subscription?->getSince(), $teams);
     }
 }

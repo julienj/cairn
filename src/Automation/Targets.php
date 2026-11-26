@@ -10,16 +10,17 @@ use App\Entity\Issue;
 use App\Entity\User;
 use App\Repository\CommentRepository;
 use App\Repository\JournalEntryRepository;
+use App\Repository\TeamRepository;
 use App\Repository\UserRepository;
 use App\Security\Referents;
 
 /**
  * Turns the target a rule names into a person, on one issue: the referent
  * of a role on its project, its author, the last internal user
- * who wrote on it, or a named member. When
+ * who wrote on it, or a named member; or into the team it names. When
  * there is nobody behind the target, it says why, which is what the
  * execution of the rule reports: `no_referent`,
- * `no_internal`, `unknown_user`, `deactivated`.
+ * `no_internal`, `unknown_user`, `unknown_team`, `deactivated`.
  */
 final class Targets
 {
@@ -28,6 +29,7 @@ final class Targets
         private readonly JournalEntryRepository $journal,
         private readonly CommentRepository $comments,
         private readonly UserRepository $users,
+        private readonly TeamRepository $teams,
         private readonly ConfigRegistry $config,
     ) {
     }
@@ -37,6 +39,11 @@ final class Targets
         $parsed = Target::parse($target);
         if (Target::NOBODY === $parsed?->kind) {
             return ResolvedTarget::nobody();
+        }
+        if (Target::TEAM === $parsed?->kind) {
+            $team = $this->teams->find((int) $parsed->argument);
+
+            return null === $team ? ResolvedTarget::missing('unknown_team', '') : ResolvedTarget::toTeam($team);
         }
         [$user, $missing] = match ($parsed?->kind) {
             Target::REFERENT => [$this->referents->of($issue->getProject(), $parsed->argument), 'no_referent'],

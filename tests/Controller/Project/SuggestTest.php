@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Tests\Controller\Project;
 
+use App\Entity\Team;
+use App\Message\Command\Team\CreateTeam;
+use App\Message\Command\Team\GrantTeamAccess;
+use App\Message\CommandBus;
 use App\Tests\Scene\ShopScene;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -48,6 +52,25 @@ final class SuggestTest extends WebTestCase
         self::assertResponseIsSuccessful();
         $people = json_decode((string) $this->client->getResponse()->getContent(), true, flags: \JSON_THROW_ON_ERROR);
         self::assertSame(['Nadia Benali'], array_column($people, 'name'));
+    }
+
+    public function testTheTeamsOfTheProjectAreOfferedBeforeThePeople(): void
+    {
+        $commands = self::getContainer()->get(CommandBus::class);
+        $hosting = $commands->dispatch(new CreateTeam('Hosting', true));
+        $commands->dispatch(new CreateTeam('Handling', true));
+        self::assertInstanceOf(Team::class, $hosting);
+        $commands->dispatch(new GrantTeamAccess((int) $hosting->getId(), $this->scene->dupont->getId(), null, 'developer'));
+        $this->signInAs('claire.martin@maison-dupont.test');
+
+        $this->client->request('GET', '/MD/SPT/suggest/users?q=h');
+
+        self::assertResponseIsSuccessful();
+        $found = json_decode((string) $this->client->getResponse()->getContent(), true, flags: \JSON_THROW_ON_ERROR);
+        self::assertSame(['id' => $hosting->getId(), 'name' => 'Hosting', 'team' => true, 'hint' => 'Team'], $found[0]);
+        self::assertNotContains('Handling', array_column($found, 'name'), 'no role on the project');
+        self::assertContains('Thomas Girard', array_column($found, 'name'), 'the people follow');
+        self::assertArrayNotHasKey('team', $found[1]);
     }
 
     /**

@@ -9,6 +9,7 @@ use App\Config\Definition\WorkflowDefinition;
 use App\Entity\Enum\Criticality;
 use App\Entity\Project;
 use App\Entity\Tag;
+use App\Entity\Team;
 use App\Entity\User;
 use App\Form\Type\MarkdownType;
 use App\Form\Type\ToggleType;
@@ -28,6 +29,9 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  */
 final class IssueType extends AbstractType
 {
+    /** What starts the value of a team among the assignees, before its id: a person's value is their id alone. */
+    private const string TEAM = 'team-';
+
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $workflow = $options['workflow'];
@@ -75,9 +79,15 @@ final class IssueType extends AbstractType
         }
         if (null !== $options['members']) {
             $builder->add('assignee', ChoiceType::class, [
-                'choices' => $options['members'],
-                'choice_label' => static fn (User $user): string => $user->getFullName(),
-                'choice_value' => static fn (?User $user): ?string => null === $user ? null : (string) $user->getId(),
+                // The people, then the teams under their own heading: one or the other.
+                'choices' => [...$options['members'], ...$options['teams']],
+                'choice_label' => static fn (User|Team $assignee): string => $assignee instanceof Team ? $assignee->getName() : $assignee->getFullName(),
+                'choice_value' => static fn (User|Team|null $assignee): ?string => match (true) {
+                    null === $assignee => null,
+                    $assignee instanceof Team => self::TEAM.$assignee->getId(),
+                    default => (string) $assignee->getId(),
+                },
+                'group_by' => static fn (User|Team $assignee): ?string => $assignee instanceof Team ? $options['teams_label'] : null,
                 'choice_translation_domain' => false,
                 'placeholder' => 'issue.field.assignee_none',
                 'required' => false,
@@ -101,6 +111,8 @@ final class IssueType extends AbstractType
                 'internal' => false,
                 'criticality' => true,
                 'members' => null,
+                'teams' => [],
+                'teams_label' => '',
                 'tags' => [],
                 'private' => false,
                 'project' => null,
@@ -111,11 +123,15 @@ final class IssueType extends AbstractType
             ->setAllowedTypes('internal', 'bool')
             ->setAllowedTypes('criticality', 'bool')
             ->setAllowedTypes('members', ['null', User::class.'[]'])
+            ->setAllowedTypes('teams', Team::class.'[]')
+            ->setAllowedTypes('teams_label', 'string')
             ->setAllowedTypes('tags', Tag::class.'[]')
             ->setAllowedTypes('private', 'bool')
             ->setAllowedTypes('project', ['null', Project::class])
             ->setInfo('internal', 'whether internal-only fields are shown')
             ->setInfo('members', 'the people the issue may be assigned to, null when the viewer may not assign')
+            ->setInfo('teams', 'the teams the issue may be assigned to, offered with the people')
+            ->setInfo('teams_label', 'the heading of the teams among the choices, already translated')
             ->setInfo('tags', 'the tags of the project the issue may be created with, none when it has none or the viewer may not tag')
             ->setInfo('private', 'whether the viewer may make the issue private')
             ->setInfo('project', 'where the description editor suggests issues and people and sends images');

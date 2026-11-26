@@ -1,0 +1,8 @@
+{% extends 'admin/team/base.html.twig' %}
+
+{% block team_content %}
+    <div class="space-y-2">
+        <p class="text-xs text-muted">{{ (team.internal ? 'admin.team.members.intro_internal' : 'admin.team.members.intro_external')|trans }}</p>
+        <twig:Team:Members :team="team" />
+    </div>
+{% endblock %}

@@ -157,17 +157,11 @@
                             {% if grantsPending %}
                                 <twig:Ui:IconButton icon="send" :label="'project.access.resend'|trans" data-action="live#action" data-live-action-param="resend" data-live-user-param="{{ grantsUser.id }}" />
                             {% endif %}
-                            <twig:Ui:IconButton icon="x" tone="danger" :label="'admin.access.revoke'|trans" data-action="live#action" data-live-action-param="confirmRevoke" data-live-membership-param="{{ membership.id }}" />
+                            <twig:Ui:IconButton icon="x" tone="danger" :label="'admin.access.revoke'|trans" data-action="live#action" data-live-action-param="confirmRevoke" data-live-access-param="{{ membership.id }}" />
                         </span>
                     </div>
                     {% if revoking == membership.id %}
-                        <div class="mt-2 flex flex-wrap items-center gap-2 rounded-md border border-red-line bg-red-soft px-3 py-2 text-sm text-red" role="alertdialog">
-                            <span>{{ 'admin.access.revoke_confirm'|trans }}</span>
-                            <span class="ml-auto flex items-center gap-2">
-                                <twig:Ui:Button variant="danger" size="sm" data-action="live#action" data-live-action-param="revoke" data-loading="addAttribute(disabled)">{{ 'admin.access.revoke'|trans }}</twig:Ui:Button>
-                                <twig:Ui:Button variant="ghost" size="sm" data-action="live#action" data-live-action-param="cancelRevoke">{{ 'admin.cancel'|trans }}</twig:Ui:Button>
-                            </span>
-                        </div>
+                        {{ include('components/_revoke_confirm.html.twig') }}
                     {% endif %}
                 </li>
             {% endfor %}

@@ -1,0 +1,8 @@
+{# The confirmation of a row taken back, in place under it: `revoke` does it, `cancelRevoke` leaves it. For the live components that list accesses. #}
+<div class="mt-2 flex flex-wrap items-center gap-2 rounded-md border border-red-line bg-red-soft px-3 py-2 text-sm text-red" role="alertdialog">
+    <span>{{ 'admin.access.revoke_confirm'|trans }}</span>
+    <span class="ml-auto flex items-center gap-2">
+        <twig:Ui:Button variant="danger" size="sm" data-action="live#action" data-live-action-param="revoke" data-loading="addAttribute(disabled)">{{ 'admin.access.revoke'|trans }}</twig:Ui:Button>
+        <twig:Ui:Button variant="ghost" size="sm" data-action="live#action" data-live-action-param="cancelRevoke">{{ 'admin.cancel'|trans }}</twig:Ui:Button>
+    </span>
+</div>

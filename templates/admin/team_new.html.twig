@@ -1,0 +1,23 @@
+{% extends 'layout/admin.html.twig' %}
+
+{% block page_title %}{{ 'admin.team.new'|trans }}{% endblock %}
+
+{% block breadcrumb %}
+    <twig:ux:icon name="lucide:chevron-right" class="h-3 w-3 text-ghost shrink-0" />
+    <a href="{{ path('app_admin_teams') }}" class="hover:text-strong">{{ 'admin.nav.teams'|trans }}</a>
+{% endblock %}
+
+{% block content %}
+    <div class="max-w-2xl mx-auto px-4 sm:px-6 py-5 space-y-4">
+        <h1 class="text-xl font-semibold text-strong">{{ 'admin.team.new'|trans }}</h1>
+        {{ form_start(form, { attr: { class: 'rounded-lg border border-line bg-surface p-4 space-y-4' } }) }}
+            {{ form_errors(form) }}
+            {{ form_row(form.name) }}
+            {{ form_row(form.nature) }}
+            <div class="flex items-center gap-2">
+                <twig:Ui:Button type="submit" variant="primary" size="lg">{{ 'admin.create'|trans }}</twig:Ui:Button>
+                <twig:Ui:Button variant="ghost" size="lg" href="{{ path('app_admin_teams') }}">{{ 'admin.cancel'|trans }}</twig:Ui:Button>
+            </div>
+        {{ form_end(form) }}
+    </div>
+{% endblock %}

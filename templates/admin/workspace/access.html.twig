@@ -1,8 +1,9 @@
 {% extends 'admin/workspace/base.html.twig' %}
 
 {% block workspace_content %}
-    <div class="max-w-4xl space-y-2">
+    <div class="max-w-4xl space-y-4">
         <p class="text-xs text-muted">{{ 'admin.access.workspace_intro'|trans }}</p>
         <twig:Membership:Grants :workspace="workspace" />
+        <twig:Team:Accesses :workspace="workspace" />
     </div>
 {% endblock %}

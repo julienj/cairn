@@ -1,13 +1,14 @@
-{# Administration level: projects, workspaces, project templates, users, imports; then the configuration, one entry per subject. The entry is active on its own pages and on the pages under it.
+{# Administration level: projects, workspaces, project templates, users, teams, imports; then the configuration, one entry per subject. The entry is active on its own pages and on the pages under it.
    `this` is read before the nested components, whose blocks see their own `this`. #}
 {% set adminNavRoute = app.current_route ?? '' %}
-{% set adminNavCounts = { projects: this.projectCount, workspaces: this.workspaceCount, users: this.userCount, templates: this.templateCount } %}
+{% set adminNavCounts = { projects: this.projectCount, workspaces: this.workspaceCount, users: this.userCount, templates: this.templateCount, teams: this.teamCount } %}
 <twig:Ui:Layout:Sidebar :title="'admin.title'|trans">
     <twig:Ui:Layout:Sidebar:Section :label="'admin.title'|trans">
         <twig:Ui:Layout:Sidebar:Item href="{{ path('app_admin_projects') }}" icon="list" :count="adminNavCounts.projects" :active="adminNavRoute starts with 'app_admin_project'">{{ 'admin.nav.projects'|trans }}</twig:Ui:Layout:Sidebar:Item>
         <twig:Ui:Layout:Sidebar:Item href="{{ path('app_admin_workspaces') }}" icon="folders" :count="adminNavCounts.workspaces" :active="adminNavRoute starts with 'app_admin_workspace'">{{ 'admin.nav.workspaces'|trans }}</twig:Ui:Layout:Sidebar:Item>
         <twig:Ui:Layout:Sidebar:Item href="{{ path('app_admin_templates') }}" icon="copy" :count="adminNavCounts.templates" :active="adminNavRoute starts with 'app_admin_template'">{{ 'admin.nav.templates'|trans }}</twig:Ui:Layout:Sidebar:Item>
         <twig:Ui:Layout:Sidebar:Item href="{{ path('app_admin_users') }}" icon="users" :count="adminNavCounts.users" :active="adminNavRoute starts with 'app_admin_user'">{{ 'admin.nav.users'|trans }}</twig:Ui:Layout:Sidebar:Item>
+        <twig:Ui:Layout:Sidebar:Item href="{{ path('app_admin_teams') }}" icon="users-round" :count="adminNavCounts.teams" :active="adminNavRoute starts with 'app_admin_team'">{{ 'admin.nav.teams'|trans }}</twig:Ui:Layout:Sidebar:Item>
         <twig:Ui:Layout:Sidebar:Item href="{{ path('app_admin_imports') }}" icon="archive-restore" :active="adminNavRoute starts with 'app_admin_import'">{{ 'admin.nav.imports'|trans }}</twig:Ui:Layout:Sidebar:Item>
     </twig:Ui:Layout:Sidebar:Section>
     <twig:Ui:Layout:Sidebar:Section :label="'admin.nav.configuration'|trans">

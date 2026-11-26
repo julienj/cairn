@@ -35,6 +35,10 @@ final class CreateIssueInput
     #[Assert\Positive]
     public ?int $assignee = null;
 
+    /** Id of a team with a role on the project, instead of `assignee`. */
+    #[Assert\Positive]
+    public ?int $assigneeTeam = null;
+
     public bool $private = false;
 
     /**

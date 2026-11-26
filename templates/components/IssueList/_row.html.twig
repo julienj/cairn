@@ -23,6 +23,6 @@
     <td class="sm:px-3 sm:py-2.5 order-5 whitespace-nowrap text-xs text-muted">{{ issue.tracker.name }}</td>
     <td class="sm:px-3 sm:py-2.5 order-6 whitespace-nowrap"><twig:Ui:Status:Step :status="issue_status(issue)" :label="issue_place(issue)" /></td>
     <td class="sm:px-3 sm:py-2.5 order-2 whitespace-nowrap"><twig:Ui:Criticality:Badge :criticality="issue.criticality.value" /></td>
-    <td class="sm:px-3 sm:py-1.5 order-7 whitespace-nowrap leading-none"><twig:User:Avatar :user="issue.assignee" size="md" /></td>
+    <td class="sm:px-3 sm:py-1.5 order-7 whitespace-nowrap leading-none"><twig:Issue:Assignee :issue="issue" size="md" /></td>
     <td class="sm:px-3 sm:py-2.5 order-3 ml-auto sm:ml-0 text-right whitespace-nowrap text-xs text-faint">{{ issue.updatedAt|format_datetime('short', 'short') }}</td>
 </twig:Ui:Table:Row>

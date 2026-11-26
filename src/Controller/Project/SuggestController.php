@@ -6,10 +6,12 @@ namespace App\Controller\Project;
 
 use App\Entity\Issue;
 use App\Entity\Project;
+use App\Entity\Team;
 use App\Entity\User;
 use App\Entity\Workspace;
 use App\Message\Query\Issue\SearchIssues;
 use App\Message\Query\Project\ListProjectMembers;
+use App\Message\Query\Project\ListProjectTeams;
 use App\Message\QueryBus;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -17,10 +19,12 @@ use Symfony\Component\HttpKernel\Attribute\MapQueryParameter;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * What the editor offers after `#` (issues of the project the user may
- * see, closed ones included) and after `@` (the project's members).
+ * see, closed ones included) and after `@` (the teams that hold a role on
+ * the project, then its members).
  */
 #[Route('/{workspaceKey}/{projectKey}/suggest', requirements: ['workspaceKey' => Workspace::KEY_FORMAT, 'projectKey' => Project::KEY_FORMAT])]
 #[IsGranted('view', subject: 'project')]
@@ -51,6 +55,7 @@ final class SuggestController extends AbstractController
         #[CurrentProject]
         Project $project,
         QueryBus $queries,
+        TranslatorInterface $translator,
         #[MapQueryParameter]
         string $q = '',
     ): JsonResponse {
@@ -60,9 +65,16 @@ final class SuggestController extends AbstractController
             static fn (User $user) => '' === $text || str_contains(mb_strtolower($user->getFullName()), $text),
         );
 
-        return $this->json(array_map(
-            static fn (User $user) => ['id' => $user->getId(), 'name' => $user->getFullName()],
-            \array_slice(array_values($members), 0, self::LIMIT),
-        ));
+        // The teams first: there are few, and a name typed finds them among the people.
+        $teams = array_filter(
+            $queries->ask(new ListProjectTeams($project)),
+            static fn (Team $team) => '' === $text || str_contains(mb_strtolower($team->getName()), $text),
+        );
+        $hint = $translator->trans('issue.show.team');
+
+        return $this->json(\array_slice([
+            ...array_map(static fn (Team $team) => ['id' => $team->getId(), 'name' => $team->getName(), 'team' => true, 'hint' => $hint], array_values($teams)),
+            ...array_map(static fn (User $user) => ['id' => $user->getId(), 'name' => $user->getFullName()], array_values($members)),
+        ], 0, self::LIMIT));
     }
 }

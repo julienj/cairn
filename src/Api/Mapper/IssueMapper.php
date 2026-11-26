@@ -107,6 +107,7 @@ final class IssueMapper
             private: $issue->isPrivate(),
             author: $this->refs->user($issue->getAuthor()),
             assignee: null === $issue->getAssignee() ? null : $this->refs->user($issue->getAssignee()),
+            assigneeTeam: null === $issue->getAssigneeTeam() ? null : new NamedRef((int) $issue->getAssigneeTeam()->getId(), $issue->getAssigneeTeam()->getName()),
             release: null === $release ? null : new NamedRef((int) $release->getId(), $release->getName()),
             tags: array_map(TagRef::of(...), $tags),
             createdAt: $issue->getCreatedAt(),

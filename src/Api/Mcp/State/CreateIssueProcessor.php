@@ -33,6 +33,7 @@ final class CreateIssueProcessor implements ProcessorInterface
         $input->description = $data->description;
         $input->criticality = Criticality::from($data->criticality);
         $input->assignee = $data->assignee;
+        $input->assigneeTeam = $data->assigneeTeam;
         $input->private = $data->private;
         $input->fields = $data->fields;
 

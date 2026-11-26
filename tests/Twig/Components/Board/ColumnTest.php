@@ -4,7 +4,12 @@ declare(strict_types=1);
 
 namespace App\Tests\Twig\Components\Board;
 
+use App\Entity\Team;
 use App\Entity\Tracker;
+use App\Message\Command\Issue\UpdateIssue;
+use App\Message\Command\Team\CreateTeam;
+use App\Message\Command\Team\GrantTeamAccess;
+use App\Message\CommandBus;
 use App\Tests\Scene\ShopScene;
 use App\Twig\Components\Board\Column;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -36,6 +41,21 @@ final class ColumnTest extends KernelTestCase
         self::assertStringNotContainsString('MD-SPT-3', $render);
         self::assertStringContainsString('data-board-places="needs_info qualified in_progress blocked to_test to_release done declined"', $render, 'who moves freely drops a card on any other place');
         self::assertStringContainsString('data-board-places="needs_info qualified in_progress declined"', (string) $this->column('new', 'nadia.benali@cairn.test')->render(), 'a developer, held to the workflow, where her actions lead');
+    }
+
+    public function testACardShowsTheTeamItsIssueIsGivenToAsASquare(): void
+    {
+        $commands = self::getContainer()->get(CommandBus::class);
+        $team = $commands->dispatch(new CreateTeam('Hosting', true));
+        self::assertInstanceOf(Team::class, $team);
+        $commands->dispatch(new GrantTeamAccess((int) $team->getId(), $this->scene->dupont->getId(), null, 'developer'));
+        $commands->dispatch(new UpdateIssue((int) $this->scene->user('thomas.girard@cairn.test')->getId(), 'MD-SPT-1', assigneeTeamId: $team->getId()));
+
+        $render = (string) $this->column('new', 'thomas.girard@cairn.test')->render();
+
+        $card = explode('data-board-key="MD-SPT-2"', explode('data-board-key="MD-SPT-1"', $render)[1])[0];
+        self::assertStringContainsString('title="Hosting"', $card);
+        self::assertStringContainsString('rounded-md', $card, 'a team is a square where a person is a disc');
     }
 
     public function testACardTheViewerCannotMoveIsLocked(): void

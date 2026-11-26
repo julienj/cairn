@@ -199,7 +199,7 @@ final class RuleType extends AbstractType
 
     /**
      * Who a step may aim at: the referent of each role, who the issue
-     * names, then the members where the context has some.
+     * names, the teams, then the members where the context has some.
      *
      * @return array<string, array<string, string>> group => target => label
      */
@@ -218,9 +218,15 @@ final class RuleType extends AbstractType
             $people[Target::user($id)] = $name;
         }
 
+        $teams = [];
+        foreach ($context->teams as $id => $name) {
+            $teams[Target::team($id)] = \in_array($id, $context->idleTeams, true) ? $this->translator->trans('automation.target.team_without_role', ['%team%' => $name]) : $name;
+        }
+
         return array_filter([
             $this->translator->trans('automation.target.group.referents') => $referents,
             $this->translator->trans('automation.target.group.issue') => $relative,
+            $this->translator->trans('automation.target.group.teams') => $teams,
             $this->translator->trans('automation.target.group.people') => $people,
         ]);
     }

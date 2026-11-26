@@ -9,12 +9,15 @@ use App\Entity\Attachment;
 use App\Entity\Issue;
 use App\Entity\Project;
 use App\Entity\Tag;
+use App\Entity\Team;
 use App\Entity\Tracker;
+use App\Entity\User;
 use App\Form\Issue\IssueData;
 use App\Form\Issue\IssueType;
 use App\Message\Command\Issue\CreateIssue;
 use App\Message\CommandBus;
 use App\Message\Query\Project\ListProjectMembers;
+use App\Message\Query\Project\ListProjectTeams;
 use App\Message\Query\Project\ListTrackers;
 use App\Message\QueryBus;
 use App\MessageHandler\Command\Issue\IssueException;
@@ -165,11 +168,12 @@ final class CreateForm extends AbstractController
                 title: (string) $data->title,
                 description: (string) $data->description,
                 criticality: $data->criticality,
-                assigneeId: $data->assignee?->getId(),
+                assigneeId: $data->assignee instanceof User ? $data->assignee->getId() : null,
                 private: $data->private,
                 fields: array_filter($data->fields, static fn (mixed $value): bool => null !== $value && '' !== $value),
                 attachments: $this->pending,
                 tagIds: array_map(static fn (Tag $tag): int => (int) $tag->getId(), $data->tags),
+                assigneeTeamId: $data->assignee instanceof Team ? $data->assignee->getId() : null,
             ));
         } catch (IssueException|TagException) {
             // A tag deleted while the issue was being written is a refusal like another.
@@ -214,13 +218,16 @@ final class CreateForm extends AbstractController
 
         $viewer = $this->viewer->get();
         $definition = $this->config->definition();
+        $assigns = $this->access->isGranted($viewer, Permission::IssueAssign, $this->project);
 
         return $this->forms->createNamed('issue', IssueType::class, new IssueData(), [
             'workflow' => $definition->workflow($tracker->getWorkflowId()),
             'definition' => $definition,
             'internal' => $viewer->isInternal(),
             'criticality' => $this->access->isGranted($viewer, Permission::IssueSetCriticality, $this->project),
-            'members' => $this->access->isGranted($viewer, Permission::IssueAssign, $this->project) ? $this->queries->ask(new ListProjectMembers($this->project)) : null,
+            'members' => $assigns ? $this->queries->ask(new ListProjectMembers($this->project)) : null,
+            'teams' => $assigns ? $this->queries->ask(new ListProjectTeams($this->project)) : [],
+            'teams_label' => $this->translator->trans('issue.field.assignee_teams'),
             'tags' => $this->access->isGranted($viewer, Permission::IssueSetTags, $this->project) ? $this->tags->findByProject($this->project) : [],
             // Issues of a private tracker are private whatever one chooses.
             'private' => !$tracker->isPrivate() && $this->access->isGranted($viewer, Permission::IssueSetPrivate, $this->project),

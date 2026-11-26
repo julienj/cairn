@@ -43,6 +43,7 @@ final class CreateIssueProcessor implements ProcessorInterface
             private: $data->private,
             fields: $data->fields,
             attachments: $data->attachments,
+            assigneeTeamId: $data->assigneeTeam,
         ));
         \assert($issue instanceof Issue);
 

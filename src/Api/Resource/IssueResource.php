@@ -47,7 +47,8 @@ use App\Api\State\UpdateIssueProcessor;
                 'tracker[]' => new QueryParameter(schema: ['type' => 'array', 'items' => ['type' => 'integer']], description: 'Ids of categories.'),
                 'place[]' => new QueryParameter(schema: ['type' => 'array', 'items' => ['type' => 'string']], description: 'Ids of steps, `in_progress`. A step is the same in every category that uses it: add `tracker[]` to keep to the issues of some categories.'),
                 'criticality[]' => new QueryParameter(schema: ['type' => 'array', 'items' => ['type' => 'string', 'enum' => ['low', 'normal', 'high', 'blocking']]]),
-                'assignee[]' => new QueryParameter(schema: ['type' => 'array', 'items' => ['type' => 'string']], description: 'Ids of users, `me`, or `none` for the unassigned issues.'),
+                'assignee[]' => new QueryParameter(schema: ['type' => 'array', 'items' => ['type' => 'string']], description: 'Ids of users, `me`, or `none` for the unassigned issues: given to nobody, neither a person nor a team.'),
+                'assigneeTeam[]' => new QueryParameter(schema: ['type' => 'array', 'items' => ['type' => 'integer']], description: 'Ids of teams. With `assignee[]`, an issue is listed when it is given to one of them, person or team.'),
                 'author' => new QueryParameter(schema: ['type' => 'string'], description: 'Id of a user, or `me`.'),
                 'release[]' => new QueryParameter(schema: ['type' => 'array', 'items' => ['type' => 'string']], description: 'Ids of releases, or `none` for the issues outside any.'),
                 'q' => new QueryParameter(schema: ['type' => 'string'], description: 'Words of the title or the description, or a key.'),
@@ -115,6 +116,8 @@ final readonly class IssueResource
         public bool $private,
         public UserRef $author,
         public ?UserRef $assignee,
+        /** The team the issue is given to instead of a person: one or the other, never both. */
+        public ?NamedRef $assigneeTeam,
         public ?NamedRef $release,
         /** The tags of its project it carries, by name. */
         public array $tags,

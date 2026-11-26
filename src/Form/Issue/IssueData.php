@@ -6,6 +6,7 @@ namespace App\Form\Issue;
 
 use App\Entity\Enum\Criticality;
 use App\Entity\Tag;
+use App\Entity\Team;
 use App\Entity\User;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -25,7 +26,8 @@ final class IssueData
 
     public Criticality $criticality = Criticality::DEFAULT;
 
-    public ?User $assignee = null;
+    /** The person or the team the issue is given to. */
+    public User|Team|null $assignee = null;
 
     public bool $private = false;
 

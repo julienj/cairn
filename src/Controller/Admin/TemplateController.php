@@ -201,6 +201,15 @@ final class TemplateController extends AbstractController
         return $this->redirectToRoute('app_admin_template_automations', ['template' => $template->getId()]);
     }
 
+    /**
+     * The roles the template gives to teams on the projects made from it.
+     */
+    #[Route('/{template}/access', name: 'app_admin_template_access', requirements: ['template' => '\d+'], methods: ['GET'])]
+    public function access(#[MapEntity(id: 'template')] ProjectTemplate $template): Response
+    {
+        return $this->render('admin/template/access.html.twig', ['template' => $template]);
+    }
+
     #[Route('/{template}/settings', name: 'app_admin_template_settings', requirements: ['template' => '\d+'], methods: ['GET', 'POST'])]
     public function settings(#[MapEntity(id: 'template')] ProjectTemplate $template, Request $request): Response
     {

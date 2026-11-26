@@ -46,6 +46,8 @@ final class UpdateIssueProcessor implements ProcessorInterface
             }
         }
 
+        $input->assigneeTeam = $data->assigneeTeam;
+
         return $this->rest->update($key, $input, $named);
     }
 }
