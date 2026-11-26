@@ -76,7 +76,7 @@ async function pictureStore(mode, request) {
  * veil says so while they are dragged over it.
  */
 export default class extends Controller {
-    static targets = ['main', 'detail', 'body', 'box', 'files', 'template', 'submit', 'refresher', 'actions', 'discard', 'confirm', 'drop'];
+    static targets = ['main', 'detail', 'body', 'box', 'picker', 'files', 'template', 'submit', 'refresher', 'actions', 'discard', 'confirm', 'drop'];
 
     static values = { attachmentUrl: String, previewUrl: String, failed: String };
 
@@ -171,6 +171,10 @@ export default class extends Controller {
         this.dragging = 0;
         this.dropTarget.hidden = true;
         Array.from(event.dataTransfer.files).forEach((file) => this.send(file));
+    }
+
+    choose() {
+        this.pickerTarget.click();
     }
 
     chosen(event) {
@@ -469,10 +473,19 @@ export default class extends Controller {
         this.bodyTarget.innerHTML = await response.text();
         this.mainTarget.hidden = true;
         this.detailTarget.hidden = false;
+        // Read from its start, wherever the form was scrolled to. Not scrollIntoView: it would scroll the site too.
+        const scroller = this.element.closest('[data-widget-scroller]');
+        this.left = scroller?.scrollTop ?? 0;
+        scroller?.scrollTo(0, 0);
     }
 
     back() {
+        if (this.detailTarget.hidden) {
+            return;
+        }
         this.detailTarget.hidden = true;
         this.mainTarget.hidden = false;
+        // back where the report was opened from
+        this.element.closest('[data-widget-scroller]')?.scrollTo(0, this.left ?? 0);
     }
 }

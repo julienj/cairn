@@ -7,6 +7,9 @@
     <div class="rounded-lg border border-line bg-surface p-6 space-y-4">
         {% if linked %}
             <div class="space-y-2 text-center" data-controller="widget-linked">
+                <span class="mx-auto grid h-14 w-14 place-items-center rounded-full bg-emerald-soft text-emerald">
+                    <twig:ux:icon name="lucide:check" class="h-6 w-6" />
+                </span>
                 <h1 class="text-lg font-semibold text-strong">{{ 'widget.link.done'|trans }}</h1>
                 <p class="text-muted">{{ 'widget.link.done_hint'|trans }}</p>
             </div>

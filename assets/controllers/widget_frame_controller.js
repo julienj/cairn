@@ -25,7 +25,7 @@ const POLL_FOR = 5 * 60 * 1000;
  * while the screenshot is edited).
  */
 export default class extends Controller {
-    static targets = ['connect', 'alone', 'refused', 'frame', 'link'];
+    static targets = ['connect', 'alone', 'refused', 'frame', 'link', 'close', 'kept', 'waiting'];
 
     static values = {
         project: String,
@@ -74,6 +74,9 @@ export default class extends Controller {
                 this.show();
             }
             window.dispatchEvent(new CustomEvent('widget:context-changed', { detail: { report: this.report } }));
+        } else if ('cairn:layout' === event.data?.type) {
+            // the button of the site closes the panel, unless the panel covers it
+            this.closeTarget.hidden = true !== event.data.covered;
         } else if ('cairn:collapsed' === event.data?.type) {
             this.collapsed?.();
             this.collapsed = null;
@@ -148,6 +151,7 @@ export default class extends Controller {
         } else {
             this.frameTarget.removeAttribute('src');
             this.frameTarget.innerHTML = '';
+            this.wait(false);
             this.prepare();
         }
     }
@@ -169,6 +173,7 @@ export default class extends Controller {
         url.searchParams.set('site', this.siteValue);
         url.searchParams.set('challenge', this.pair.challenge);
         this.popup = window.open(url, 'cairn-widget-link', 'popup,width=480,height=680');
+        this.wait(true);
         this.deadline = Date.now() + POLL_FOR;
         clearTimeout(this.polling);
         this.polling = setTimeout(() => this.ask(), POLL_EVERY);
@@ -189,7 +194,15 @@ export default class extends Controller {
         }
         if (Date.now() < this.deadline) {
             this.polling = setTimeout(() => this.ask(), POLL_EVERY);
+        } else {
+            this.wait(false);
         }
+    }
+
+    /* While the window of Cairn is awaited, the frame says where the sign-in goes on. */
+    wait(waiting) {
+        this.waitingTarget.hidden = !waiting;
+        this.keptTarget.hidden = waiting;
     }
 
     async post(body) {

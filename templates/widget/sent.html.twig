@@ -1,4 +1,4 @@
-{# What the `widget-report` frame shows once the issue was created: its key, the way to it in Cairn (another tab: the site stays where it is) and the way back to an empty form. #}
+{# What the `widget-report` frame shows once the issue was created: its key, the way back to an empty form, which is what a review goes on with, and the way to the issue in Cairn (another tab: the site stays where it is). #}
 {% set sentRoute = { workspaceKey: project.workspace.key, projectKey: project.key } %}
 <turbo-frame id="widget-report">
     <div class="flex flex-1 flex-col items-center justify-center gap-4 px-8 py-10 text-center">
@@ -7,7 +7,9 @@
         </span>
         <h2 class="text-lg font-semibold text-strong">{{ 'widget.sent.title'|trans({ '%key%': project.issuePrefix ~ '-' ~ number }) }}</h2>
         <p class="text-muted">{{ 'widget.sent.text'|trans }}</p>
-        <twig:Ui:Button variant="primary" href="{{ url('app_issue_show', sentRoute|merge({ number: number })) }}" target="_blank" rel="noopener">{{ 'widget.sent.open'|trans }}</twig:Ui:Button>
-        <twig:Ui:Button variant="ghost" href="{{ path('app_widget_report', sentRoute) }}">{{ 'widget.sent.another'|trans }}</twig:Ui:Button>
+        <div class="flex flex-col items-stretch gap-2 pt-2">
+            <twig:Ui:Button variant="primary" size="lg" href="{{ path('app_widget_report', sentRoute) }}">{{ 'widget.sent.another'|trans }}</twig:Ui:Button>
+            <twig:Ui:Button size="lg" icon="external-link" href="{{ url('app_issue_show', sentRoute|merge({ number: number })) }}" target="_blank" rel="noopener">{{ 'widget.sent.open'|trans }}</twig:Ui:Button>
+        </div>
     </div>
 </turbo-frame>

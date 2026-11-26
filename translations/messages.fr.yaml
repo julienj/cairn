@@ -1342,6 +1342,7 @@ widget:
         text: Connectez-vous pour signaler un problème sur ce site.
         action: Se connecter
         kept: Votre connexion est gardée 30 jours.
+        waiting: "Terminez la connexion dans la fenêtre qui vient de s'ouvrir."
     link:
         title: Lier votre compte Cairn à ce site ?
         text: Vous pourrez signaler des problèmes depuis ce site sans vous reconnecter, pendant 30 jours.
@@ -1353,6 +1354,7 @@ widget:
     form:
         tracker: Catégorie
         title: Titre
+        title_placeholder: Le problème en quelques mots
         description: Description
         criticality: Criticité
         tags: Étiquettes
@@ -1361,6 +1363,8 @@ widget:
         private_tracker: 'Catégorie privée : masquée aux utilisateurs externes.'
         files: Fichiers
         attach: Joindre un fichier
+        attachments: Capture et fichiers
+        drop_hint: "ou déposez des fichiers n'importe où dans ce panneau"
         drop: Déposez vos fichiers pour les joindre
         remove_file: 'Retirer %name%'
         upload_failed: Ce fichier n'a pas pu être envoyé.
