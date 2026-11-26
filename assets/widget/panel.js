@@ -43,7 +43,8 @@ export function createPanel({ cairn, address, label, report }) {
 
     const style = document.createElement('style');
     style.textContent = `
-:host { all: initial; }
+:host { all: initial !important; }
+:host([data-away]) { opacity: 0 !important; pointer-events: none !important; }
 ${buttonStyles}
 .panel { position: fixed; left: var(--left); top: var(--top); z-index: 2147483647; width: var(--width); height: var(--height); overflow: hidden; border-radius: 14px; background: #fff; color-scheme: light dark; box-shadow: 0 0 0 1px rgba(17, 24, 39, .1), 0 2px 6px rgba(17, 24, 39, .08), 0 24px 56px -12px rgba(17, 24, 39, .35); transform-origin: var(--origin); opacity: 0; scale: .96; visibility: hidden; transition: opacity .15s, scale .15s, visibility 0s .15s; }
 .panel.open { opacity: 1; scale: 1; visibility: visible; transition: opacity .18s, scale .3s cubic-bezier(.2, 1.15, .3, 1); }
@@ -208,13 +209,11 @@ iframe { display: block; width: 100%; height: 100%; border: 0; }
             case 'cairn:collapse':
                 // Out of the picture but still drawn: a frame that is not displayed is slowed down by the
                 // browser. Then two frames, for the page to be drawn without the widget.
-                host.style.opacity = '0';
-                host.style.pointerEvents = 'none';
+                host.setAttribute('data-away', '');
                 window.requestAnimationFrame(() => window.requestAnimationFrame(() => send({ type: 'cairn:collapsed' })));
                 break;
             case 'cairn:expand':
-                host.style.opacity = '';
-                host.style.pointerEvents = '';
+                host.removeAttribute('data-away');
                 break;
             case 'cairn:widen':
                 panel.classList.add('wide');
