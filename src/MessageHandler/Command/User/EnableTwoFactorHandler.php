@@ -33,7 +33,7 @@ final class EnableTwoFactorHandler
         if ($user->hasTotp()) {
             throw UserException::twoFactorAlreadyOn();
         }
-        if (!$this->codes->isValidForSecret($command->secret, $command->code)) {
+        if (!$this->codes->isValidForSecret($user, $command->secret, $command->code)) {
             throw UserException::wrongCode();
         }
 
