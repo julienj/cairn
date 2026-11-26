@@ -18,6 +18,10 @@ let sending = 0;
 let current = null;
 /* The files that are in and that no form holds yet: the one on the page takes them, or the next one while it is drawn again. */
 const arrived = [];
+/* What the frame was last told of the issue being begun: it is told again when that changes only. */
+let told = null;
+/* How long what is written waits before the draft is kept, so that a burst of keys is one writing, in milliseconds. */
+const SAVE_WAIT = 250;
 /* The shape of a draft: one kept in another shape is not read. */
 const DRAFT_VERSION = 1;
 /* The controls somebody writes in: what they hold says an issue is begun. */
@@ -63,7 +67,8 @@ async function pictureStore(mode, request) {
  * that arrives while the form is drawn again goes to the next one.
  *
  * What is written is kept as a draft in the sessionStorage of the frame,
- * which the site cannot read, so that the issue begun follows from page
+ * which the site cannot read, a moment after the last key and at the
+ * latest when the page goes, so that the issue begun follows from page
  * to page of the site in this tab, until it is sent. A draft holds each
  * control by its name: its text, or the values checked among those of
  * the name, none included; and the files sent. It is given back to the
@@ -95,10 +100,13 @@ export default class extends Controller {
         this.hold();
         this.take();
         this.recall();
+        // a form that comes says where the issue stands, whatever the one before said
+        told = null;
         this.tell();
     }
 
     disconnect() {
+        this.flush();
         if (current === this) {
             current = null;
         }
@@ -120,6 +128,8 @@ export default class extends Controller {
     }
 
     refresh() {
+        // the form drawn again reads the draft: it holds what was just written
+        this.flush();
         this.refreshing = true;
         this.element.requestSubmit(this.refresherTarget);
     }
@@ -315,7 +325,21 @@ export default class extends Controller {
             && !control.name.endsWith('[technical]'));
     }
 
+    /* Something was written or chosen: the draft is kept once the writing pauses. */
+    written() {
+        this.saving ??= setTimeout(() => this.save(), SAVE_WAIT);
+    }
+
+    /* Keeps now what waited to be: the page goes, or the form is drawn again. */
+    flush() {
+        if (null != this.saving) {
+            this.save();
+        }
+    }
+
     save() {
+        clearTimeout(this.saving);
+        this.saving = null;
         if (null === this.draft || this.refreshing) {
             return;
         }
@@ -347,6 +371,10 @@ export default class extends Controller {
     tell(begun = null) {
         begun ??= null !== this.filesTarget.querySelector('li[data-uuid]')
             || this.controls().some((control) => WRITTEN.includes(control.type) && '' !== control.value.trim());
+        if (begun === told) {
+            return;
+        }
+        told = begun;
         window.dispatchEvent(new CustomEvent('widget:draft', { detail: { begun } }));
     }
 
@@ -428,6 +456,9 @@ export default class extends Controller {
     }
 
     drop() {
+        // what waited to be kept is dropped with the rest
+        clearTimeout(this.saving);
+        this.saving = null;
         if (null === this.draft) {
             return;
         }

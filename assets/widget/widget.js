@@ -21,7 +21,10 @@
  *    the report is handed over, the zoom and the preferences of the
  *    system (preferences.js).
  * 2. It asks Cairn whether the project knows this site. Only then does it
- *    show its button; on any other site nothing shows.
+ *    show its button; on any other site nothing shows. The answer is kept
+ *    for the tab (sessionStorage), so that the button is there at once on
+ *    the next page; Cairn is asked again all the same, and a site it no
+ *    longer knows has lost its button by the page after.
  * 3. The button opens a panel holding a page of Cairn (panel.js), which
  *    it hands what it noted, and again each time it notes more.
  */
@@ -71,12 +74,46 @@ if (script && keys && window.fetch && !window.__cairnWidget && wanted(script)) {
         collectedAt: now(),
     });
 
+    // What Cairn last said of this site in this tab, for this project: the label of its button.
+    const known = `cairn-widget-site:${keys[1]}-${keys[2]}`;
+    const remember = (label) => {
+        try {
+            if (null === label) {
+                window.sessionStorage.removeItem(known);
+            } else {
+                window.sessionStorage.setItem(known, label);
+            }
+        } catch { /* no storage: Cairn is awaited on each page */ }
+    };
+    let shown = false;
+    const show = (label) => {
+        if (!shown) {
+            shown = true;
+            noted = createPanel({ cairn, address, label, report });
+        }
+    };
+    try {
+        const label = window.sessionStorage.getItem(known);
+        if (label) {
+            show(label);
+        }
+    } catch { /* no storage: the button waits for Cairn */ }
+
     nativeFetch(`${address}/site`, { credentials: 'omit' })
-        .then((response) => (response.ok ? response.json() : null))
+        .then((response) => {
+            if (response.ok) {
+                return response.json();
+            }
+            // Cairn no longer knows this site: the button of this page stays, the next one has none
+            remember(null);
+
+            return null;
+        })
         .then((site) => {
             if ('string' === typeof site?.label) {
-                noted = createPanel({ cairn, address, label: site.label, report });
+                remember(site.label);
+                show(site.label);
             }
         })
-        .catch(() => { /* Cairn does not know this site, or cannot be reached: no button */ });
+        .catch(() => { /* Cairn cannot be reached: what it last said holds */ });
 }

@@ -73,10 +73,15 @@ export function createButton(label, { onClick, onMove, onAim, onEscape }) {
         moveTo(pointOf(place));
     };
     settle();
-    window.addEventListener('resize', () => {
+    const resettle = () => {
         settle();
         onMove();
-    });
+    };
+    window.addEventListener('resize', resettle);
+    // shown before the page is read (a site Cairn already answered for in this tab): the window may lose a scrollbar's width to it
+    if ('loading' === document.readyState) {
+        document.addEventListener('DOMContentLoaded', resettle, { once: true });
+    }
 
     let press = null;
     let moved = false;
