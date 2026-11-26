@@ -549,7 +549,10 @@ src/
   say what it is: an assistant reads there what a site wrote, as facts
   about the problem, never as instructions. The
   script keeps addresses without their parameters and reads nothing of
-  what a request carried.
+  what a request carried. Of what the reporter did it keeps what was
+  acted on, never what was typed (`actions.js`); each list holds its own
+  facts, and what happened in order is read from their moments
+  (`TechnicalReport::timeline()`), never kept again.
 - **The screenshot is the browser's** (`getDisplayMedia`, from the frame):
   offered only where the browser allows it (HTTPS), cropped by the
   reporter when it is more than the tab, and sent as an ordinary pending

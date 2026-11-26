@@ -88,8 +88,8 @@ final class IssueApiTest extends ApiTestCase
                     ['kind' => 'image', 'url' => 'https://staging.maison-dupont.test/images/halo.jpg', 'status' => 404, 'at' => '2026-11-24T10:14:05.000Z'],
                     ['kind' => 'ajax', 'method' => 'GET', 'url' => 'https://staging.maison-dupont.test/api/prices/halo', 'status' => 500, 'at' => '2026-11-24T10:14:06.000Z'],
                 ],
-                'performance' => ['ttfb' => 320, 'lcp' => 4800, 'cls' => 0.12, 'inp' => 90],
                 'pages' => [['url' => 'https://staging.maison-dupont.test/'], ['url' => 'https://staging.maison-dupont.test/lamps']],
+                'actions' => [['kind' => 'click', 'role' => 'button', 'name' => 'Show the price', 'selector' => '#price > button', 'page' => 'https://staging.maison-dupont.test/lamps', 'count' => 2, 'at' => '2026-11-24T10:14:05.500Z', 'value' => 'never kept']],
             ],
         ));
         \assert($reported instanceof Issue);
@@ -105,9 +105,9 @@ final class IssueApiTest extends ApiTestCase
             ['ajax', 'GET', 'https://staging.maison-dupont.test/api/prices/halo', 500],
         ], array_map(static fn (array $request): array => [$request['kind'], $request['method'], $request['url'], $request['status']], $report['network']));
         self::assertSame(1.25, $report['zoom']);
-        self::assertSame([320, 4800, 0.12, 90], [$report['performance']['ttfb'], $report['performance']['lcp'], $report['performance']['cls'], $report['performance']['inp']]);
         self::assertSame(['dark', false, 'fine'], [$report['preferences']['colorScheme'], $report['preferences']['reducedMotion'], $report['preferences']['pointer']]);
         self::assertSame(['https://staging.maison-dupont.test/lamps', 'https://staging.maison-dupont.test/'], array_column($report['pages'], 'url'), 'the last page seen first');
+        self::assertSame([['kind' => 'click', 'role' => 'button', 'name' => 'Show the price', 'selector' => '#price > button', 'page' => 'https://staging.maison-dupont.test/lamps', 'count' => 2, 'at' => '2026-11-24T10:14:05.500Z']], array_map(static fn (array $action): array => array_intersect_key($action, ['kind' => 0, 'role' => 0, 'name' => 0, 'selector' => 0, 'page' => 0, 'count' => 0, 'at' => 0]), $report['actions']), 'what was done, never what was typed');
 
         // an issue written in Cairn has none, and a list carries none
         self::assertArrayNotHasKey('technicalReport', $this->api('GET', '/api/issues/MD-SPT-1', $secret));

@@ -1,12 +1,14 @@
 import { bare, cut, keep, now } from './text.js';
 
 const MAX_PAGES = 20;
+/* An hour: a page seen before that is no longer the way that led here. */
+const MAX_AGE = 3600000;
 const KEY = 'cairn-widget-pages';
 
 /*
  * The pages seen in this tab, kept by the site itself in its
- * sessionStorage: the list lasts as long as the tab, and is nobody's
- * history. A page that changes its address without loading (an
+ * sessionStorage: the list lasts as long as the tab, an hour for each
+ * page but the one being seen, and is nobody's history. A page that changes its address without loading (an
  * application in one page) is another page seen. A page that does not
  * load the widget is missing from the list. `noted` is called after
  * each page seen.
@@ -18,7 +20,9 @@ export function watchPages(noted) {
             const list = JSON.parse(window.sessionStorage.getItem(KEY) || '[]');
 
             // the storage is the site's: anything else may have written there
-            return Array.isArray(list) ? list.filter((page) => page && 'string' === typeof page.url) : [];
+            const since = Date.now() - MAX_AGE;
+
+            return Array.isArray(list) ? list.filter((page, index) => page && 'string' === typeof page.url && (index === list.length - 1 || !(Date.parse(page.at) < since))) : [];
         } catch {
             return [];
         }

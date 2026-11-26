@@ -1,19 +1,24 @@
-import { bare, cut, describe, keep, now } from './text.js';
+import { bare, cut, describe, keep, now, RECENT, remembered } from './text.js';
 
 const MAX_ERRORS = 30;
+const KEY = 'cairn-widget-errors';
 
 /*
  * The errors of the page, from the moment the widget is loaded: what the
  * page writes with console.error, the errors nobody caught and the
  * promises nobody handled. A file that failed to load is not an error of
  * the code: network.js notes it.
+ * The site keeps them in its sessionStorage, as it keeps what was done
+ * (actions.js): the error an action caused is still beside it on the
+ * next page.
  * `noted` is called after each one. Returns the function that gives what
  * was noted so far.
  */
 export function watchErrors(noted) {
-    const errors = [];
+    const { list: errors, save } = remembered(KEY, MAX_ERRORS, RECENT);
     const note = (error) => {
         keep(errors, MAX_ERRORS, error);
+        save();
         noted();
     };
 

@@ -15,8 +15,9 @@
  * 1. From the moment it is loaded, it notes what helps reproduce a
  *    problem: the errors of the page (errors.js), its requests that
  *    failed, Ajax or files (network.js), the pages seen in this tab
- *    (pages.js), and what the site says of itself in `window.Cairn`
- *    (context.js), and how the page performed (performance.js); and, when
+ *    (pages.js), the last things done on them, never what was typed
+ *    (actions.js), and what the site says of itself in `window.Cairn`
+ *    (context.js); and, when
  *    the report is handed over, the zoom and the preferences of the
  *    system (preferences.js).
  * 2. It asks Cairn whether the project knows this site. Only then does it
@@ -24,12 +25,12 @@
  * 3. The button opens a panel holding a page of Cairn (panel.js), which
  *    it hands what it noted, and again each time it notes more.
  */
+import { watchActions } from './actions.js';
 import { wanted } from './activation.js';
 import { watchContext } from './context.js';
 import { watchErrors } from './errors.js';
 import { watchNetwork } from './network.js';
 import { watchPages } from './pages.js';
-import { watchPerformance } from './performance.js';
 import { createPanel } from './panel.js';
 import { preferences, zoom } from './preferences.js';
 import { bare, cut, now } from './text.js';
@@ -48,8 +49,8 @@ if (script && keys && window.fetch && !window.__cairnWidget && wanted(script)) {
     const errors = watchErrors(() => noted());
     const { network, nativeFetch } = watchNetwork(cairn, () => noted());
     const pages = watchPages(() => noted());
-    const measured = watchPerformance();
     const context = watchContext(() => noted());
+    const actions = watchActions(() => noted());
 
     const report = () => ({
         page: { url: bare(window.location.href), title: cut(document.title) },
@@ -65,8 +66,8 @@ if (script && keys && window.fetch && !window.__cairnWidget && wanted(script)) {
         context: context(),
         errors: errors(),
         network: network(),
-        performance: measured(),
         pages: pages(),
+        actions: actions(),
         collectedAt: now(),
     });
 

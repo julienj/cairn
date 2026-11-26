@@ -1,6 +1,7 @@
-import { bare, keep, now } from './text.js';
+import { bare, keep, now, RECENT, remembered } from './text.js';
 
 const MAX_FAILURES = 60;
+const KEY = 'cairn-widget-network';
 /* What made the browser ask for a file, as it says it, by the kind the report gives. */
 const INITIATORS = { img: 'image', image: 'image', script: 'script', link: 'stylesheet', css: 'stylesheet', video: 'media', audio: 'media', track: 'media' };
 const TAGS = { IMG: 'image', IMAGE: 'image', SCRIPT: 'script', LINK: 'stylesheet', VIDEO: 'media', AUDIO: 'media', SOURCE: 'media', TRACK: 'media' };
@@ -26,12 +27,15 @@ const AJAX = ['fetch', 'xmlhttprequest'];
  *
  * A file is noted once, an Ajax request each time it fails. The requests
  * made to Cairn itself (`ignored`, its origin) are not the page's.
+ * The site keeps them in its sessionStorage, as it keeps what was done
+ * (actions.js): what an action made fail is still beside it on the next
+ * page.
  * `noted` is called after each one. Returns the function that gives what
  * was noted so far, and the fetch of the browser as it was, for the
  * widget's own request.
  */
 export function watchNetwork(ignored, noted) {
-    const failures = [];
+    const { list: failures, save } = remembered(KEY, MAX_FAILURES, RECENT);
     const files = new Map();
 
     const note = (failure) => {
@@ -42,12 +46,14 @@ export function watchNetwork(ignored, noted) {
             const known = files.get(failure.url);
             if (known) {
                 known.status ??= failure.status;
+                save();
 
                 return;
             }
             files.set(failure.url, failure);
         }
         keep(failures, MAX_FAILURES, failure);
+        save();
         noted();
     };
     const ajax = (method, address, status) => note({ kind: 'ajax', method: String(method || 'GET').toUpperCase(), url: bare(address), status, at: now() });

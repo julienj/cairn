@@ -54,7 +54,7 @@ final class TechnicalReportTest extends TestCase
         ]);
 
         self::assertNotNull($report);
-        self::assertSame(['page', 'environment', 'context', 'errors', 'network', 'performance', 'pages', 'collectedAt'], array_keys($report->toArray()));
+        self::assertSame(['page', 'environment', 'context', 'errors', 'network', 'pages', 'actions', 'collectedAt'], array_keys($report->toArray()));
         self::assertSame(['url' => 'https://staging.example.com/cart', 'title' => 'Cart'], $report->page());
         self::assertSame(['width' => 1280, 'height' => 800], $report->environment()['viewport']);
         self::assertNull($report->environment()['screen'], 'a size is two numbers');
@@ -76,8 +76,6 @@ final class TechnicalReportTest extends TestCase
             ['kind' => 'ajax', 'method' => 'GET', 'url' => 'https://staging.example.com/api', 'status' => 0, 'at' => null],
         ], $report->network(), 'in the order it failed, a method for a request only, a file without a known status has none; a moment that does not exist is no moment, and comes last');
 
-        self::assertSame(['ttfb' => 120, 'domContentLoaded' => null, 'load' => null, 'lcp' => 3200, 'cls' => 0.4, 'inp' => null], $report->performance(), 'times are whole milliseconds, of ten minutes at most');
-
         self::assertCount(30, $report->pages(), 'the last ones seen');
         self::assertSame('https://staging.example.com/page/80', $report->pages()[0]['url'], 'the last one first');
     }
@@ -90,22 +88,58 @@ final class TechnicalReportTest extends TestCase
         self::assertSame($report->toArray(), TechnicalReport::from($report->toArray())?->toArray());
         self::assertNull($report->browser());
         self::assertNull($report->environment()['preferences']);
-        self::assertNull($report->performance());
-        self::assertSame([], $report->measures());
     }
 
-    public function testAMeasureIsRatedAsGoogleRatesIt(): void
+    public function testKeepsWhatWasDoneAndNeverMoreThanItsShape(): void
     {
-        $report = TechnicalReport::from(['page' => ['url' => 'https://staging.example.com/'], 'performance' => ['ttfb' => 400, 'domContentLoaded' => 900, 'load' => 2400, 'lcp' => 3250, 'inp' => 1200, 'cls' => 0]]);
-        self::assertNotNull($report);
+        $report = TechnicalReport::from([
+            'page' => ['url' => 'https://staging.example.com/cart'],
+            'actions' => [
+                ['kind' => 'submit', 'role' => 'form', 'name' => 'Checkout', 'selector' => '#checkout', 'page' => 'https://staging.example.com/cart', 'count' => 1, 'at' => '2026-11-24T10:14:09.000Z', 'value' => 'what was typed'],
+                ['kind' => 'click', 'role' => 'BUTTON', 'name' => str_repeat('n', 500), 'selector' => str_repeat('s', 500), 'count' => 4000, 'at' => '2026-11-24T10:14:05.000Z'],
+                ['kind' => 'keypress', 'name' => 'a', 'at' => '2026-11-24T10:14:06.000Z'],
+                ['kind' => 'click', 'name' => 'No moment', 'at' => 'just now'],
+                ['kind' => 'change', 'role' => '<script>', 'name' => 'Email', 'count' => 'many', 'at' => '2026-11-24T10:14:07.000Z'],
+            ],
+        ]);
 
+        self::assertNotNull($report);
+        self::assertSame(['click', 'change', 'submit'], array_column($report->actions(), 'kind'), 'the kinds known here, each with its moment, oldest first');
+        self::assertSame(['kind', 'role', 'name', 'selector', 'page', 'count', 'at'], array_keys($report->actions()[2]), 'nothing a site adds is kept');
+        self::assertSame(['button', 60, 200, null, 1], [$report->actions()[0]['role'], mb_strlen((string) $report->actions()[0]['name']), mb_strlen((string) $report->actions()[0]['selector']), $report->actions()[0]['page'], $report->actions()[0]['count']]);
+        self::assertSame([null, 'Email', 1], [$report->actions()[1]['role'], $report->actions()[1]['name'], $report->actions()[1]['count']]);
+    }
+
+    public function testReadsWhatFollowedAnActionInItsOrder(): void
+    {
+        $report = TechnicalReport::from([
+            'page' => ['url' => 'https://staging.example.com/cart'],
+            'errors' => [
+                ['kind' => 'console', 'message' => 'Before anything was done', 'at' => '2026-11-24T10:14:00.000Z'],
+                ['kind' => 'console', 'message' => 'Price not found', 'at' => '2026-11-24T10:14:06.500Z'],
+                ['kind' => 'error', 'message' => 'No moment'],
+            ],
+            'network' => [['kind' => 'ajax', 'method' => 'POST', 'url' => 'https://staging.example.com/api/cart', 'status' => 500, 'at' => '2026-11-24T10:14:06.000Z']],
+            'pages' => [
+                ['url' => 'https://staging.example.com/', 'at' => '2026-11-24T10:13:00.000Z'],
+                ['url' => 'https://staging.example.com/cart', 'at' => '2026-11-24T10:14:08.000Z'],
+            ],
+            'actions' => [
+                ['kind' => 'click', 'name' => 'Cart', 'at' => '2026-11-24T10:14:07.000Z'],
+                ['kind' => 'click', 'name' => 'Add to cart', 'at' => '2026-11-24T10:14:06.000Z'],
+            ],
+        ]);
+
+        self::assertNotNull($report);
         self::assertSame([
-            ['name' => 'ttfb', 'value' => 400, 'rating' => 'good', 'position' => 16.7],
-            ['name' => 'domContentLoaded', 'value' => 900, 'rating' => null, 'position' => null],
-            ['name' => 'lcp', 'value' => 3250, 'rating' => 'average', 'position' => 50.0],
-            ['name' => 'load', 'value' => 2400, 'rating' => null, 'position' => null],
-            ['name' => 'inp', 'value' => 1200, 'rating' => 'poor', 'position' => 98.0],
-            ['name' => 'cls', 'value' => 0.0, 'rating' => 'good', 'position' => 2.0],
-        ], $report->measures(), 'in the order they come while the page loads, a measure without a scale unrated; the mark never leaves the gauge');
+            ['page', 'https://staging.example.com/'],
+            ['error', 'Before anything was done'],
+            ['action', 'Add to cart'],
+            ['request', 'https://staging.example.com/api/cart'],
+            ['error', 'Price not found'],
+            ['action', 'Cart'],
+            ['page', 'https://staging.example.com/cart'],
+            ['error', 'No moment'],
+        ], array_map(static fn (array $event): array => [$event['type'], $event['entry']['name'] ?? $event['entry']['message'] ?? $event['entry']['url']], $report->timeline()), 'an action before what it caused, what has no moment last');
     }
 }
