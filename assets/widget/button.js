@@ -38,7 +38,7 @@ const CLOSE = '<svg class="close" width="18" height="18" viewBox="0 0 24 24" fil
  * the disc: the label opens towards the inside of the window from there,
  * so the disc itself never moves under the pointer.
  */
-export function createButton(label, { onClick, onMove }) {
+export function createButton(label, { onClick, onMove, onAim }) {
     const dock = document.createElement('div');
     dock.className = 'dock';
     const button = document.createElement('button');
@@ -159,6 +159,9 @@ export function createButton(label, { onClick, onMove }) {
     };
     button.addEventListener('pointerup', drop);
     button.addEventListener('pointercancel', drop);
+    // aimed at, by the pointer or the keyboard, before it is pressed
+    button.addEventListener('pointerenter', onAim);
+    button.addEventListener('focus', onAim);
     button.addEventListener('click', (event) => {
         if (moved) {
             // the click that ends a move opens nothing
