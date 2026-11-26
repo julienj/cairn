@@ -1403,6 +1403,9 @@ widget:
         removed: 'Site %origin% removed.'
         remove: Remove
         remove_confirm: The widget leaves this site, and whoever linked their account there will have to link it again.
+        added_on: 'Added on %date%'
+        remove_title: Remove this site?
+        remove_submit: Remove the site
         empty: No site yet
         empty_hint: Declare the staging site of the project to get the line of script to put on it.
         insecure: No screenshot (not HTTPS)
@@ -1410,15 +1413,23 @@ widget:
             address: Address of the site
             address_help: 'Scheme and domain, without a path: https://staging.example.com'
     install:
-        title: On the pages of the site
-        help: 'Put one of these lines in the <head> of every page, as early as possible: what happened before it loaded is not in the report.'
+        title: Installation
         always:
-            title: On a site being reviewed
-            help: Everybody sees the button.
+            title: Review
+            help: Everybody sees the button on the site.
         on_demand:
-            title: In production
-            help: 'Nobody sees the button, and the script does nothing, until someone opens a page of the site with ?cairn=1 at the end of its address. The site then remembers them in that browser; ?cairn=0 hides the button again.'
-        copy: Copy
+            title: Production
+            help: Nobody sees the button, and the script does nothing, until someone opens the link below.
+        script:
+            label: 'In the <head> of every page'
+            help: 'As early as possible: what happened before it loaded is not in the report.'
+            copy: Copy the line
+        link:
+            label: Link that shows the button
+            help: The site then remembers them in that browser, on all of its pages.
+            hide: 'To hide it again:'
+            copy: Copy the link
+            copy_hide: Copy the link that hides it
         copied: Copied
     refused:
         not_an_origin: 'This is not the address of a site: scheme and domain, without a path.'

@@ -1,6 +1,6 @@
 {% extends 'project/settings/base.html.twig' %}
 
-{# The widget of the project: the sites it is shown on, each removed in place, and the line of script their pages load, in its two ways of showing the button; `form`, at its own address, is the dialog declaring a site. Without a site there is no widget, and no line to copy. #}
+{# The widget of the project: a card per site it is shown on, which holds all there is to do for that site: the line of script its pages load, in one of its two ways of showing the button, the address that asks for the button in production, and the way to its removal; `form`, at its own address, is the dialog declaring a site, `removing` the site a second dialog asks again about before it goes. Without a site there is no widget, and no line to copy. #}
 {% block settings_title %}{{ 'nav.project.configuration.widget'|trans }}{% endblock %}
 
 {% block settings_count %}{{ sites|length }}{% endblock %}
@@ -12,59 +12,99 @@
 {% endblock %}
 
 {% block settings_content %}
-    <div class="max-w-3xl space-y-6">
-        {% if sites is empty %}
+    {% if sites is empty %}
+        <div class="max-w-3xl">
             <twig:Ui:EmptyState :title="'widget.site.empty'|trans" icon="message-square" bordered>{{ 'widget.site.empty_hint'|trans }}</twig:Ui:EmptyState>
-        {% else %}
-            <ul class="divide-y divide-line-subtle rounded-lg border border-line bg-surface text-sm">
-                {% for site in sites %}
-                    <li class="flex flex-wrap items-center gap-3 px-4 py-2.5">
-                        <span class="font-mono text-strong">{{ site.origin }}</span>
-                        {% if not site.secure %}
-                            <twig:Ui:Badge tone="amber" size="sm">{{ 'widget.site.insecure'|trans }}</twig:Ui:Badge>
-                        {% endif %}
-                        <form method="post" action="{{ path('app_project_settings_widget_site_delete', settingsRoute|merge({ site: site.id })) }}" class="ml-auto">
-                            <input type="hidden" name="_token" value="{{ csrf_token('submit') }}" data-controller="csrf-protection">
-                            <twig:Ui:Disclosure :closedLabel="'widget.site.remove'|trans" :openLabel="'issue.edit.cancel'|trans">
-                                <div class="mt-2 flex flex-wrap items-center gap-3" role="alertdialog">
-                                    <span class="flex-1 basis-48 text-xs text-muted">{{ 'widget.site.remove_confirm'|trans }}</span>
-                                    <twig:Ui:Button type="submit" variant="danger" size="sm" icon="trash-2">{{ 'widget.site.remove'|trans }}</twig:Ui:Button>
-                                </div>
-                            </twig:Ui:Disclosure>
-                        </form>
-                    </li>
-                {% endfor %}
-            </ul>
-
-            <section class="rounded-lg border border-line bg-surface p-4 space-y-4">
-                <div class="space-y-1">
-                    <h2 class="text-sm font-semibold text-strong">{{ 'widget.install.title'|trans }}</h2>
-                    <p class="text-xs text-muted">{{ 'widget.install.help'|trans }}</p>
-                </div>
-                {# One line per way of showing the button: what differs is the data-display of the tag, which the script reads before anything else. #}
-                {% for display, attribute in { always: ' data-display="always"', on_demand: '' } %}
-                    <div class="space-y-2" data-controller="clipboard">
-                        <div class="flex flex-wrap items-center gap-2">
-                            <h3 class="text-sm font-medium text-strong">{{ ('widget.install.' ~ display ~ '.title')|trans }}</h3>
-                            <twig:Ui:Button size="sm" icon="copy" class="ml-auto" data-action="clipboard#copy">
-                                <span data-clipboard-target="idle">{{ 'widget.install.copy'|trans }}</span>
-                                <span data-clipboard-target="done" hidden>{{ 'widget.install.copied'|trans }}</span>
-                            </twig:Ui:Button>
+        </div>
+    {% else %}
+        <ul class="max-w-3xl space-y-4">
+            {% for site in sites %}
+                {% set siteScheme = site.origin|split('://')[0] ~ '://' %}
+                {% set siteLink = site.origin ~ '/?cairn=' %}
+                {# The card is a group: the way its script is loaded is chosen by two radios of its own, and what follows shows for one or the other without a line of script. #}
+                <li class="group/site rounded-lg border border-line bg-surface shadow-sm">
+                    <header class="flex items-center gap-3 px-4 py-3">
+                        <span class="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-sunken text-muted"><twig:ux:icon name="lucide:globe" class="h-4 w-4" /></span>
+                        <div class="min-w-0 flex-1">
+                            <a href="{{ site.origin }}" target="_blank" rel="noopener noreferrer" class="group/open inline-flex max-w-full items-center gap-1.5 text-sm font-medium text-strong hover:text-brand">
+                                <span class="truncate"><span class="font-normal text-faint group-hover/open:text-brand">{{ siteScheme }}</span>{{ site.origin|slice(siteScheme|length) }}</span>
+                                <twig:ux:icon name="lucide:external-link" class="h-3.5 w-3.5 shrink-0 text-faint opacity-0 transition-opacity group-hover/open:opacity-100 group-focus-visible/open:opacity-100" />
+                            </a>
+                            <p class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-faint">
+                                {{ 'widget.site.added_on'|trans({ '%date%': site.createdAt|format_date('medium') }) }}
+                                {% if not site.secure %}
+                                    <twig:Ui:Badge tone="amber" size="sm" icon="camera">{{ 'widget.site.insecure'|trans }}</twig:Ui:Badge>
+                                {% endif %}
+                            </p>
                         </div>
-                        <p class="text-xs text-muted">{{ ('widget.install.' ~ display ~ '.help')|trans }}</p>
-                        <pre class="overflow-x-auto rounded-md bg-slate-900 px-3 py-2 font-mono text-xs text-slate-100" data-clipboard-target="source" data-test="widget-snippet-{{ display }}">&lt;script src="{{ app.request.schemeAndHttpHost }}/widget.js" data-project="{{ project.issuePrefix }}"{{ attribute }} async&gt;&lt;/script&gt;</pre>
+                        <twig:Ui:IconButton icon="trash-2" tone="danger" :label="'widget.site.remove'|trans" href="{{ path('app_project_settings_widget_site_remove', settingsRoute|merge({ site: site.id })) }}" data-turbo-frame="modal" />
+                    </header>
+
+                    <div class="flex flex-col gap-4 border-t border-line-subtle px-4 py-4">
+                        <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+                            <div class="min-w-0">
+                                <h3 class="text-sm font-medium text-strong">{{ 'widget.install.title'|trans }}</h3>
+                                <p class="text-xs text-muted group-has-[[value=demand]:checked]/site:hidden">{{ 'widget.install.always.help'|trans }}</p>
+                                <p class="hidden text-xs text-muted group-has-[[value=demand]:checked]/site:block">{{ 'widget.install.on_demand.help'|trans }}</p>
+                            </div>
+                            <twig:Ui:Form:Segmented name="display-{{ site.id }}" value="always" :options="{ always: 'widget.install.always.title'|trans, demand: 'widget.install.on_demand.title'|trans }" class="mt-0" role="radiogroup" aria-label="{{ 'widget.install.title'|trans }}" />
+                        </div>
+
+                        <div class="flex flex-col gap-1.5">
+                            <p class="text-xs font-medium text-muted">{{ 'widget.install.script.label'|trans }}</p>
+                            {# One line per way of showing the button: what differs is the data-display of the tag, which the script reads before anything else. #}
+                            {% for display, attribute in { always: ' data-display="always"', on_demand: '' } %}
+                                <div class="relative rounded-md bg-slate-900 {{ display == 'always' ? 'group-has-[[value=demand]:checked]/site:hidden' : 'hidden group-has-[[value=demand]:checked]/site:block' }}" data-controller="clipboard">
+                                    <pre class="whitespace-pre-wrap wrap-anywhere py-2.5 pl-3 pr-11 font-mono text-xs leading-5 text-slate-100" data-clipboard-target="source" data-test="widget-snippet-{{ display }}">&lt;script src="{{ app.request.schemeAndHttpHost }}/widget.js" data-project="{{ project.issuePrefix }}"{{ attribute }} async&gt;&lt;/script&gt;</pre>
+                                    <twig:Ui:CopyButton :label="'widget.install.script.copy'|trans" :copiedLabel="'widget.install.copied'|trans" class="absolute right-1.5 top-1.5 text-slate-400 hover:bg-slate-800 hover:text-slate-100" />
+                                </div>
+                            {% endfor %}
+                            <p class="text-xs text-faint">{{ 'widget.install.script.help'|trans }}</p>
+                        </div>
+
+                        <div class="hidden flex-col gap-1.5 group-has-[[value=demand]:checked]/site:flex">
+                            <p class="text-xs font-medium text-muted">{{ 'widget.install.link.label'|trans }}</p>
+                            <div class="flex h-9 items-center gap-2 rounded-md border border-line-strong bg-subtle pl-3 pr-1" data-controller="clipboard" data-clipboard-text-value="{{ siteLink }}1">
+                                <twig:ux:icon name="lucide:link" class="h-3.5 w-3.5 shrink-0 text-faint" />
+                                <span class="min-w-0 flex-1 select-all truncate font-mono text-xs text-strong" data-test="widget-link">{{ siteLink }}1</span>
+                                <twig:Ui:CopyButton :label="'widget.install.link.copy'|trans" :copiedLabel="'widget.install.copied'|trans" />
+                            </div>
+                            <p class="flex flex-wrap items-center gap-x-1.5 text-xs text-faint" data-controller="clipboard" data-clipboard-text-value="{{ siteLink }}0">
+                                {{ 'widget.install.link.help'|trans }}
+                                <span>{{ 'widget.install.link.hide'|trans }} <code class="font-mono text-muted">?cairn=0</code></span>
+                                <twig:Ui:CopyButton size="sm" :label="'widget.install.link.copy_hide'|trans" :copiedLabel="'widget.install.copied'|trans" />
+                            </p>
+                        </div>
                     </div>
-                {% endfor %}
-            </section>
-        {% endif %}
-    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
 {% endblock %}
 
-{# Answered alone to a request made for the frame: it reads only `project` and `form`. #}
+{# Answered alone to a request made for the frame: it reads only `project`, `form` and `removing`, the site its second dialog asks about. #}
 {% block modal %}
-    {{ include('project/_form_dialog.html.twig', {
-        title: 'widget.site.new'|trans,
-        closeHref: path('app_project_settings_widget', { workspaceKey: project.workspace.key, projectKey: project.key }),
-        submitLabel: 'widget.site.add'|trans,
-    }) }}
+    {% set modalRoute = { workspaceKey: project.workspace.key, projectKey: project.key } %}
+    {% set modalClose = path('app_project_settings_widget', modalRoute) %}
+    {% if removing %}
+        <turbo-frame id="modal" data-controller="modal-frame" data-action="turbo:submit-end->modal-frame#submitted">
+            <form method="post" action="{{ path('app_project_settings_widget_site_delete', modalRoute|merge({ site: removing.id })) }}">
+                <input type="hidden" name="_token" value="{{ csrf_token('submit') }}" data-controller="csrf-protection">
+                <twig:Ui:Dialog :title="'widget.site.remove_title'|trans" :closeHref="modalClose">
+                    <twig:block name="description"><p class="truncate font-mono">{{ removing.origin }}</p></twig:block>
+                    <p class="text-sm text-body">{{ 'widget.site.remove_confirm'|trans }}</p>
+                    <twig:block name="footer">
+                        <twig:Ui:Button type="submit" variant="danger" icon="trash-2">{{ 'widget.site.remove_submit'|trans }}</twig:Ui:Button>
+                        <twig:Ui:Button variant="ghost" :href="modalClose" data-turbo-frame="_top" data-action="dialog#dismiss">{{ 'admin.cancel'|trans }}</twig:Ui:Button>
+                    </twig:block>
+                </twig:Ui:Dialog>
+            </form>
+        </turbo-frame>
+    {% else %}
+        {{ include('project/_form_dialog.html.twig', {
+            title: 'widget.site.new'|trans,
+            closeHref: modalClose,
+            submitLabel: 'widget.site.add'|trans,
+        }) }}
+    {% endif %}
 {% endblock %}

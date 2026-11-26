@@ -1403,6 +1403,9 @@ widget:
         removed: 'Site %origin% retiré.'
         remove: Retirer
         remove_confirm: Le widget quitte ce site, et ceux qui y avaient lié leur compte devront le lier à nouveau.
+        added_on: 'Ajouté le %date%'
+        remove_title: Retirer ce site ?
+        remove_submit: Retirer le site
         empty: Aucun site pour le moment
         empty_hint: Déclarez le site de recette du projet pour obtenir la ligne de script à y placer.
         insecure: Pas de capture (pas de HTTPS)
@@ -1410,15 +1413,23 @@ widget:
             address: Adresse du site
             address_help: 'Le protocole et le domaine, sans chemin : https://recette.exemple.fr'
     install:
-        title: Sur les pages du site
-        help: 'Placez l''une de ces lignes dans le <head> de chaque page, le plus tôt possible : ce qui s''est passé avant son chargement n''est pas dans le rapport.'
+        title: Installation
         always:
-            title: Sur un site en recette
-            help: Tout le monde voit le bouton.
+            title: Recette
+            help: Tout le monde voit le bouton sur le site.
         on_demand:
-            title: En production
-            help: 'Personne ne voit le bouton, et le script ne fait rien, tant que l''on n''a pas ouvert une page du site avec ?cairn=1 à la fin de son adresse. Le site s''en souvient ensuite dans ce navigateur ; ?cairn=0 masque de nouveau le bouton.'
-        copy: Copier
+            title: Production
+            help: Personne ne voit le bouton, et le script ne fait rien, tant qu'on n'a pas ouvert le lien ci-dessous.
+        script:
+            label: 'Dans le <head> de chaque page'
+            help: 'Le plus tôt possible : ce qui s''est passé avant son chargement n''est pas dans le rapport.'
+            copy: Copier la ligne
+        link:
+            label: Lien qui affiche le bouton
+            help: Le site s'en souvient ensuite dans ce navigateur, sur toutes ses pages.
+            hide: 'Pour le masquer de nouveau :'
+            copy: Copier le lien
+            copy_hide: Copier le lien qui masque
         copied: Copié
     refused:
         not_an_origin: 'Ce n''est pas l''adresse d''un site : le protocole et le domaine, sans chemin.'
