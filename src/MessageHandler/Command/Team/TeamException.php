@@ -44,6 +44,14 @@ final class TeamException extends \DomainException implements TranslatableInterf
         return new self(\sprintf('%d issue(s) are assigned to the team "%s".', $count, $name), 'admin.refused.team_holds_issues', ['%name%' => $name, '%count%' => (string) $count]);
     }
 
+    /**
+     * @param list<string> $rules the rules that aim at the team, each with where it holds
+     */
+    public static function namedByRules(string $name, array $rules): self
+    {
+        return new self(\sprintf('Automation rules aim at the team "%s": %s.', $name, implode(', ', $rules)), 'admin.refused.team_named_by_rules', ['%name%' => $name, '%rules%' => implode(', ', $rules)]);
+    }
+
     public static function unknownRole(string $role): self
     {
         return new self(\sprintf('Role "%s" does not exist in the configuration.', $role), 'admin.refused.unknown_role', ['%role%' => $role]);

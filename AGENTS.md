@@ -393,7 +393,10 @@ src/
   form: the `ParameterKind` alone decides the check and the field.
 - **A rule names roles, not people** (`Target`, resolved by
   `Automation/Targets` through the referents), so a template copies it as
-  it is. Where a rule is written is a `RuleContext` (a project or a
+  it is. It may name a team as well (`team:<id>`), which is the same on
+  every project and needs no referent: a team that holds no role on the
+  project is skipped like a role without a referent, and the page of the
+  rules says so first (`TeamsWithoutAccess`). Where a rule is written is a `RuleContext` (a project or a
   template); the checker, the form and `RuleSentence` know nothing else.
 - **A rule acts without an author, through the usual doors**: intent
   methods, journal entries and comments signed with its name, then
@@ -407,8 +410,8 @@ src/
   (`Issue::$lastActivityAt`), never from a rule; "due" is written once, in
   `AutomationRuleRepository::findDueIssues()`.
 - A rule keeps what it says as data: `Automation/RuleReferences` finds the
-  rules that name a step, an action or a role before a change leaves them
-  without their object.
+  rules that name a step, an action, a role or a team before a change
+  leaves them without their object.
 
 ### Forges and imports
 

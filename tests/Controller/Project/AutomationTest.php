@@ -6,10 +6,15 @@ namespace App\Tests\Controller\Project;
 
 use App\Entity\AutomationRule;
 use App\Entity\Membership;
+use App\Entity\Team;
 use App\Message\Command\Automation\CreateRule;
 use App\Message\Command\Membership\SetReferent;
+use App\Message\Command\Team\CreateTeam;
+use App\Message\Command\Team\GrantTeamAccess;
+use App\Message\Command\Team\RevokeTeamAccess;
 use App\Message\CommandBus;
 use App\Repository\AutomationRuleRepository;
+use App\Repository\TeamAccessRepository;
 use App\Tests\Scene\ShopScene;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -86,6 +91,40 @@ final class AutomationTest extends WebTestCase
         self::assertSelectorTextContains('main', 'The Project manager referent, Thomas Girard, has a deactivated account');
         $this->client->request('GET', '/MD/SPT/access');
         self::assertSelectorTextContains('main', 'Deactivated');
+    }
+
+    public function testARuleThatAimsAtATeamSaysSoAndWarnsWhenTheTeamHoldsNoRoleHere(): void
+    {
+        $commands = self::getContainer()->get(CommandBus::class);
+        $team = $commands->dispatch(new CreateTeam('Hosting', true));
+        self::assertInstanceOf(Team::class, $team);
+        $commands->dispatch(new GrantTeamAccess((int) $team->getId(), $this->scene->dupont->getId(), null, 'developer'));
+        $rule = $commands->dispatch(new CreateRule((int) $this->scene->shop->getId(), 'New issue to hosting', null, [
+            'trigger' => ['type' => 'issue_created'],
+            'conditions' => [],
+            'actions' => [['type' => 'assign', 'params' => ['target' => 'team:'.$team->getId()]]],
+        ]));
+        self::assertInstanceOf(AutomationRule::class, $rule);
+        $this->client->loginUser($this->scene->user('thomas.girard@cairn.test'));
+
+        $this->client->request('GET', '/MD/SPT/settings/automations');
+        self::assertSelectorTextContains('main', 'When an issue is created: assign it to the team Hosting.');
+        self::assertSelectorTextNotContains('main', 'holds no role on this project');
+
+        $crawler = $this->client->request('GET', '/MD/SPT/settings/automations/'.$rule->getId());
+        self::assertResponseIsSuccessful();
+        self::assertCount(1, $crawler->filter('optgroup[label="A team"] option[value="team:'.$team->getId().'"]'), 'the teams are offered among the targets');
+
+        $access = self::getContainer()->get(TeamAccessRepository::class)->findOne($team, $this->scene->dupont);
+        $commands->dispatch(new RevokeTeamAccess((int) $access?->getId()));
+        $this->client->request('GET', '/MD/SPT/settings/automations');
+        self::assertSelectorTextContains('main', 'The team Hosting holds no role on this project');
+        self::assertSelectorExists('main a[href="/MD/SPT/access"]');
+
+        $crawler = $this->client->request('GET', '/MD/SPT/settings/automations/'.$rule->getId());
+        $chosen = $crawler->filter('option[value="team:'.$team->getId().'"][selected]');
+        self::assertCount(1, $chosen, 'the form still shows the team the rule names');
+        self::assertSame('Hosting (no role on this project)', $chosen->text());
     }
 
     public function testARuleIsSwitchedOffInPlace(): void

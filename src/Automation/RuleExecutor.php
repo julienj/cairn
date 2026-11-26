@@ -15,6 +15,7 @@ use App\Entity\Enum\Criticality;
 use App\Entity\Issue;
 use App\Entity\JournalEntry;
 use App\Entity\Place;
+use App\Entity\Team;
 use App\Entity\User;
 use App\Event\CommentAdded;
 use App\Event\IssueMoved;
@@ -22,6 +23,7 @@ use App\Event\IssueUpdated;
 use App\MessageHandler\Command\Issue\IssueHandlerSupport;
 use App\Notification\SubscriptionRules;
 use App\Repository\BudgetLineRepository;
+use App\Repository\TeamRepository;
 use App\Security\AccessControl;
 use Doctrine\DBAL\Exception as DatabaseException;
 use Doctrine\ORM\EntityManagerInterface;
@@ -51,6 +53,7 @@ final class RuleExecutor
         private readonly Targets $targets,
         private readonly SubscriptionRules $subscriptions,
         private readonly AccessControl $access,
+        private readonly TeamRepository $teams,
         private readonly ConfigRegistry $config,
         private readonly BudgetLineRepository $budgetLines,
         private readonly EntityManagerInterface $entityManager,
@@ -102,6 +105,9 @@ final class RuleExecutor
         $target = $this->targets->resolve($action->text('target'), $issue);
         if ($target->isMissing()) {
             return StepResult::skipped(ActionType::Assign, (string) $target->reason, $target->label);
+        }
+        if (null !== $target->team) {
+            return $this->assignToTeam($rule, $target->team, $issue);
         }
         $user = $target->user;
         // as for a person who assigns: only someone with a role on the project
@@ -165,6 +171,27 @@ final class RuleExecutor
     }
 
     /**
+     * As for a person who assigns: only a team that holds a role on the
+     * project, which then follows the issue as one.
+     */
+    private function assignToTeam(string $rule, Team $team, Issue $issue): StepResult
+    {
+        if (!\in_array($team, $this->teams->findOnProject($issue->getProject()), true)) {
+            return StepResult::skipped(ActionType::Assign, 'not_a_member', $team->getName());
+        }
+        if ($issue->getAssigneeTeam() === $team) {
+            return StepResult::unchanged(ActionType::Assign, $team->getName());
+        }
+
+        $previous = $issue->getAssigneeName();
+        $issue->assignToTeam($team);
+        $entry = JournalEntry::changed($issue, null, 'assignee', $previous, $team->getName());
+        $this->support->record(new IssueUpdated($issue, null, [$entry->byRule($rule)], rule: $rule, newAssigneeTeam: $team));
+
+        return StepResult::applied(ActionType::Assign, $team->getName());
+    }
+
+    /**
      * Following is not a change of the issue: nothing is journaled, as
      * when someone follows by themselves.
      *
@@ -173,6 +200,14 @@ final class RuleExecutor
     private function subscribe(RuleStep $action, Issue $issue): StepResult
     {
         $target = $this->targets->resolve($action->text('target'), $issue);
+        if (null !== $target->team) {
+            if ($this->subscriptions->followsAsTeam($issue, $target->team)) {
+                return StepResult::unchanged(ActionType::Subscribe, $target->team->getName());
+            }
+            $this->subscriptions->subscribeTeam($issue, $target->team);
+
+            return StepResult::applied(ActionType::Subscribe, $target->team->getName());
+        }
         $user = $target->user;
         if (null === $user) {
             return StepResult::skipped(ActionType::Subscribe, $target->reason ?? 'unknown_user', $target->label);

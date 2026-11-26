@@ -1143,6 +1143,7 @@ admin:
         team_name_taken: 'A team is already named %name%.'
         team_internal_only: '%name% is external: the team %team% is for internal users only.'
         team_internal_only_role: 'The team %team% is external: the role "%role%" is for internal teams only.'
+        team_named_by_rules: 'Automation rules aim at the team %name% (%rules%): change them first.'
         team_holds_issues: '{1}An issue is assigned to the team %name%: give it to someone else first.|]1,Inf[ %count% issues are assigned to the team %name%: give them to someone else first.'
         team_not_wider: 'The role "%role%" does not widen the role "%inherited%" the team holds on the workspace.'
         deactivated: '%name% is deactivated: reactivate the account first.'
@@ -1731,6 +1732,8 @@ automation:
         deactivated: 'The %role% referent, %name%, has a deactivated account: what a rule aims at them is skipped until the account is reactivated or someone else is designated.'
         other_role: '%name% was designated as the %role% referent but holds another role on this project now: what a rule aims at them is skipped until someone is designated.'
     designate: Designate a referent
+    team_without_access: 'The team %team% holds no role on this project: what a rule assigns to it is skipped until it is given one.'
+    grant_team: Give the team a role
     form:
         name: Name
         name_help: 'External users read it too: this name signs what the rule does, in the history of the issues and in the mails.'
@@ -1813,8 +1816,10 @@ automation:
         group:
             referents: Referents of the project
             issue: From the issue
+            teams: A team
             people: A member of the project
         referent: 'The %role% referent'
+        team_without_role: '%team% (no role on this project)'
         author: The author of the issue
         last_internal: The last internal user who acted
         nobody: Nobody (remove the assignee)
@@ -1856,6 +1861,7 @@ automation:
             author: its author
             last_internal: the last internal user who acted
             nobody: nobody
+            team: 'the team %team%'
         join:
             if: ', if '
             and: ' and '
@@ -1895,6 +1901,7 @@ automation:
             no_referent: 'no %value% referent'
             no_internal: no internal user acted on it
             unknown_user: this person no longer exists
+            unknown_team: this team no longer exists
             deactivated: 'the account of %value% is deactivated'
             not_a_member: '%value% has no role on the project'
             unknown_place: 'the step “%value%” no longer exists'

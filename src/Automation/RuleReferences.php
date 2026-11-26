@@ -86,6 +86,24 @@ final class RuleReferences
     }
 
     /**
+     * The rules that aim at a team, wherever they hold.
+     *
+     * @return list<string>
+     */
+    public function toTeam(int $teamId): array
+    {
+        return $this->naming(
+            static fn (ParameterKind $kind): bool => ParameterKind::Target === $kind,
+            static function (string $value) use ($teamId): bool {
+                $target = Target::parse($value);
+
+                return Target::TEAM === $target?->kind && (int) $target->argument === $teamId;
+            },
+            null,
+        );
+    }
+
+    /**
      * @param \Closure(ParameterKind): bool $kind       the parameters to look at
      * @param \Closure(string): bool        $names      whether a value of one is what is looked for
      * @param string|null                   $workflowId only the rules that hold on a tracker of this workflow

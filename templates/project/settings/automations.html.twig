@@ -24,6 +24,15 @@
         </twig:Ui:Callout>
     {% endfor %}
 
+    {% for team in teamsWithoutAccess %}
+        <twig:Ui:Callout tone="amber" size="sm" role="status" class="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <span>{{ 'automation.team_without_access'|trans({ '%team%': team }) }}</span>
+            {% if is_granted('project.manage_members', project) %}
+                <a href="{{ path('app_project_access', settingsRoute) }}" class="font-medium underline">{{ 'automation.grant_team'|trans }}</a>
+            {% endif %}
+        </twig:Ui:Callout>
+    {% endfor %}
+
     {% if rules is empty %}
         <twig:Ui:EmptyState :title="'automation.empty'|trans" icon="zap" bordered>{{ 'automation.empty_hint'|trans }}</twig:Ui:EmptyState>
     {% endif %}

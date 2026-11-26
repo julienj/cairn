@@ -8,8 +8,11 @@ use App\Automation\Definition\RuleContext;
 use App\Config\ConfigRegistry;
 use App\Entity\Project;
 use App\Entity\ProjectTemplate;
+use App\Entity\Team;
 use App\Message\Query\Project\ListProjectMembers;
 use App\Message\QueryBus;
+use App\Repository\AutomationRuleRepository;
+use App\Repository\TeamRepository;
 use App\Repository\TemplateTrackerRepository;
 use App\Repository\TrackerRepository;
 
@@ -18,8 +21,11 @@ use App\Repository\TrackerRepository;
  * roles of the instance, its members (the active accounts that hold a
  * role of the configuration on it, directly, through its workspace or
  * through a team). A
- * project template: its own trackers and the roles, without anybody,
- * since its rules are copied into projects whose members are not known.
+ * project gives the teams that hold a role on it, and those its rules
+ * already name without one. A project template: its
+ * own trackers and the roles, without anybody, since its rules are copied
+ * into projects whose members are not known, and every team, which is
+ * the same on every project.
  */
 final class RuleContexts
 {
@@ -28,6 +34,9 @@ final class RuleContexts
         private readonly TemplateTrackerRepository $templateTrackers,
         private readonly QueryBus $queries,
         private readonly ConfigRegistry $config,
+        private readonly TeamRepository $teams,
+        private readonly AutomationRuleRepository $rules,
+        private readonly TeamsWithoutAccess $teamsWithoutAccess,
     ) {
     }
 
@@ -51,7 +60,10 @@ final class RuleContexts
         }
         asort($people);
 
-        return new RuleContext($trackers, $workflows, $definition->places, $roles, $people);
+        // A rule copied from a template may name a team that holds no role here yet: it stays offered, and said so.
+        $idle = $this->teamsWithoutAccess->of($project, $this->rules->findByProject($project), activeOnly: false);
+
+        return new RuleContext($trackers, $workflows, $definition->places, $roles, $people, self::named($this->teams->findOnProject($project)) + $idle, array_keys($idle));
     }
 
     public function ofTemplate(ProjectTemplate $template): RuleContext
@@ -69,6 +81,21 @@ final class RuleContexts
             $roles[$role->id] = $role->label;
         }
 
-        return new RuleContext($trackers, $workflows, $definition->places, $roles);
+        return new RuleContext($trackers, $workflows, $definition->places, $roles, teams: self::named($this->teams->findAllByName()));
+    }
+
+    /**
+     * @param list<Team> $teams
+     *
+     * @return array<int, string> team id => name
+     */
+    private static function named(array $teams): array
+    {
+        $names = [];
+        foreach ($teams as $team) {
+            $names[(int) $team->getId()] = $team->getName();
+        }
+
+        return $names;
     }
 }

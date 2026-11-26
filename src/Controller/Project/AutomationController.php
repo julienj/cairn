@@ -6,6 +6,7 @@ namespace App\Controller\Project;
 
 use App\Automation\AutomationException;
 use App\Automation\MissingReferents;
+use App\Automation\TeamsWithoutAccess;
 use App\Entity\AutomationRule;
 use App\Entity\Enum\RunOutcome;
 use App\Entity\Project;
@@ -45,7 +46,7 @@ final class AutomationController extends AbstractController
     }
 
     #[Route('', name: 'app_project_settings_automations', methods: ['GET'])]
-    public function rules(#[CurrentProject] Project $project, AutomationRunRepository $runs, MissingReferents $missingReferents): Response
+    public function rules(#[CurrentProject] Project $project, AutomationRunRepository $runs, MissingReferents $missingReferents, TeamsWithoutAccess $teamsWithoutAccess): Response
     {
         $rules = $this->rules->findByProject($project);
 
@@ -54,6 +55,7 @@ final class AutomationController extends AbstractController
             'rules' => $rules,
             'lastRuns' => $runs->findLastRuns($rules),
             'missingReferents' => $missingReferents->of($project, $rules),
+            'teamsWithoutAccess' => $teamsWithoutAccess->of($project, $rules),
         ]);
     }
 

@@ -1143,6 +1143,7 @@ admin:
         team_name_taken: 'Une équipe porte déjà le nom %name%.'
         team_internal_only: '%name% est externe : l''équipe %team% est réservée aux utilisateurs internes.'
         team_internal_only_role: 'L''équipe %team% est externe : le rôle « %role% » est réservé aux équipes internes.'
+        team_named_by_rules: 'Des règles d''automatisation visent l''équipe %name% (%rules%) : modifiez-les d''abord.'
         team_holds_issues: '{1}Une demande est affectée à l''équipe %name% : affectez-la d''abord à quelqu''un d''autre.|]1,Inf[ %count% demandes sont affectées à l''équipe %name% : affectez-les d''abord à quelqu''un d''autre.'
         team_not_wider: 'Le rôle « %role% » n''élargit pas le rôle « %inherited% » que l''équipe tient sur l''espace.'
         deactivated: "%name% est désactivé : réactivez d'abord le compte."
@@ -1731,6 +1732,8 @@ automation:
         deactivated: "Le référent %role%, %name%, a un compte désactivé : ce qu'une règle lui destine est sauté tant que le compte n'est pas réactivé ou qu'un autre référent n'est pas désigné."
         other_role: "%name% a été désigné référent %role% mais porte aujourd'hui un autre rôle sur ce projet : ce qu'une règle lui destine est sauté tant qu'un référent n'est pas désigné."
     designate: Désigner un référent
+    team_without_access: 'L''équipe %team% n''a aucun rôle sur ce projet : ce qu''une règle lui assigne est ignoré tant qu''elle n''en a pas.'
+    grant_team: Donner un rôle à l'équipe
     form:
         name: Nom
         name_help: "Les externes le lisent aussi : ce nom signe ce que fait la règle, dans l'historique des demandes et dans les mails."
@@ -1813,8 +1816,10 @@ automation:
         group:
             referents: Référents du projet
             issue: Selon la demande
+            teams: Une équipe
             people: Un membre du projet
         referent: 'Le référent %role%'
+        team_without_role: '%team% (sans rôle sur ce projet)'
         author: L'auteur de la demande
         last_internal: Le dernier utilisateur interne intervenu
         nobody: Personne (retirer l'assignation)
@@ -1856,6 +1861,7 @@ automation:
             author: son auteur
             last_internal: le dernier utilisateur interne intervenu
             nobody: personne
+            team: 'l''équipe %team%'
         join:
             if: ', si '
             and: ' et '
@@ -1895,6 +1901,7 @@ automation:
             no_referent: 'aucun référent %value%'
             no_internal: aucun interne n'est intervenu
             unknown_user: "cette personne n'existe plus"
+            unknown_team: "cette équipe n'existe plus"
             deactivated: 'le compte de %value% est désactivé'
             not_a_member: "%value% n'a pas de rôle sur le projet"
             unknown_place: "l'étape « %value% » n'existe plus"

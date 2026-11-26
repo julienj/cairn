@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\MessageHandler\Command\Team;
 
+use App\Automation\RuleReferences;
 use App\Message\Command\Team\DeleteTeam;
 use App\Repository\IssueRepository;
 use App\Repository\IssueTeamSubscriptionRepository;
@@ -15,8 +16,8 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 /**
- * A team stays while issues are assigned to it: give them to someone
- * first. Who is part of it, the roles it holds and what it follows are
+ * A team stays while issues are assigned to it or an automation rule
+ * aims at it: give the issues to someone, change the rules first. Who is part of it, the roles it holds and what it follows are
  * current state: they go with the team, in statements AccessControl does not see.
  */
 #[AsMessageHandler(bus: 'command.bus')]
@@ -26,6 +27,7 @@ final class DeleteTeamHandler
         private readonly TeamRepository $teams,
         private readonly TeamMemberRepository $members,
         private readonly IssueRepository $issues,
+        private readonly RuleReferences $rules,
         private readonly IssueTeamSubscriptionRepository $subscriptions,
         private readonly TeamAccessRepository $accesses,
         private readonly AccessControl $access,
@@ -40,6 +42,11 @@ final class DeleteTeamHandler
         $held = $this->issues->count(['assigneeTeam' => $team]);
         if ($held > 0) {
             throw TeamException::holdsIssues($team->getName(), $held);
+        }
+
+        $rules = $this->rules->toTeam((int) $team->getId());
+        if ([] !== $rules) {
+            throw TeamException::namedByRules($team->getName(), $rules);
         }
 
         $this->accesses->removeTeam($team);

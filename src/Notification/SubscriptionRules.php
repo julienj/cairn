@@ -126,16 +126,24 @@ final class SubscriptionRules
      */
     public function subscribeTeam(Issue $issue, Team $team): void
     {
+        if (!$this->followsAsTeam($issue, $team)) {
+            $this->entityManager->persist(new IssueTeamSubscription($issue, $team));
+        }
+    }
+
+    public function followsAsTeam(Issue $issue, Team $team): bool
+    {
         if (null !== $issue->getId() && null !== $this->teamSubscriptions->findOne($issue, $team)) {
-            return;
+            return true;
         }
         // Made earlier in the same command, not flushed yet.
         foreach ($this->entityManager->getUnitOfWork()->getScheduledEntityInsertions() as $entity) {
             if ($entity instanceof IssueTeamSubscription && $entity->getIssue() === $issue && $entity->getTeam() === $team) {
-                return;
+                return true;
             }
         }
-        $this->entityManager->persist(new IssueTeamSubscription($issue, $team));
+
+        return false;
     }
 
     public function unsubscribeTeam(Issue $issue, Team $team): void
