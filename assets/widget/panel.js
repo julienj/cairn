@@ -29,8 +29,8 @@ const NARROW = '(max-width: 640px)';
  *
  * The frame and the script talk by messages, each checking where the
  * other's come from: the script hands over what it noted (`report()`),
- * again whenever it notes more (the function returned, which waits for
- * a burst to end), closes the panel when asked to, takes the whole widget out of the
+ * again whenever it notes more while the panel is open (the function
+ * returned, which waits for a burst to end), closes the panel when asked to, takes the whole widget out of the
  * picture while the frame takes a screenshot, and makes the panel a dialog over the
  * page while the screenshot is edited. It also tells the frame whether
  * the panel covers the button (`cairn:layout`), which otherwise closes it,
@@ -85,12 +85,15 @@ iframe { display: block; width: 100%; height: 100%; border: 0; }
     const send = (message) => frame?.contentWindow?.postMessage(message, cairn);
     let pending = null;
     const noted = () => {
-        if (null === frame || null !== pending) {
+        // a closed panel is told nothing: it gets the whole report when it opens
+        if (null === frame || !shown || null !== pending) {
             return;
         }
         pending = window.setTimeout(() => {
             pending = null;
-            send({ type: 'cairn:context', report: report() });
+            if (shown) {
+                send({ type: 'cairn:context', report: report() });
+            }
         }, NOTED_WAIT);
     };
 
