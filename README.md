@@ -246,7 +246,7 @@ Nobody sees the button, and the script does nothing (it listens to nothing, stor
 
 Good to know:
 
-- **The button can be moved** by dragging it to another corner of the window, when it hides what is being reviewed; the site remembers the corner, per browser.
+- **The button can be moved** by dragging it anywhere along the edge of the window, when it hides what is being reviewed: it catches on the corners and on the middle of each edge, and its panel opens beside it. The site remembers the place, per browser.
 - **The button only shows on the sites declared on the project.** On any other site the script shows nothing, whatever its tag says.
 - **The screenshot needs HTTPS** on the site, as browsers require. Without it the widget works and offers to attach a file instead.
 - **A Content-Security-Policy on the site** must allow Cairn in `script-src`, `frame-src` and `connect-src`. A `Permissions-Policy` that names `display-capture` must allow Cairn there too, or the screenshot is refused.
