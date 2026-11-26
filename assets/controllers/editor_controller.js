@@ -90,12 +90,13 @@ const IssueReference = reference({
     text: ({ id }) => `#${id}`,
 });
 
+// A person or a team: the id says which, `user:12` or `team:3`, as the markdown does.
 const UserMention = reference({
     name: 'userMention',
     cssClass: 'mention',
-    pattern: /@\[([^\]\n]+)\]\(user:(\d+)\)/,
+    pattern: /@\[([^\]\n]+)\]\(((?:user|team):\d+)\)/,
     attrs: (match) => ({ id: match[2], label: match[1] }),
-    markdown: ({ id, label }) => `@[${String(label).replace(/[[\]]/g, '')}](user:${id})`,
+    markdown: ({ id, label }) => `@[${String(label).replace(/[[\]]/g, '')}](${id})`,
     text: ({ label }) => `@${label}`,
 });
 
@@ -130,7 +131,7 @@ export default class extends Controller {
                 AttachmentImage,
                 Placeholder.configure({ placeholder: this.placeholderValue }),
                 IssueReference.configure({ suggestion: this.suggestion('#', this.issuesUrlValue, (issue) => ({ id: issue.key, label: issue.key, hint: issue.title })) }),
-                UserMention.configure({ suggestion: this.suggestion('@', this.usersUrlValue, (user) => ({ id: String(user.id), label: user.name })) }),
+                UserMention.configure({ suggestion: this.suggestion('@', this.usersUrlValue, (member) => ({ id: `${member.team ? 'team' : 'user'}:${member.id}`, label: member.name, hint: member.hint })) }),
                 Extension.create({
                     name: 'pageKeys',
                     addKeyboardShortcuts: () => ({

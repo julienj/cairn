@@ -8,6 +8,7 @@ use App\Entity\Issue;
 use App\Entity\Project;
 use App\Entity\User;
 use App\Message\Query\Project\ListProjectMembers;
+use App\Message\Query\Project\ListProjectTeams;
 use App\Message\QueryBus;
 use App\Repository\IssueRepository;
 use App\Security\AccessControl;
@@ -36,7 +37,8 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
  * becomes a link when the reader may see that issue and stays text
  * otherwise, so that a private issue cannot be probed; `@[Name](user:12)`
  * shows the current name of a member of the project the text belongs to,
- * and stays the text typed for anyone else: an id written by hand must
+ * `@[Name](team:3)` that of a team with a role on it, and both stay the
+ * text typed for anyone else: an id written by hand must
  * not tell who holds an account. Links and images are paths of the site,
  * as the pages need them; a text read away from it, in a mail, asks for
  * absolute URLs and gets them from the request context, like `absolute_url()`.
@@ -68,6 +70,7 @@ final class MarkdownRenderer
         $environment->addInlineParser(new IssueReferenceParser());
         $environment->addInlineParser(new MentionParser());
         $environment->addRenderer(Mention::class, new MentionRenderer());
+        $environment->addRenderer(TeamMention::class, new MentionRenderer());
 
         $this->parser = new MarkdownParser($environment);
         $this->renderer = new HtmlRenderer($environment);
@@ -79,6 +82,7 @@ final class MarkdownRenderer
         $this->dropRemoteImages($document);
         $this->resolveIssueReferences($document, $reader);
         $this->resolveMentions($document, $project);
+        $this->resolveTeamMentions($document, $project);
         if ($absoluteUrls) {
             $this->absolutizeUrls($document);
         }
@@ -110,6 +114,21 @@ final class MarkdownRenderer
         $ids = [];
         foreach ($this->nodes($this->parser->parse($markdown), Mention::class) as $mention) {
             $ids[$mention->userId] = $mention->userId;
+        }
+
+        return array_values($ids);
+    }
+
+    /**
+     * The teams a text mentions, by id, without rendering it.
+     *
+     * @return list<int>
+     */
+    public function mentionedTeamIds(string $markdown): array
+    {
+        $ids = [];
+        foreach ($this->nodes($this->parser->parse($markdown), TeamMention::class) as $mention) {
+            $ids[$mention->teamId] = $mention->teamId;
         }
 
         return array_values($ids);
@@ -172,6 +191,28 @@ final class MarkdownRenderer
         foreach ($mentions as $mention) {
             $name = $names[$mention->userId] ?? null;
             $mention->replaceWith(null === $name ? new Text('@'.$mention->name) : new Mention($mention->userId, $name));
+        }
+    }
+
+    /**
+     * The teams the editor offers, and no other: those that hold a role
+     * on the project.
+     */
+    private function resolveTeamMentions(Document $document, Project $project): void
+    {
+        $mentions = $this->nodes($document, TeamMention::class);
+        if ([] === $mentions) {
+            return;
+        }
+
+        $names = [];
+        foreach ($this->queries->ask(new ListProjectTeams($project)) as $team) {
+            $names[(int) $team->getId()] = $team->getName();
+        }
+
+        foreach ($mentions as $mention) {
+            $name = $names[$mention->teamId] ?? null;
+            $mention->replaceWith(null === $name ? new Text('@'.$mention->name) : new TeamMention($mention->teamId, $name));
         }
     }
 

@@ -18,6 +18,7 @@ use App\Event\IssueTransitioned;
 use App\Event\IssueUpdated;
 use App\Markdown\MarkdownRenderer;
 use App\Message\Query\Project\ListProjectMembers;
+use App\Message\Query\Project\ListProjectTeams;
 use App\Message\QueryBus;
 use App\Repository\IssueSubscriptionRepository;
 use App\Repository\IssueTeamSubscriptionRepository;
@@ -31,8 +32,8 @@ use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
  * inside the transaction: the author at creation, with the members whose
  * role on the project follows new issues (`followsNewIssues` in the
  * configuration), the assignee when assigned, the author of a comment and
- * the people a text mentions. A team the issue is given to follows it
- * as one (IssueTeamSubscription), and keeps following it afterwards, as
+ * the people a text mentions. A team the issue is given to, or a text
+ * mentions, follows it as one (IssueTeamSubscription), and keeps following it afterwards, as
  * a person does. Nobody is subscribed to what they cannot
  * see: a private issue for an external user, a mention in a private
  * comment. Unsubscribing deletes the row, and the next of these actions
@@ -207,11 +208,20 @@ final class SubscriptionRules
     }
 
     /**
-     * The people the text mentions, if they may read it: the comment when
+     * The teams the text mentions, and the people it mentions if they may read it: the comment when
      * it came with one, the issue otherwise.
      */
     private function subscribeMentioned(Issue $issue, string $text, ?Comment $comment = null): void
     {
+        $teamIds = $this->markdown->mentionedTeamIds($text);
+        if ([] !== $teamIds) {
+            // Only a team with a role on the project is mentioned, as the editor offers; it then follows the issue as one.
+            foreach ($this->queries->ask(new ListProjectTeams($issue->getProject())) as $team) {
+                if (\in_array($team->getId(), $teamIds, true)) {
+                    $this->subscribeTeam($issue, $team);
+                }
+            }
+        }
         $ids = $this->markdown->mentionedUserIds($text);
         if ([] === $ids) {
             return;

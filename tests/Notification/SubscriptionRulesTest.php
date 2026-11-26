@@ -5,14 +5,19 @@ declare(strict_types=1);
 namespace App\Tests\Notification;
 
 use App\Entity\Issue;
+use App\Entity\Team;
 use App\Entity\User;
 use App\Message\Command\Issue\AddComment;
 use App\Message\Command\Issue\ApplyTransition;
 use App\Message\Command\Issue\CreateIssue;
 use App\Message\Command\Issue\UnfollowIssue;
 use App\Message\Command\Issue\UpdateIssue;
+use App\Message\Command\Team\AddTeamMember;
+use App\Message\Command\Team\CreateTeam;
+use App\Message\Command\Team\GrantTeamAccess;
 use App\Message\CommandBus;
 use App\Repository\IssueSubscriptionRepository;
+use App\Repository\IssueTeamSubscriptionRepository;
 use App\Tests\KernelHelpers;
 use App\Tests\MessageHandler\Command\Issue\IssueFixtures;
 use Doctrine\ORM\EntityManagerInterface;
@@ -75,6 +80,27 @@ final class SubscriptionRulesTest extends KernelTestCase
         $this->commands->dispatch(new AddComment((int) $this->fixtures->developer->getId(), $issue->getKey(), \sprintf('Looking into it with @[Léa](user:%d).', $lea->getId())));
 
         self::assertSame(['claire@client.test', 'lea@agency.test', 'nadia@agency.test', 'thomas@agency.test'], $this->subscribers($issue));
+    }
+
+    public function testATeamMentionedInATextFollowsTheIssueAsOne(): void
+    {
+        $marc = $this->fixtures->access->user('marc@agency.test', internal: true);
+        $hosting = $this->commands->dispatch(new CreateTeam('Hosting', true));
+        $support = $this->commands->dispatch(new CreateTeam('Support', true));
+        self::assertInstanceOf(Team::class, $hosting);
+        self::assertInstanceOf(Team::class, $support);
+        $this->commands->dispatch(new AddTeamMember((int) $hosting->getId(), (int) $marc->getId()));
+        $this->commands->dispatch(new GrantTeamAccess((int) $hosting->getId(), $this->fixtures->access->workspace->getId(), null, 'developer'));
+        $issue = $this->fixtures->createIssue($this->fixtures->client);
+        $teams = self::getContainer()->get(IssueTeamSubscriptionRepository::class);
+
+        $this->commands->dispatch(new AddComment((int) $this->fixtures->developer->getId(), $issue->getKey(), \sprintf('A redirection for @[Hosting](team:%d), not for @[Support](team:%d).', $hosting->getId(), $support->getId())));
+        $this->commands->dispatch(new AddComment((int) $this->fixtures->developer->getId(), $issue->getKey(), \sprintf('Again, @[Hosting](team:%d)?', $hosting->getId())));
+
+        self::assertSame([$hosting], $teams->findTeams($issue), 'the team follows, once; a team without a role on the project is not mentioned');
+        self::assertNotContains('marc@agency.test', $this->subscribers($issue), 'nobody is subscribed for the team');
+        self::assertContains($marc, $teams->findMembers($issue), 'its members are written to');
+        self::assertNull($issue->getAssigneeTeam(), 'mentioning is not assigning');
     }
 
     public function testAMentionInAPrivateCommentDoesNotSubscribeAnExternalUser(): void

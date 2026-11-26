@@ -13,7 +13,7 @@ final class MentionRenderer implements NodeRendererInterface
 {
     public function render(Node $node, ChildNodeRendererInterface $childRenderer): HtmlElement
     {
-        if (!$node instanceof Mention) {
+        if (!$node instanceof Mention && !$node instanceof TeamMention) {
             throw new \InvalidArgumentException('Incompatible node type: '.$node::class);
         }
 
