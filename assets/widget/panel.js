@@ -205,14 +205,18 @@ iframe { display: block; width: 100%; height: 100%; border: 0; }
             case 'cairn:widen':
                 panel.classList.add('wide');
                 backdrop.hidden = false;
+                // the dialog has its own ways out: the button would only show through at its corner
+                dock.style.visibility = 'hidden';
                 break;
             case 'cairn:narrow':
                 panel.classList.remove('wide');
                 backdrop.hidden = true;
+                dock.style.visibility = '';
                 break;
         }
     });
 
+    const dock = button.nodes[1];
     root.append(style, ...button.nodes, backdrop, panel);
     // Beside the body, not in it: a site that replaces its body to change page (Turbo, htmx) would take the widget away.
     document.documentElement.appendChild(host);
