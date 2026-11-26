@@ -1425,9 +1425,13 @@ account:
             qr_alt: QR code to scan with your authentication app
             manual: 'Cannot scan it? Type this key in your app instead:'
             submit: Turn on
+            start: Set up
+            cancel: Back to my account
         status:
             title: Authentication app
             'on': 'On'
+            'off': 'Off'
+            off_help: Add a code from an authentication app to your password, so that a stolen password is not enough to sign in as you.
         disable:
             title: Turn off
             help: Sign in with your password alone again. Confirm with a code.

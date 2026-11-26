@@ -12,16 +12,19 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Security\Http\Util\TargetPathTrait;
 
 /**
  * Whoever the instance holds to a second factor and has none yet signs in, and can do nothing but set it up (or
- * sign out): every page of the application leads to the one that does. The API is not asked, its tokens are the
- * person's own to give.
+ * sign out): every page of the application leads to the one that does, in the layout of the sign-in, and the
+ * page asked for is kept to go back to it. The API is not asked, its tokens are the person's own to give.
  */
 #[AsEventListener(KernelEvents::REQUEST, priority: 0)]
 final readonly class TwoFactorEnrolment
 {
-    private const array ROUTES = ['app_account_two_factor', 'app_logout', '2fa_login', '2fa_login_check'];
+    use TargetPathTrait;
+
+    private const array ROUTES = ['app_two_factor_enable', 'app_logout', '2fa_login', '2fa_login_check'];
 
     public function __construct(
         private Security $security,
@@ -46,6 +49,9 @@ final readonly class TwoFactorEnrolment
             return;
         }
 
-        $event->setResponse(new RedirectResponse($this->urls->generate('app_account_two_factor')));
+        if ($request->isMethod('GET') && !$request->isXmlHttpRequest() && $request->hasSession()) {
+            $this->saveTargetPath($request->getSession(), 'main', $request->getUri());
+        }
+        $event->setResponse(new RedirectResponse($this->urls->generate('app_two_factor_enable')));
     }
 }

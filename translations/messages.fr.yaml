@@ -1425,9 +1425,13 @@ account:
             qr_alt: "QR code à scanner avec votre application d'authentification"
             manual: "Impossible de le scanner ? Saisissez plutôt cette clé dans votre application :"
             submit: Activer
+            start: Configurer
+            cancel: Retour à mon compte
         status:
             title: "Application d'authentification"
             'on': Activée
+            'off': Désactivée
+            off_help: "Ajoutez à votre mot de passe un code d'une application d'authentification : un mot de passe volé ne suffit plus pour se connecter à votre place."
         disable:
             title: Désactiver
             help: "Ne vous connectez de nouveau qu'avec votre mot de passe. Confirmez avec un code."

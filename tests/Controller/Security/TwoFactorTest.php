@@ -43,12 +43,12 @@ final class TwoFactorTest extends WebTestCase
         // The password leads where it always did; the next request is sent to the code.
         self::assertResponseRedirects('/');
         $this->client->followRedirect();
-        self::assertResponseRedirects('/2fa');
+        self::assertResponseRedirects('/security/2fa');
         foreach (['/', '/account', '/projects'] as $url) {
             $this->client->request('GET', $url);
-            self::assertResponseRedirects('/2fa', null, $url);
+            self::assertResponseRedirects('/security/2fa', null, $url);
         }
-        $crawler = $this->client->request('GET', '/2fa');
+        $crawler = $this->client->request('GET', '/security/2fa');
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('h1', 'Two-factor authentication');
         self::assertCount(1, $crawler->filter('input[name="_auth_code"][autocomplete="one-time-code"]'));
@@ -71,17 +71,17 @@ final class TwoFactorTest extends WebTestCase
 
         $this->submitCode('000000');
 
-        self::assertResponseRedirects('/2fa');
+        self::assertResponseRedirects('/security/2fa');
         $this->client->followRedirect();
         self::assertSelectorExists('[role="alert"]');
         $this->client->request('GET', '/');
-        self::assertResponseRedirects('/2fa');
+        self::assertResponseRedirects('/security/2fa');
     }
 
     public function testTheCodeIsAskedOfWhoHasTypedThePasswordOnly(): void
     {
         // Nobody opens the check path without the password: a code is worth nothing alone.
-        $this->client->request('POST', '/2fa_check', ['_auth_code' => self::totpCode($this->secret)]);
+        $this->client->request('POST', '/security/2fa/check', ['_auth_code' => self::totpCode($this->secret)]);
 
         self::assertResponseRedirects('/login');
     }
@@ -97,9 +97,9 @@ final class TwoFactorTest extends WebTestCase
         $this->signIn();
         $this->submitCode($code);
 
-        self::assertResponseRedirects('/2fa', null, 'the same code, even in its window, is not taken twice');
+        self::assertResponseRedirects('/security/2fa', null, 'the same code, even in its window, is not taken twice');
         $this->client->request('GET', '/');
-        self::assertResponseRedirects('/2fa');
+        self::assertResponseRedirects('/security/2fa');
     }
 
     public function testTheCodesAreGuessedAtAFewTriesOnly(): void
@@ -111,11 +111,11 @@ final class TwoFactorTest extends WebTestCase
 
         $this->submitCode(self::totpCode($this->secret));
 
-        self::assertResponseRedirects('/2fa');
+        self::assertResponseRedirects('/security/2fa');
         $this->client->followRedirect();
         self::assertSelectorTextContains('[role="alert"]', 'Too many attempts');
         $this->client->request('GET', '/');
-        self::assertResponseRedirects('/2fa', null, 'even the right code waits');
+        self::assertResponseRedirects('/security/2fa', null, 'even the right code waits');
     }
 
     public function testARightCodeForgetsTheWrongOnes(): void
@@ -132,7 +132,7 @@ final class TwoFactorTest extends WebTestCase
         for ($attempt = 0; $attempt < 4; ++$attempt) {
             $this->submitCode('00001'.$attempt);
         }
-        self::assertResponseRedirects('/2fa');
+        self::assertResponseRedirects('/security/2fa');
         $this->client->followRedirect();
         self::assertSelectorNotExists('[role="alert"]:contains("Too many")', 'the count started again after the right code');
     }
@@ -141,7 +141,7 @@ final class TwoFactorTest extends WebTestCase
     {
         $this->signIn(rememberMe: true);
         $this->client->followRedirect();
-        self::assertResponseRedirects('/2fa');
+        self::assertResponseRedirects('/security/2fa');
         self::assertBrowserNotHasCookie('REMEMBERME', message: 'the password alone does not earn it');
 
         $this->submitCode(self::totpCode($this->secret));
@@ -172,7 +172,7 @@ final class TwoFactorTest extends WebTestCase
 
     private function submitCode(string $code): void
     {
-        $crawler = $this->client->request('GET', '/2fa');
+        $crawler = $this->client->request('GET', '/security/2fa');
         $this->client->submit($crawler->selectButton('Verify')->form(['_auth_code' => $code]));
     }
 }

@@ -65,12 +65,14 @@ without its Doctrine bridge), `symfony/mcp-bundle`, Mercure
   own: `oidc_login` knows one per firewall, from the configuration.
 - **Second factor**: optional, TOTP only, by `scheb/2fa-bundle`, on the
   `main` firewall alone (the `api` firewall has its tokens). An account
-  that signs in with a password turns it on from `/account/two-factor`
-  (`EnableTwoFactor`: the code of the scanned secret proves it works);
+  that signs in with a password turns it on at `/security/2fa/enable`, in
+  the layout of the sign-in, from its account or when held to it
+  (`EnableTwoFactor`: the code of the scanned secret proves it works, with no
+  limit on the tries: the secret is on the screen);
   `CAIRN_TWO_FACTOR` (`optional`, `internal`, `all`) says who must, and
   `Security/TwoFactorPolicy` is the one place that answers: whoever must and
-  has none is held on that page by `Security/TwoFactorEnrolment`, and cannot
-  turn it off. The accounts of the identity provider hold none and are never
+  has none is sent to that page by `Security/TwoFactorEnrolment` after the
+  password, comes back to the page they asked for, and cannot turn it off. The accounts of the identity provider hold none and are never
   asked: the provider has its own, and `User::signInWithSso()` drops the
   secret. Lost phone and codes: the administration resets it
   (`ResetTwoFactor`). The code is guessed at five tries per account
@@ -173,7 +175,7 @@ src/
   | account     | `/account/…`                  | `Controller/` root     | `templates/account/`   |
   | project     | `/MD/SPT/…`                   | `Controller/Project/`  | `templates/project/`   |
   | admin       | `/admin/…`                    | `Controller/Admin/`    | `templates/admin/`     |
-  | security    | `/login`                      | `Controller/Security/` | `templates/security/`  |
+  | security    | `/login`, `/security/…`       | `Controller/Security/` | `templates/security/`  |
   | api         | `/api/…`, `/mcp`              | none: `Api/`           | none                   |
 
 - **URLs carry keys, not ids, and one route per need.** A project action

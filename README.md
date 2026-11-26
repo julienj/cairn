@@ -185,7 +185,7 @@ Good to know:
 
 ### Two-factor authentication
 
-Every account that signs in with a password can turn on a second factor in its account (Security > Two-factor authentication): a code from an authentication app (TOTP), asked after the password. `CAIRN_TWO_FACTOR` says who has to:
+Every account that signs in with a password can turn on a second factor from its account (Security > Two-factor authentication), by scanning a QR code and typing a first code: a code from an authentication app (TOTP), asked after the password. `CAIRN_TWO_FACTOR` says who has to:
 
 | Value | Who must set it up |
 |---|---|
@@ -193,7 +193,7 @@ Every account that signs in with a password can turn on a second factor in its a
 | `internal` | The internal users; external users choose |
 | `all` | Everybody |
 
-Someone who must and has not yet is sent to the page that sets it up as soon as they sign in, and can do nothing else. Good to know:
+Someone who must and has not yet is sent to the page that sets it up, in the sign-in, as soon as they type their password, and can do nothing else. Good to know:
 
 - **Accounts that sign in through single sign-on are never asked**: the provider has its own second factor.
 - **The API and the MCP server are not asked either**: a personal token signs their requests.

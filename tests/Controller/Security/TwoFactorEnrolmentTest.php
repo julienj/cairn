@@ -50,7 +50,7 @@ final class TwoFactorEnrolmentTest extends WebTestCase
             $this->client->loginUser($scene->user($email));
             foreach (['/', '/account', '/account/notifications', '/projects', '/MD/SPT/issues'] as $url) {
                 $this->client->request('GET', $url);
-                self::assertResponseRedirects('/account/two-factor', null, $email.' '.$url);
+                self::assertResponseRedirects('/security/2fa/enable', null, $email.' '.$url);
             }
         }
     }
@@ -62,7 +62,7 @@ final class TwoFactorEnrolmentTest extends WebTestCase
 
         $this->client->loginUser($scene->user('thomas.girard@cairn.test'));
         $this->client->request('GET', '/account');
-        self::assertResponseRedirects('/account/two-factor');
+        self::assertResponseRedirects('/security/2fa/enable');
 
         $this->client->loginUser($scene->user('claire.martin@maison-dupont.test'));
         $this->client->request('GET', '/account');
@@ -74,10 +74,13 @@ final class TwoFactorEnrolmentTest extends WebTestCase
         $this->boot('all');
         $this->client->loginUser(ShopScene::load(self::getContainer())->user('thomas.girard@cairn.test'));
 
-        $this->client->request('GET', '/account/two-factor');
+        $this->client->request('GET', '/security/2fa/enable');
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('[role="alert"]', 'requires two-factor authentication');
         self::assertSelectorExists('img[data-test="totp-qr"]');
+
+        $this->client->request('GET', '/account/two-factor');
+        self::assertResponseRedirects('/security/2fa/enable', null, 'the account page is not where to set it up when it is required');
 
         $this->client->request('GET', '/logout');
         self::assertResponseRedirects('/login');

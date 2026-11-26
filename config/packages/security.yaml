@@ -94,7 +94,7 @@ security:
         - { path: ^/login/sso(/callback)?$, roles: PUBLIC_ACCESS } # to the identity provider and back
         - { path: ^/password, roles: PUBLIC_ACCESS } # forgot password, set the password from a link
         - { path: ^/storia, roles: PUBLIC_ACCESS } # dev only: the bundle is disabled in prod
-        - { path: ^/2fa, roles: IS_AUTHENTICATED_2FA_IN_PROGRESS } # the code, between the password and the application
+        - { path: ^/security/2fa(/check)?$, roles: IS_AUTHENTICATED_2FA_IN_PROGRESS } # the code, between the password and the application
         # The API: its documentation is read signed in, by those who may use
         # it (AccessControl::canUseApi(): the internal users); reading the API
         # needs a token with the `read` scope, anything else `write`

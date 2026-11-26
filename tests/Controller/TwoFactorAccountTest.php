@@ -14,8 +14,8 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 /**
- * The page of the second factor of one's own account: set up with the QR code of a secret and a first code,
- * turning it off, and the limit on the codes typed there.
+ * The page of the second factor of one's own account: where it stands, the way to set it up, turning it off, and
+ * the limit on the codes typed there.
  */
 final class TwoFactorAccountTest extends WebTestCase
 {
@@ -42,22 +42,13 @@ final class TwoFactorAccountTest extends WebTestCase
     }
 
     /**
-     * The secret the page shows, as typed in an app.
+     * Gives the account a second factor and signs it in again, as the page of a person who just set it up.
      */
-    private function scannedSecret(): string
+    private function turnedOn(): string
     {
-        $crawler = $this->client->request('GET', '/account/two-factor');
-        self::assertResponseIsSuccessful();
-
-        return str_replace(' ', '', trim($crawler->filter('[data-test="totp-secret"]')->text()));
-    }
-
-    private function turnOn(): string
-    {
-        $secret = $this->scannedSecret();
-        $this->client->submitForm('Turn on', ['enable[code]' => self::totpCode($secret)]);
-        self::assertResponseRedirects('/account/two-factor');
-        $this->client->followRedirect();
+        $secret = self::totpSecret();
+        $this->enableTwoFactorOn($this->claire, $secret);
+        $this->client->loginUser($this->claire);
 
         return $secret;
     }
@@ -69,56 +60,29 @@ final class TwoFactorAccountTest extends WebTestCase
         self::assertSelectorExists('aside a[href="/account/two-factor"]');
     }
 
-    public function testTheSetupShowsTheQrCodeAndTheKeyOfTheSameSecretUntilItIsConfirmed(): void
+    public function testItOffersToSetItUpWhenThereIsNone(): void
     {
-        $crawler = $this->client->request('GET', '/account/two-factor');
+        $this->client->request('GET', '/account/two-factor');
 
         self::assertResponseIsSuccessful();
-        self::assertStringStartsWith('data:image/svg+xml', (string) $crawler->filter('img[data-test="totp-qr"]')->attr('src'));
-        $secret = str_replace(' ', '', trim($crawler->filter('[data-test="totp-secret"]')->text()));
-        self::assertMatchesRegularExpression('/^[A-Z2-7]{16,}$/', $secret);
-        self::assertSame($secret, $this->scannedSecret(), 'reloading the page does not change what was scanned');
-        self::assertFalse($this->account()->hasTotp(), 'nothing is on until a code proves it works');
+        self::assertSelectorExists('a[href="/security/2fa/enable"]');
+        self::assertSelectorNotExists('img[data-test="totp-qr"]', 'the page that sets it up is the sign-in\'s');
     }
 
-    public function testAWrongCodeLeavesItOff(): void
+    public function testItShowsItIsOnWhenThereIsOne(): void
     {
-        $this->scannedSecret();
-
-        $this->client->submitForm('Turn on', ['enable[code]' => '000000']);
-
-        self::assertResponseStatusCodeSame(422);
-        self::assertSelectorTextContains('form', 'That code is incorrect.');
-        self::assertFalse($this->account()->hasTotp());
-    }
-
-    public function testTheCodeOfTheScannedSecretTurnsItOn(): void
-    {
-        $secret = $this->turnOn();
-
-        $account = $this->account();
-        self::assertTrue($account->hasTotp());
-        self::assertSame($secret, $account->getTotpSecret());
-        self::assertSelectorTextContains('body', 'Two-factor authentication is on.');
+        $this->turnedOn();
 
         $this->client->request('GET', '/account/two-factor');
-        self::assertSelectorNotExists('img[data-test="totp-qr"]');
-    }
 
-    public function testTheCodeOfAnotherSecretDoesNotTurnItOn(): void
-    {
-        $this->scannedSecret();
-
-        $this->client->submitForm('Turn on', ['enable[code]' => self::totpCode(self::totpSecret())]);
-
-        self::assertResponseStatusCodeSame(422);
-        self::assertFalse($this->account()->hasTotp());
+        self::assertResponseIsSuccessful();
+        self::assertSelectorNotExists('a[href="/security/2fa/enable"]');
+        self::assertSelectorExists('form[action$="/two-factor/disable"]');
     }
 
     public function testItIsTurnedOffWithACode(): void
     {
-        $this->turnOn();
-        $secret = (string) $this->account()->getTotpSecret();
+        $secret = $this->turnedOn();
 
         $this->client->request('GET', '/account/two-factor');
         $this->client->submitForm('Turn off', ['disable[code]' => '000000']);
@@ -135,8 +99,7 @@ final class TwoFactorAccountTest extends WebTestCase
 
     public function testTheCodesAreTriedAtAFewTimesOnly(): void
     {
-        $this->turnOn();
-        $secret = (string) $this->account()->getTotpSecret();
+        $secret = $this->turnedOn();
         $this->client->request('GET', '/account/two-factor');
 
         for ($attempt = 0; $attempt < 5; ++$attempt) {
