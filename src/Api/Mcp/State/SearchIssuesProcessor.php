@@ -30,6 +30,7 @@ final class SearchIssuesProcessor implements ProcessorInterface
             'project' => $data->project,
             'q' => $data->q,
             'assignee' => $data->assignee,
+            'assigneeTeam' => array_map(strval(...), $data->assigneeTeam),
             'author' => $data->author,
             'tracker' => array_map(strval(...), $data->tracker),
             'place' => $data->place,

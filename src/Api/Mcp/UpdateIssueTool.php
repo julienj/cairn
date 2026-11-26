@@ -17,7 +17,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  */
 #[McpTool(
     name: 'update_issue',
-    description: 'Changes the properties given, each needing its own right; those left out, or null, keep their value. `assignee` and `release` take `none` to unassign the issue and to take it out of its release. The step is changed with move_issue.',
+    description: 'Changes the properties given, each needing its own right; those left out, or null, keep their value. `assignee`, `assigneeTeam` and `release` take `none` to unassign the issue and to take it out of its release. An issue is assigned to a person or to a team, one or the other. The step is changed with move_issue.',
     structuredContent: false,
     outputFormats: ['json' => ['application/json']],
     security: "is_granted('api.write')",
@@ -47,6 +47,10 @@ final class UpdateIssueTool
     /** Id of a member of the project, or `none` to unassign. */
     #[Assert\Regex(self::ID_OR_NONE, message: 'An id, or none.')]
     public ?string $assignee = null;
+
+    /** Id of a team with a role on the project (get_project lists them): the issue is given to it instead of a person. `none` to unassign. */
+    #[Assert\Regex(self::ID_OR_NONE, message: 'An id, or none.')]
+    public ?string $assigneeTeam = null;
 
     public ?bool $private = null;
 

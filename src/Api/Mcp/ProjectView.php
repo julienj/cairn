@@ -8,6 +8,7 @@ use App\Api\Resource\MemberResource;
 use App\Api\Resource\ProjectResource;
 use App\Api\Resource\ReleaseResource;
 use App\Api\Resource\TagResource;
+use App\Api\Resource\TeamResource;
 use App\Api\Resource\TrackerResource;
 
 /**
@@ -19,6 +20,7 @@ final readonly class ProjectView
     /**
      * @param list<TrackerResource> $trackers its categories, with the steps and the fields of their workflow
      * @param list<MemberResource>  $members  who an issue may be assigned to
+     * @param list<TeamResource>    $teams    the teams an issue may be assigned to instead of a person
      * @param list<ReleaseResource> $releases
      * @param list<TagResource>     $tags     what its issues may carry, several each
      */
@@ -28,6 +30,7 @@ final readonly class ProjectView
         public array $members,
         public array $releases,
         public array $tags,
+        public array $teams,
     ) {
     }
 }

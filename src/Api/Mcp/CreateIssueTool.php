@@ -47,6 +47,10 @@ final class CreateIssueTool
     #[Assert\Positive]
     public ?int $assignee = null;
 
+    /** Id of a team with a role on the project (get_project lists them), instead of `assignee`. */
+    #[Assert\Positive]
+    public ?int $assigneeTeam = null;
+
     /** True to hide the issue from the client. */
     public bool $private = false;
 

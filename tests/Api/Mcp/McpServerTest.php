@@ -7,6 +7,10 @@ namespace App\Tests\Api\Mcp;
 use App\Attachment\AttachmentStorage;
 use App\Entity\Enum\ApiTokenScope;
 use App\Entity\Enum\TagColour;
+use App\Entity\Team;
+use App\Message\Command\Team\CreateTeam;
+use App\Message\Command\Team\GrantTeamAccess;
+use App\Message\CommandBus;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\Uid\Uuid;
 
@@ -206,6 +210,34 @@ final class McpServerTest extends McpTestCase
 
         $nowhere = $this->rpc('tools/call', ['name' => 'move_issue', 'arguments' => ['key' => $key, 'place' => 'nowhere']], $secret);
         self::assertArrayHasKey('error', $nowhere);
+    }
+
+    public function testAnIssueIsGivenToATeamOfTheProject(): void
+    {
+        $commands = self::getContainer()->get(CommandBus::class);
+        $team = $commands->dispatch(new CreateTeam('Hosting', true));
+        self::assertInstanceOf(Team::class, $team);
+        $commands->dispatch(new GrantTeamAccess((int) $team->getId(), $this->scene->dupont->getId(), null, 'developer'));
+        $secret = $this->tokenFor(self::DEVELOPER)->secret;
+        $teamId = $team->getId();
+
+        self::assertSame([['id' => $teamId, 'name' => 'Hosting']], array_map(static fn (array $row): array => ['id' => $row['id'], 'name' => $row['name']], $this->read('get_project', ['key' => 'MD-SPT'], $secret)['teams']));
+
+        $given = $this->read('update_issue', ['key' => 'MD-SPT-2', 'assigneeTeam' => (string) $teamId], $secret);
+        self::assertSame('Hosting', $given['assigneeTeam']['name']);
+
+        // An assistant fills what it does not use with nulls: nothing is emptied by one.
+        $kept = $this->read('update_issue', ['key' => 'MD-SPT-2', 'assignee' => null, 'assigneeTeam' => null, 'criticality' => 'low'], $secret);
+        self::assertSame('Hosting', $kept['assigneeTeam']['name']);
+
+        $found = $this->read('search_issues', ['project' => 'MD-SPT', 'assigneeTeam' => [$teamId]], $secret);
+        self::assertSame(['MD-SPT-2'], array_column($found['issues'], 'key'));
+
+        $unassigned = $this->read('update_issue', ['key' => 'MD-SPT-2', 'assigneeTeam' => 'none'], $secret);
+        self::assertArrayNotHasKey('assigneeTeam', $unassigned);
+
+        $created = $this->read('create_issue', ['project' => 'MD-SPT', 'tracker' => $this->issue('MD-SPT-1')->getTracker()->getId(), 'title' => 'Renew the certificate', 'assigneeTeam' => $teamId, 'fields' => ['environment' => 'prod']], $secret);
+        self::assertSame('Hosting', $created['assigneeTeam']['name']);
     }
 
     public function testAnIssueChangesCategoryWithItsOwnTool(): void
