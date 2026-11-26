@@ -20,6 +20,9 @@ const ANCHORS = [
     { edge: 'left', at: 0.5 }, { edge: 'right', at: 0.5 },
     { edge: 'bottom', at: 0 }, { edge: 'bottom', at: 0.5 }, { edge: 'bottom', at: 1 },
 ];
+/* What the disc is filled with, and what rings its badge: one colour, so the badge reads as cut in the disc. */
+const FILL = '#1c1c21';
+const FILL_OVER = '#26262c';
 const LOGO = '<svg class="logo" width="22" height="22" viewBox="0 0 64 64" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="43" width="44" height="9" rx="4.5"/><rect x="16" y="29" width="40" height="8" rx="4" transform="rotate(-3 36 33)"/><rect x="12" y="15" width="27" height="8" rx="4" transform="rotate(4 25.5 19)"/></svg>';
 const CLOSE = '<svg class="close" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
 
@@ -46,7 +49,13 @@ export function createButton(label, { onClick, onMove, onAim, onEscape }) {
     button.setAttribute('aria-expanded', 'false');
     button.innerHTML = `<span class="mark">${LOGO}${CLOSE}</span><span class="label"><span></span></span>`;
     button.querySelector('.label span').textContent = label;
-    dock.appendChild(button);
+    // Around the button, which cuts what goes past it: what the badge holds on to, at the top right corner of the
+    // button whether it is a disc or open on its label.
+    const pill = dock.appendChild(document.createElement('span'));
+    pill.className = 'pill';
+    const badge = document.createElement('i');
+    badge.className = 'begun';
+    pill.append(button, badge);
 
     const hints = document.createElement('div');
     hints.className = 'anchors';
@@ -184,6 +193,8 @@ export function createButton(label, { onClick, onMove, onAim, onEscape }) {
         position: () => ({ edge: place.edge, ...pointOf(place) }),
         open: (open) => button.setAttribute('aria-expanded', open ? 'true' : 'false'),
         focus: () => button.focus({ preventScroll: true }),
+        /* An issue is begun in the panel: a dot on the disc says so. */
+        begun: (begun) => button.toggleAttribute('data-begun', begun),
     };
 }
 
@@ -258,18 +269,21 @@ function remembered() {
 }
 
 /*
- * One look for every site, light or dark: a dark glass disc with a light
+ * One look for every site, light or dark: a dark disc with a light
  * hairline, as the tools of a browser are drawn, which no palette of a
- * site is mistaken for.
+ * site is mistaken for. It is opaque: what rings its badge is its own
+ * colour, whatever the page behind.
  */
 export const buttonStyles = `
 .dock { position: fixed; left: 0; top: 0; z-index: 2147483646; width: 0; height: 0; transition: transform .5s cubic-bezier(.2, 1.2, .3, 1); }
 .dock[data-dragging] { transition: none; }
-button { position: absolute; top: ${-SIZE / 2}px; display: flex; align-items: center; width: max-content; height: ${SIZE}px; min-width: ${SIZE}px; margin: 0; padding: 0; overflow: hidden; border: 0; border-radius: ${SIZE / 2}px; background: rgba(22, 22, 26, .84); -webkit-backdrop-filter: blur(12px) saturate(180%); backdrop-filter: blur(12px) saturate(180%); color: #fff; font: 500 13px/1 system-ui, -apple-system, "Segoe UI", sans-serif; letter-spacing: -.005em; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .13), inset 0 1px 0 rgba(255, 255, 255, .1), 0 1px 2px rgba(0, 0, 0, .3), 0 8px 20px -6px rgba(0, 0, 0, .45); cursor: pointer; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; transition: background-color .2s, box-shadow .2s, scale .2s cubic-bezier(.2, 1.2, .3, 1); animation: cairn-arrive .35s cubic-bezier(.2, 1.2, .3, 1) backwards; }
-.dock[data-side="start"] button { left: ${-SIZE / 2}px; }
-.dock[data-side="end"] button { right: ${-SIZE / 2}px; flex-direction: row-reverse; }
-.dock[data-side="center"] button { left: 0; translate: -50% 0; }
-button:hover, button[aria-expanded="true"] { background: rgba(30, 30, 36, .94); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .18), inset 0 1px 0 rgba(255, 255, 255, .12), 0 1px 2px rgba(0, 0, 0, .3), 0 10px 26px -6px rgba(79, 70, 229, .55); }
+.pill { position: absolute; top: ${-SIZE / 2}px; display: block; width: max-content; }
+button { position: relative; display: flex; align-items: center; height: ${SIZE}px; min-width: ${SIZE}px; margin: 0; padding: 0; overflow: hidden; border: 0; border-radius: ${SIZE / 2}px; background: ${FILL}; color: #fff; font: 500 13px/1 system-ui, -apple-system, "Segoe UI", sans-serif; letter-spacing: -.005em; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .13), inset 0 1px 0 rgba(255, 255, 255, .1), 0 1px 2px rgba(0, 0, 0, .3), 0 8px 20px -6px rgba(0, 0, 0, .45); cursor: pointer; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; transition: background-color .2s, box-shadow .2s, scale .2s cubic-bezier(.2, 1.2, .3, 1); animation: cairn-arrive .35s cubic-bezier(.2, 1.2, .3, 1) backwards; }
+.dock[data-side="start"] .pill { left: ${-SIZE / 2}px; }
+.dock[data-side="end"] .pill { right: ${-SIZE / 2}px; }
+.dock[data-side="end"] button { flex-direction: row-reverse; }
+.dock[data-side="center"] .pill { left: 0; translate: -50% 0; }
+button:hover, button[aria-expanded="true"] { background: ${FILL_OVER}; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .18), inset 0 1px 0 rgba(255, 255, 255, .12), 0 1px 2px rgba(0, 0, 0, .3), 0 10px 26px -6px rgba(79, 70, 229, .55); }
 button:active { scale: .95; }
 button:focus-visible { outline: 2px solid #a5b4fc; outline-offset: 2px; }
 .dock[data-dragging] button { scale: 1.08; cursor: grabbing; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .18), 0 2px 4px rgba(0, 0, 0, .3), 0 18px 36px -8px rgba(0, 0, 0, .6); }
@@ -293,5 +307,8 @@ button[aria-expanded="false"]:focus-visible .label span { opacity: 1; }
 .anchors[data-shown] { opacity: 1; }
 .anchors i { position: absolute; left: ${-SIZE / 2}px; top: ${-SIZE / 2}px; width: ${SIZE}px; height: ${SIZE}px; border-radius: 50%; background: rgba(22, 22, 26, .45); box-shadow: 0 0 0 5px rgba(255, 255, 255, .6); scale: .2; transition: scale .25s cubic-bezier(.2, 1.2, .3, 1), background-color .2s, box-shadow .2s; }
 .anchors i[data-near] { scale: 1.15; background: rgba(99, 102, 241, .16); box-shadow: 0 0 0 1.5px rgba(99, 102, 241, .85); }
+.begun { position: absolute; right: 1px; top: 1px; width: 10px; height: 10px; border-radius: 50%; background: #a5b4fc; box-shadow: 0 0 0 2px ${FILL}; pointer-events: none; scale: 0; transition: scale .25s cubic-bezier(.2, 1.2, .3, 1), box-shadow .2s; }
+button:hover + .begun { box-shadow: 0 0 0 2px ${FILL_OVER}; }
+button[data-begun][aria-expanded="false"] + .begun { scale: 1; }
 @keyframes cairn-arrive { from { opacity: 0; scale: .6; } }
 `;

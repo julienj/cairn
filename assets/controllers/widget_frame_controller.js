@@ -22,7 +22,8 @@ const POLL_FOR = 5 * 60 * 1000;
  * keeps its draft), `widget:collapse` and
  * `widget:expand` (the panel out of the way while a screenshot is taken),
  * `widget:widen` and `widget:narrow` (the panel a dialog over the page
- * while the screenshot is edited).
+ * while the screenshot is edited), `widget:draft` (whether an issue is
+ * begun).
  */
 export default class extends Controller {
     static targets = ['connect', 'alone', 'refused', 'frame', 'link', 'close', 'kept', 'waiting', 'loading'];
@@ -265,6 +266,13 @@ export default class extends Controller {
     narrow() {
         if (this.linked) {
             window.parent.postMessage({ type: 'cairn:narrow' }, this.siteValue);
+        }
+    }
+
+    /* That an issue is begun, and nothing of it: the button of the site shows it. */
+    drafted(event) {
+        if (this.linked) {
+            window.parent.postMessage({ type: 'cairn:draft', begun: true === event.detail.begun }, this.siteValue);
         }
     }
 
