@@ -39,6 +39,11 @@ final class TeamException extends \DomainException implements TranslatableInterf
         return new self(\sprintf('%s is external: the team "%s" is internal.', $userName, $teamName), 'admin.refused.team_internal_only', ['%name%' => $userName, '%team%' => $teamName]);
     }
 
+    public static function holdsIssues(string $name, int $count): self
+    {
+        return new self(\sprintf('%d issue(s) are assigned to the team "%s".', $count, $name), 'admin.refused.team_holds_issues', ['%name%' => $name, '%count%' => (string) $count]);
+    }
+
     public static function unknownRole(string $role): self
     {
         return new self(\sprintf('Role "%s" does not exist in the configuration.', $role), 'admin.refused.unknown_role', ['%role%' => $role]);

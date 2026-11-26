@@ -89,6 +89,9 @@ final class AppStory extends Story
     /** @var array<string, User> */
     private array $users = [];
 
+    /** @var array<string, Team> by name */
+    private array $teams = [];
+
     public function __construct(
         private readonly StarterKit $kit,
         private readonly CommandBus $commands,
@@ -128,6 +131,7 @@ final class AppStory extends Story
                 }
             }
             $this->createLinks($now);
+            $this->assignToTeams($now);
             $this->createCode($now);
             $this->entityManager->flush();
         } finally {
@@ -180,6 +184,7 @@ final class AppStory extends Story
         foreach ($teams as [$name, $internal, $members, $accesses]) {
             $team = $this->commands->dispatch(new CreateTeam($name, $internal));
             \assert($team instanceof Team);
+            $this->teams[$name] = $team;
             foreach ($members as $member) {
                 $this->commands->dispatch(new AddTeamMember((int) $team->getId(), (int) $this->users[$member]->getId()));
             }
@@ -418,6 +423,15 @@ final class AppStory extends Story
     /**
      * Links between issues, made by the manager of Maison Dupont.
      */
+    /**
+     * An issue waits for the hosting team, whoever of it takes it.
+     */
+    private function assignToTeams(\DateTimeImmutable $now): void
+    {
+        Clock::set(new MockClock($now->modify('-20 minutes')));
+        $this->commands->dispatch(new UpdateIssue((int) $this->users['thomas']->getId(), 'MD-SPT-18', assigneeTeamId: $this->teams['Hosting']->getId()));
+    }
+
     private function createLinks(\DateTimeImmutable $now): void
     {
         Clock::set(new MockClock($now->modify('-30 minutes')));

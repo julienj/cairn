@@ -27,6 +27,7 @@ final readonly class IssueListFilters
      * @param list<int>         $projects
      * @param list<int>         $trackers
      * @param list<int>         $assignees   user ids, 0 for unassigned
+     * @param list<int>         $teams       team ids, read with the assignees: an issue given to one of them, person or team
      * @param list<int>         $releases    release ids, 0 for the issues in no release
      * @param list<int>         $tags        tag ids, 0 for the issues without any tag
      * @param list<Criticality> $criticality
@@ -49,6 +50,7 @@ final readonly class IssueListFilters
         public \SortDirection $order = \SortDirection::Ascending,
         public ?IssueGrouping $group = null,
         public string $view = self::VIEW_LIST,
+        public array $teams = [],
     ) {
     }
 
@@ -74,6 +76,7 @@ final readonly class IssueListFilters
             order: null !== $sort && 'desc' === ($query['order'] ?? null) ? \SortDirection::Descending : \SortDirection::Ascending,
             group: self::enum(IssueGrouping::class, $query['group'] ?? null),
             view: self::VIEW_BOARD === ($query['view'] ?? null) ? self::VIEW_BOARD : self::VIEW_LIST,
+            teams: QueryIds::of($query['teams'] ?? null),
         );
     }
 
@@ -103,6 +106,7 @@ final readonly class IssueListFilters
             'trackers' => $this->trackers,
             'criticality' => $this->criticalityValues(),
             'assignees' => $this->assignees,
+            'teams' => $this->teams,
             'releases' => $this->releases,
             'tags' => $this->tags,
             'q' => $this->q,
@@ -139,7 +143,7 @@ final readonly class IssueListFilters
      */
     public function hasFilters(): bool
     {
-        return [] !== $this->places || [] !== $this->projects || [] !== $this->trackers || [] !== $this->assignees || [] !== $this->releases || [] !== $this->tags
+        return [] !== $this->places || [] !== $this->projects || [] !== $this->trackers || [] !== $this->assignees || [] !== $this->teams || [] !== $this->releases || [] !== $this->tags
             || [] !== $this->criticality || '' !== $this->q;
     }
 

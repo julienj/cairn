@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace App\Message\Command\Team;
 
 /**
- * Deletes a team; its members leave it with it. Handled by
+ * Deletes a team no issue is assigned to; its members and its accesses
+ * go with it. Handled by
  * DeleteTeamHandler.
  */
 final readonly class DeleteTeam

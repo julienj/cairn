@@ -43,15 +43,16 @@ final class RuleConditions
     private function holds(RuleStep $condition, Issue $issue, ?User $actor): bool
     {
         $expected = $condition->text('is');
-        $assignee = $issue->getAssignee();
+        // A team counts as its kind does; nobody is neither a person nor a team.
+        $internal = $issue->getAssignee()?->isInternal() ?? $issue->getAssigneeTeam()?->isInternal();
 
         return match ($condition->type) {
             ConditionType::Actor => null !== $actor && $actor->isInternal() === (ConditionType::INTERNAL === $expected),
             ConditionType::Assignee => match ($expected) {
-                ConditionType::NOBODY => null === $assignee,
-                ConditionType::INTERNAL => true === $assignee?->isInternal(),
-                ConditionType::EXTERNAL => false === $assignee?->isInternal(),
-                ConditionType::EXTERNAL_OR_NOBODY => true !== $assignee?->isInternal(),
+                ConditionType::NOBODY => null === $internal,
+                ConditionType::INTERNAL => true === $internal,
+                ConditionType::EXTERNAL => false === $internal,
+                ConditionType::EXTERNAL_OR_NOBODY => true !== $internal,
                 default => false,
             },
             ConditionType::Place => \in_array($issue->getPlace(), $condition->texts('is'), true),

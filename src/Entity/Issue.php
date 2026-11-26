@@ -75,6 +75,10 @@ class Issue implements HasPlace
     #[ORM\ManyToOne]
     private ?User $assignee = null;
 
+    /** The team the issue is given to, instead of a person: one or the other, never both. */
+    #[ORM\ManyToOne]
+    private ?Team $assigneeTeam = null;
+
     #[ORM\ManyToOne]
     private ?Release $release = null;
 
@@ -271,10 +275,39 @@ class Issue implements HasPlace
         return $this->assignee;
     }
 
+    /**
+     * Gives the issue to a person, or to nobody: the team it was given
+     * to no longer holds it.
+     */
     public function assignTo(?User $assignee): void
     {
         $this->assignee = $assignee;
+        $this->assigneeTeam = null;
         $this->touch();
+    }
+
+    public function getAssigneeTeam(): ?Team
+    {
+        return $this->assigneeTeam;
+    }
+
+    /**
+     * Gives the issue to a team, instead of the person who held it.
+     */
+    public function assignToTeam(Team $team): void
+    {
+        $this->assignee = null;
+        $this->assigneeTeam = $team;
+        $this->touch();
+    }
+
+    /**
+     * Whoever the issue is given to, by name: the person or the team,
+     * null for nobody. What the journal keeps of an assignment.
+     */
+    public function getAssigneeName(): ?string
+    {
+        return $this->assignee?->getFullName() ?? $this->assigneeTeam?->getName();
     }
 
     /**

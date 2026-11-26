@@ -299,6 +299,13 @@ src/
   with the roles that trigger it, read from the configuration: no role is
   named in code. `aside` is read by the diagram and by the
   step menu of an issue, which draws the same path, and holds nobody.
+- **An issue is given to a person or to a team, never both**
+  (`Issue::assignTo()`, `assignToTeam()`): giving it to one takes it from
+  the other, and `UpdateIssue::NOBODY` from both. A team is assignable
+  where it holds a role (`IssueHandlerSupport::assigneeTeam()`), as a
+  person is. "Unassigned" means neither, everywhere it is asked: the filter,
+  the group, the condition of a rule. The journal keeps the name, of the
+  person or of the team. A team that holds issues is not deleted.
 - **`journal_label`** (`Twig/JournalLabelExtension`) is the only place that
   reads what each journal type recorded, for the thread and the mails.
 - **Releases are optional, without a setting**: a project without any
@@ -352,6 +359,13 @@ src/
   `#[AsEventListener]`s of `NotificationDispatcher::collect()` are the
   whole list of what notifies; `Notification/SubscriptionRules` never
   subscribes someone who cannot see the issue.
+- **A team follows an issue as one** (`IssueTeamSubscription`), from the
+  moment it is given the issue and afterwards, as a person does. Nobody
+  is subscribed for it: `NotifyIssueChangeHandler` reads who is part of
+  the team when the change leaves, so whoever joins is told and whoever
+  leaves is not. Any member unsubscribes the team, for all of it
+  (`UnfollowIssueAsTeam`); nobody opts out alone of what their team
+  follows.
 - **A mail is queued, then grouped.** `NotifyIssueChange` (ids only) writes
   a `PendingNotification` per recipient; `ProjectMailSender` (Scheduler)
   sends a group once things calmed down. `ChangeFilter` says what one

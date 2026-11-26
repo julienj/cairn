@@ -54,7 +54,7 @@ final class CreateIssueHandler
 
         $this->support->denyUnless($this->access->isGranted($actor, Permission::IssueCreate, $project), 'create issues in this project');
         $this->support->denyUnless($actor->isInternal() || !$tracker->isPrivate(), 'use this tracker');
-        $this->support->denyUnless(null === $command->assigneeId || $this->access->isGranted($actor, Permission::IssueAssign, $project), 'assign issues');
+        $this->support->denyUnless((null === $command->assigneeId && null === $command->assigneeTeamId) || $this->access->isGranted($actor, Permission::IssueAssign, $project), 'assign issues');
         $this->support->denyUnless(!$command->private || $this->access->isGranted($actor, Permission::IssueSetPrivate, $project), 'make issues private');
         $this->support->denyUnless(Criticality::DEFAULT === $command->criticality || $this->access->isGranted($actor, Permission::IssueSetCriticality, $project), 'set the criticality');
         $this->support->denyUnless([] === $command->tagIds || $this->access->isGranted($actor, Permission::IssueSetTags, $project), 'tag issues');
@@ -64,6 +64,7 @@ final class CreateIssueHandler
         $this->support->assertRequiredFields($workflow, $command->fields);
 
         $assignee = $this->support->assignee($command->assigneeId, $project);
+        $assigneeTeam = $this->support->assigneeTeam($command->assigneeTeamId, $project);
         $tags = [];
         foreach (array_unique($command->tagIds) as $tagId) {
             $tag = $this->tags->find($tagId) ?? throw TagException::notFound('Tag', $tagId);
@@ -78,7 +79,7 @@ final class CreateIssueHandler
 
         $issue = new Issue($project, $tracker, $this->workflows->row($workflow->initial), $project->allocateIssueNumber(), $actor, $command->title, $command->description);
         $issue->setCriticality($command->criticality);
-        $issue->assignTo($assignee);
+        null !== $assigneeTeam ? $issue->assignToTeam($assigneeTeam) : $issue->assignTo($assignee);
         if ($command->private || $tracker->isPrivate()) {
             $issue->makePrivate();
         }

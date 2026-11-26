@@ -42,9 +42,10 @@
                         :title="issue.title"
                         href="{{ path('app_issue_show', { workspaceKey: issue.project.workspace.key, projectKey: issue.project.key, number: issue.number }) }}"
                         :criticality="issue.criticality.value"
-                        :assignee="issue.assignee ? issue.assignee.fullName : null"
+                        :assignee="issue.assigneeName"
                         :assigneeAvatar="avatar_url(issue.assignee)"
-                        :assigneeKind="issue.assignee and not issue.assignee.internal ? 'external' : 'internal'"
+                        :assigneeKind="(issue.assignee and not issue.assignee.internal) or (issue.assigneeTeam and not issue.assigneeTeam.internal) ? 'external' : 'internal'"
+                        :assigneeShape="issue.assigneeTeam ? 'square' : 'round'"
                         :private="issue.private or issue.tracker.private"
                         :release="issue.release ? issue.release.name : null"
                     >

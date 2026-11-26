@@ -20,10 +20,11 @@ final readonly class ListScope
     public const array DIMENSIONS = ['place', 'project', 'tracker', 'criticality', 'assignee', 'release', 'tag'];
 
     /**
-     * @param string       $path        the address of the list, without its query string
-     * @param list<string> $dimensions  the filters offered, among self::DIMENSIONS
-     * @param ?Tracker     $tracker     the tracker the list is scoped to; its filter is then not offered
-     * @param bool         $showProject adds the project column, for the lists across projects
+     * @param string       $path         the address of the list, without its query string
+     * @param list<string> $dimensions   the filters offered, among self::DIMENSIONS
+     * @param ?Tracker     $tracker      the tracker the list is scoped to; its filter is then not offered
+     * @param bool         $showProject  adds the project column, for the lists across projects
+     * @param ?int         $teamMemberId the issues given to a team this user is part of
      */
     public function __construct(
         public string $path,
@@ -33,6 +34,7 @@ final readonly class ListScope
         public ?int $assigneeId = null,
         public ?int $authorId = null,
         public bool $showProject = false,
+        public ?int $teamMemberId = null,
     ) {
     }
 

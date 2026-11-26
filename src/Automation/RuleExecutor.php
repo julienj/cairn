@@ -108,13 +108,14 @@ final class RuleExecutor
         if (null !== $user && null === $this->access->roleOn($user, $issue->getProject())) {
             return StepResult::skipped(ActionType::Assign, 'not_a_member', $user->getFullName());
         }
-        $previous = $issue->getAssignee();
-        if ($previous?->getId() === $user?->getId()) {
+        // given to that person already, or to nobody: neither a person nor a team
+        if ($issue->getAssignee()?->getId() === $user?->getId() && null === $issue->getAssigneeTeam()) {
             return StepResult::unchanged(ActionType::Assign, (string) $user?->getFullName());
         }
 
+        $previous = $issue->getAssigneeName();
         $issue->assignTo($user);
-        $this->recordUpdate($rule, $issue, JournalEntry::changed($issue, null, 'assignee', $previous?->getFullName(), $user?->getFullName()), $user);
+        $this->recordUpdate($rule, $issue, JournalEntry::changed($issue, null, 'assignee', $previous, $user?->getFullName()), $user);
 
         return StepResult::applied(ActionType::Assign, (string) $user?->getFullName());
     }

@@ -27,6 +27,9 @@ issue:
     subscribers:
         title: Abonnés
         none: Personne ne suit cette demande.
+        team: '{0}aucun membre|{1}1 membre|]1,Inf[ %count% membres'
+        team_unfollow: 'Désabonner %team% de cette demande'
+        team_unfollowed: L'équipe ne suit plus cette demande.
     board:
         title: Kanban
         list: Liste
@@ -91,6 +94,7 @@ issue:
         change_property: 'Modifier « %property% »'
         workflow: Voir le workflow
         search_member: Rechercher un membre…
+        team: Équipe
         no_member: Aucun membre ne correspond.
         system: Cairn
         'true': Oui
@@ -211,6 +215,7 @@ issue:
         tags: Étiquettes
         assignee: Assigné
         assignee_none: Personne
+        assignee_teams: Équipes
         private: Demande privée
         private_help: Invisible pour les externes.
     list:
@@ -323,6 +328,7 @@ nav:
     issues:
         all: Toutes
         assigned: Assignées à moi
+        teams: Assignées à mes équipes
         created: Créées par moi
 
 theme:
@@ -399,6 +405,7 @@ my_issues:
     title:
         all: Mes demandes · toutes
         assigned: Mes demandes · assignées à moi
+        teams: Mes demandes · assignées à mes équipes
         created: Mes demandes · créées par moi
 
 projects:
@@ -1136,6 +1143,7 @@ admin:
         team_name_taken: 'Une équipe porte déjà le nom %name%.'
         team_internal_only: '%name% est externe : l''équipe %team% est réservée aux utilisateurs internes.'
         team_internal_only_role: 'L''équipe %team% est externe : le rôle « %role% » est réservé aux équipes internes.'
+        team_holds_issues: '{1}Une demande est affectée à l''équipe %name% : affectez-la d''abord à quelqu''un d''autre.|]1,Inf[ %count% demandes sont affectées à l''équipe %name% : affectez-les d''abord à quelqu''un d''autre.'
         team_not_wider: 'Le rôle « %role% » n''élargit pas le rôle « %inherited% » que l''équipe tient sur l''espace.'
         deactivated: "%name% est désactivé : réactivez d'abord le compte."
         already_activated: '%name% a déjà choisi un mot de passe : « Mot de passe oublié ? » sur la page de connexion lui en donne un nouveau.'

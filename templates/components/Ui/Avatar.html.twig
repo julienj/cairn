@@ -1,6 +1,6 @@
-{# Initials on a colour that tells internal (indigo) from external (emerald) and system (orange). No name: "?" for unassigned.
+{# Initials on a colour that tells internal (indigo) from external (emerald) and system (orange). No name: "?" for unassigned. A person is a disc; `shape="square"` draws a team.
    `src` is the picture the person chose (`avatar_url(user)`): it replaces the initials, and the colour of the kind stays as a ring around it. #}
-{% props name = null, kind = 'internal', size = 'md', src = null %}
+{% props name = null, kind = 'internal', size = 'md', src = null, shape = 'round' %}
 {% set avatarClasses = html_cva(
     base: 'inline-flex shrink-0 items-center justify-center rounded-full font-semibold',
     variants: {
@@ -10,6 +10,7 @@
             system: 'bg-orange-solid text-white',
             unassigned: 'border border-dashed border-line-strong font-normal text-faint',
         },
+        shape: { square: 'rounded-md' },
         size: {
             xs: 'h-4 w-4 text-[8px]',
             sm: 'h-5 w-5 text-[9px]',
@@ -30,7 +31,7 @@
         base: 'object-cover ring-1',
         variants: { kind: { internal: 'ring-brand-solid', external: 'ring-emerald-solid', system: 'ring-orange-solid' } },
     ) %}
-    <img src="{{ src }}" alt="{{ name }}" title="{{ name }}" loading="lazy" class="{{ (avatarClasses.apply({ size: size }) ~ ' ' ~ avatarImageClasses.apply({ kind: kind }, attributes.render('class')))|tailwind_merge }}" {{ attributes }}>
+    <img src="{{ src }}" alt="{{ name }}" title="{{ name }}" loading="lazy" class="{{ (avatarClasses.apply({ size: size, shape: shape }) ~ ' ' ~ avatarImageClasses.apply({ kind: kind }, attributes.render('class')))|tailwind_merge }}" {{ attributes }}>
 {% else %}
-    <span class="{{ avatarClasses.apply({ kind: name ? kind : 'unassigned', size: size }, attributes.render('class'))|tailwind_merge }}" title="{{ name ?? 'issue.unassigned'|trans }}" {{ attributes }}>{{ name ? avatarInitials : '?' }}</span>
+    <span class="{{ avatarClasses.apply({ kind: name ? kind : 'unassigned', size: size, shape: shape }, attributes.render('class'))|tailwind_merge }}" title="{{ name ?? 'issue.unassigned'|trans }}" {{ attributes }}>{{ name ? avatarInitials : '?' }}</span>
 {% endif %}

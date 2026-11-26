@@ -28,7 +28,7 @@
                 <p style="margin:0;font-size:13px;color:#6b7280;">
                     <span style="display:inline-block;padding:1px 8px;border-radius:999px;background:#f3f4f6;color:#374151;font-size:12px;font-weight:600;line-height:18px;">{{ issue_place(issue) }}</span>
                     {% if not blocking %}&nbsp;{{ ('criticality.' ~ issue.criticality.value)|trans }}{% endif %}
-                    &nbsp;·&nbsp;{{ issue.assignee ? issue.assignee.fullName : 'issue.unassigned'|trans }}
+                    &nbsp;·&nbsp;{{ issue.assigneeName ?? 'issue.unassigned'|trans }}
                 </p>
             </div>
 

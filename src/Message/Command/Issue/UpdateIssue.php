@@ -12,14 +12,16 @@ use Symfony\Component\Validator\Constraints as Assert;
  * keeps its value. Each change is checked against its own right and
  * journaled; one refusal refuses them all. Handled by UpdateIssueHandler.
  */
+#[Assert\Expression('this.assigneeId === null or this.assigneeTeamId === null', message: 'An issue is assigned to a person or to a team.')]
 final readonly class UpdateIssue
 {
     public const int NOBODY = 0;
 
     /**
-     * @param array<string, mixed>|null $fields     field id => new value, null to empty it; the fields not listed keep their value
-     * @param int|null                  $assigneeId the new assignee, NOBODY to unassign
-     * @param int|null                  $releaseId  an open release of the project, NOBODY to take the issue out of its release
+     * @param array<string, mixed>|null $fields         field id => new value, null to empty it; the fields not listed keep their value
+     * @param int|null                  $assigneeId     the new assignee, NOBODY to unassign: the team the issue was given to leaves it too
+     * @param int|null                  $assigneeTeamId the team the issue is given to, instead of a person: one or the other
+     * @param int|null                  $releaseId      an open release of the project, NOBODY to take the issue out of its release
      */
     public function __construct(
         public int $actorId,
@@ -36,6 +38,8 @@ final readonly class UpdateIssue
         public ?bool $private = null,
         #[Assert\PositiveOrZero]
         public ?int $releaseId = null,
+        #[Assert\Positive]
+        public ?int $assigneeTeamId = null,
     ) {
     }
 }

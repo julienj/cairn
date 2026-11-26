@@ -93,12 +93,13 @@ final class ListSelectionActionsHandler
         }
 
         $queryBuilder = $this->entityManager->createQueryBuilder()
-            ->select('i', 't', 'p', 'w', 'a')
+            ->select('i', 't', 'p', 'w', 'a', 'at')
             ->from(Issue::class, 'i')
             ->join('i.tracker', 't')
             ->join('i.project', 'p')
             ->join('p.workspace', 'w')
             ->leftJoin('i.assignee', 'a')
+            ->leftJoin('i.assigneeTeam', 'at')
             ->where('i.id IN (:ids)')
             ->setParameter('ids', $ids);
         IssueOrder::apply($queryBuilder);

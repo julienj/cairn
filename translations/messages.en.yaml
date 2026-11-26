@@ -27,6 +27,9 @@ issue:
     subscribers:
         title: Followers
         none: Nobody follows this issue.
+        team: '{0}no member|{1}1 member|]1,Inf[ %count% members'
+        team_unfollow: 'Stop %team% following this issue'
+        team_unfollowed: The team no longer follows this issue.
     board:
         title: Kanban
         list: List
@@ -91,6 +94,7 @@ issue:
         change_property: 'Change %property%'
         workflow: View the workflow
         search_member: Search a member…
+        team: Team
         no_member: No member matches.
         system: Cairn
         'true': Yes
@@ -211,6 +215,7 @@ issue:
         tags: Tags
         assignee: Assignee
         assignee_none: Nobody
+        assignee_teams: Teams
         private: Private issue
         private_help: Hidden from external users.
     list:
@@ -323,6 +328,7 @@ nav:
     issues:
         all: All
         assigned: Assigned to me
+        teams: Assigned to my teams
         created: Created by me
 
 theme:
@@ -399,6 +405,7 @@ my_issues:
     title:
         all: My issues · all
         assigned: My issues · assigned to me
+        teams: My issues · assigned to my teams
         created: My issues · created by me
 
 projects:
@@ -1136,6 +1143,7 @@ admin:
         team_name_taken: 'A team is already named %name%.'
         team_internal_only: '%name% is external: the team %team% is for internal users only.'
         team_internal_only_role: 'The team %team% is external: the role "%role%" is for internal teams only.'
+        team_holds_issues: '{1}An issue is assigned to the team %name%: give it to someone else first.|]1,Inf[ %count% issues are assigned to the team %name%: give them to someone else first.'
         team_not_wider: 'The role "%role%" does not widen the role "%inherited%" the team holds on the workspace.'
         deactivated: '%name% is deactivated: reactivate the account first.'
         already_activated: '%name% already chose a password: they can use "Forgot password?" on the sign-in page.'

@@ -13,7 +13,8 @@ use Doctrine\ORM\QueryBuilder;
  * grouped, then the column it is sorted by, then the default order:
  * status (open, in progress, waiting, closed), criticality (blocking
  * first), latest activity. The query builder names the issue `i`, its
- * tracker `t`, project `p`, workspace `w`, assignee `a` and release `r`;
+ * tracker `t`, project `p`, workspace `w`, assignee `a`, the team it is
+ * given to `at` and release `r`;
  * its place is joined as `step` by whoever reads its status (step()).
  */
 final class IssueOrder
@@ -81,7 +82,7 @@ final class IssueOrder
         return match ($group) {
             IssueGrouping::Place => 'IDENTITY(i.place)',
             IssueGrouping::Criticality => 'i.criticality',
-            IssueGrouping::Assignee => 'IDENTITY(i.assignee)',
+            IssueGrouping::Assignee => \sprintf("CASE WHEN i.assigneeTeam IS NOT NULL THEN CONCAT('%s', IDENTITY(i.assigneeTeam)) ELSE CONCAT('', IDENTITY(i.assignee)) END", IssueGrouping::TEAM),
             IssueGrouping::Project => 'p.id',
             IssueGrouping::Release => 'IDENTITY(i.release)',
         };
@@ -95,14 +96,20 @@ final class IssueOrder
     }
 
     /**
-     * Unassigned issues first, then by name.
+     * Unassigned issues first, then people by name, then teams by name.
      */
     private static function byAssignee(QueryBuilder $queryBuilder, string $role, \SortDirection $order): QueryBuilder
     {
-        return self::by($queryBuilder, $role.'Assigned', 'CASE WHEN a.id IS NULL THEN 0 ELSE 1 END', $order)
+        if (!\in_array('at', $queryBuilder->getAllAliases(), true)) {
+            $queryBuilder->leftJoin('i.assigneeTeam', 'at');
+        }
+
+        return self::by($queryBuilder, $role.'Assigned', 'CASE WHEN a.id IS NOT NULL THEN 1 WHEN at.id IS NOT NULL THEN 2 ELSE 0 END', $order)
             ->addOrderBy('a.lastName', $order)
             ->addOrderBy('a.firstName', $order)
-            ->addOrderBy('a.id', $order);
+            ->addOrderBy('a.id', $order)
+            ->addOrderBy('at.name', $order)
+            ->addOrderBy('at.id', $order);
     }
 
     /**

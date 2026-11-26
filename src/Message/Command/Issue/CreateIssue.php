@@ -11,6 +11,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  * Creates an issue in a tracker, on the initial place of its workflow.
  * Handled by CreateIssueHandler, which returns the Issue.
  */
+#[Assert\Expression('this.assigneeId === null or this.assigneeTeamId === null', message: 'An issue is assigned to a person or to a team.')]
 final readonly class CreateIssue
 {
     /**
@@ -32,6 +33,8 @@ final readonly class CreateIssue
         public array $fields = [],
         public array $attachments = [],
         public array $tagIds = [],
+        #[Assert\Positive]
+        public ?int $assigneeTeamId = null,
     ) {
     }
 }
