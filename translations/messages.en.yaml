@@ -574,7 +574,19 @@ admin:
             members: Members
         tab:
             members: Members
+            access: Access
             settings: Settings
+        access:
+            title: Teams
+            intro: Every member of the team holds the role granted here. Access to a workspace applies to all of its projects; direct access to a project may only widen it.
+            help_workspace: every member of a team holds its role on all the projects of the workspace
+            help_project: every member of a team holds its role on this project
+            empty_team: This team has no access yet.
+            empty_workspace: No team has access to this workspace yet.
+            empty_project: No team holds a role on this project directly.
+            choose_team: Choose a team…
+            search_team: Search for a team…
+            incomplete: Choose the team or where to grant access, and the role.
         members:
             count: '{0}No member|{1}1 member|]1,Inf[ %count% members'
             intro_internal: Only internal users may join this team.
@@ -1123,6 +1135,8 @@ admin:
         in_internal_teams: '%name% is a member of internal teams (%teams%): remove this person from those teams before making them external.'
         team_name_taken: 'A team is already named %name%.'
         team_internal_only: '%name% is external: the team %team% is for internal users only.'
+        team_internal_only_role: 'The team %team% is external: the role "%role%" is for internal teams only.'
+        team_not_wider: 'The role "%role%" does not widen the role "%inherited%" the team holds on the workspace.'
         deactivated: '%name% is deactivated: reactivate the account first.'
         already_activated: '%name% already chose a password: they can use "Forgot password?" on the sign-in page.'
         not_member: '%name% holds no role on %project%.'
@@ -1131,7 +1145,7 @@ admin:
         external_only_from_project: An account created from a project is external.
         config:
             permission_internal_only: 'The role "%role%" is open to external users: this right is for the roles reserved to internal users.'
-            role_held_by_externals: '{1}An external user holds the role "%role%": revoke that access first.|]1,Inf[ %count% accesses of external users carry the role "%role%": revoke them first.'
+            role_held_by_externals: '{1}An external user or team holds the role "%role%": revoke that access first.|]1,Inf[ %count% accesses of external users or teams carry the role "%role%": revoke them first.'
             role_has_internal_permissions: 'The role "%role%" holds rights reserved to internal users: take them away first.'
             role_held: '{1}An access carries the role "%role%": revoke it or give it another role first.|]1,Inf[ %count% accesses carry the role "%role%": revoke them or give them another role first.'
             role_in_actions: 'The role "%role%" triggers actions: %actions%. Take it out of them first.'
@@ -1261,6 +1275,7 @@ project:
         invite_hint: An invitation will be sent by email.
         intro: 'Roles held on the workspace %workspace% apply to all of its projects. A role granted here applies to this project only and may only widen the inherited one.'
         inherited: 'Inherited from the workspace %workspace%'
+        teams_inherited: 'Teams of the workspace %workspace%'
         edit_in_workspace: Edit in the workspace →
         no_inherited: Nobody holds a role on the workspace.
         direct: Access to the project

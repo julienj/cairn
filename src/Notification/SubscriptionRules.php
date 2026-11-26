@@ -15,8 +15,9 @@ use App\Event\IssueCreated;
 use App\Event\IssueTransitioned;
 use App\Event\IssueUpdated;
 use App\Markdown\MarkdownRenderer;
+use App\Message\Query\Project\ListProjectMembers;
+use App\Message\QueryBus;
 use App\Repository\IssueSubscriptionRepository;
-use App\Repository\MembershipRepository;
 use App\Repository\UserRepository;
 use App\Security\AccessControl;
 use Doctrine\ORM\EntityManagerInterface;
@@ -36,7 +37,7 @@ final class SubscriptionRules
 {
     public function __construct(
         private readonly IssueSubscriptionRepository $subscriptions,
-        private readonly MembershipRepository $memberships,
+        private readonly QueryBus $queries,
         private readonly UserRepository $users,
         private readonly AccessControl $access,
         private readonly ConfigRegistry $config,
@@ -130,8 +131,8 @@ final class SubscriptionRules
     }
 
     /**
-     * The members of the project, directly or through its workspace, whose
-     * effective role follows new issues.
+     * The members of the project, directly, through its workspace or
+     * through a team, whose effective role follows new issues.
      *
      * @return list<User>
      */
@@ -140,15 +141,14 @@ final class SubscriptionRules
         $project = $issue->getProject();
         $definition = $this->config->definition();
         $followers = [];
-        foreach ([...$this->memberships->findOnProject($project), ...$this->memberships->findOnWorkspace($project->getWorkspace())] as $membership) {
-            $user = $membership->getUser();
+        foreach ($this->queries->ask(new ListProjectMembers($project)) as $user) {
             $role = $this->access->roleOn($user, $project);
             if (null !== $role && $definition->role($role)->followsNewIssues) {
-                $followers[(int) $user->getId()] = $user;
+                $followers[] = $user;
             }
         }
 
-        return array_values($followers);
+        return $followers;
     }
 
     private function onComment(Comment $comment): void

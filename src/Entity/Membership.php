@@ -16,7 +16,7 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity(repositoryClass: MembershipRepository::class)]
 #[ORM\UniqueConstraint(name: 'uniq_membership_user_workspace', columns: ['user_id', 'workspace_id'])]
 #[ORM\UniqueConstraint(name: 'uniq_membership_user_project', columns: ['user_id', 'project_id'])]
-class Membership
+class Membership implements RoleGrant
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]

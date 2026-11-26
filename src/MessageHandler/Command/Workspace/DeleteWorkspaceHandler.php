@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\MessageHandler\Command\Workspace;
 
 use App\Entity\Membership;
+use App\Entity\TeamAccess;
 use App\Entity\Workspace;
 use App\Message\Command\Workspace\DeleteWorkspace;
 use App\MessageHandler\Command\Project\ProjectRemoval;
@@ -41,6 +42,7 @@ final class DeleteWorkspaceHandler
         }
         $scope = ['workspace' => $workspace->getId()];
         $this->entityManager->createQuery(\sprintf('DELETE FROM %s m WHERE m.workspace = :workspace', Membership::class))->execute($scope);
+        $this->entityManager->createQuery(\sprintf('DELETE FROM %s a WHERE a.workspace = :workspace', TeamAccess::class))->execute($scope);
         $this->entityManager->createQuery(\sprintf('DELETE FROM %s w WHERE w.id = :workspace', Workspace::class))->execute($scope);
         $this->entityManager->detach($workspace);
     }

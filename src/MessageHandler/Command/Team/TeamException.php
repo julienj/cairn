@@ -39,6 +39,21 @@ final class TeamException extends \DomainException implements TranslatableInterf
         return new self(\sprintf('%s is external: the team "%s" is internal.', $userName, $teamName), 'admin.refused.team_internal_only', ['%name%' => $userName, '%team%' => $teamName]);
     }
 
+    public static function unknownRole(string $role): self
+    {
+        return new self(\sprintf('Role "%s" does not exist in the configuration.', $role), 'admin.refused.unknown_role', ['%role%' => $role]);
+    }
+
+    public static function internalOnlyRole(string $roleLabel, string $teamName): self
+    {
+        return new self(\sprintf('Role "%s" cannot be granted to the team "%s", which is external.', $roleLabel, $teamName), 'admin.refused.team_internal_only_role', ['%role%' => $roleLabel, '%team%' => $teamName]);
+    }
+
+    public static function notWiderThanInherited(string $roleLabel, string $inheritedLabel): self
+    {
+        return new self(\sprintf('Role "%s" does not widen the role "%s" the team holds on the workspace.', $roleLabel, $inheritedLabel), 'admin.refused.team_not_wider', ['%role%' => $roleLabel, '%inherited%' => $inheritedLabel]);
+    }
+
     public static function deactivatedMember(string $userName): self
     {
         return new self(\sprintf('%s is deactivated.', $userName), 'admin.refused.deactivated', ['%name%' => $userName]);

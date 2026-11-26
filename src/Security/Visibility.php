@@ -6,6 +6,8 @@ namespace App\Security;
 
 use App\Config\ConfigRegistry;
 use App\Entity\Membership;
+use App\Entity\TeamAccess;
+use App\Entity\TeamMember;
 use App\Entity\User;
 use Doctrine\ORM\QueryBuilder;
 
@@ -26,8 +28,8 @@ final class Visibility
 
     /**
      * Internal users see every project. An external user sees a project
-     * when they hold a membership on it or on its workspace whose role
-     * still exists in the configuration in force.
+     * when they, or a team they are part of, hold a role on it or on its
+     * workspace that still exists in the configuration in force.
      */
     public function restrictProjects(QueryBuilder $queryBuilder, User $viewer): void
     {
@@ -42,8 +44,19 @@ final class Visibility
             ->andWhere('m.role IN (:roles)')
             ->andWhere('m.project = p OR IDENTITY(m.workspace) = IDENTITY(p.workspace)');
 
+        $teamAccess = $queryBuilder->getEntityManager()->createQueryBuilder()
+            ->select('1')
+            ->from(TeamAccess::class, 'ta')
+            ->join(TeamMember::class, 'tm', 'WITH', 'tm.team = ta.team')
+            ->where('tm.user = :viewer')
+            ->andWhere('ta.role IN (:roles)')
+            ->andWhere('ta.project = p OR IDENTITY(ta.workspace) = IDENTITY(p.workspace)');
+
         $queryBuilder
-            ->andWhere($queryBuilder->expr()->exists($membership->getDQL()))
+            ->andWhere($queryBuilder->expr()->orX(
+                $queryBuilder->expr()->exists($membership->getDQL()),
+                $queryBuilder->expr()->exists($teamAccess->getDQL()),
+            ))
             ->setParameter('viewer', $viewer)
             ->setParameter('roles', $this->config->definition()->roleIds());
     }

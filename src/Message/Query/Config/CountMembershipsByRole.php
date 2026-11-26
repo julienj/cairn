@@ -7,7 +7,8 @@ namespace App\Message\Query\Config;
 use App\Message\Query\Query;
 
 /**
- * How many memberships carry each role, by its id.
+ * How many accesses carry each role, by its id: those of people and
+ * those of teams.
  *
  * @implements Query<array<string, int>>
  */

@@ -11,6 +11,7 @@ use App\Entity\Workspace;
 use App\Message\Command\Membership\RevokeMembership;
 use App\Message\Command\Team\AddTeamMember;
 use App\Message\Command\Team\CreateTeam;
+use App\Message\Command\Team\GrantTeamAccess;
 use App\Message\CommandBus;
 use App\Repository\MembershipRepository;
 use App\Tests\KernelHelpers;
@@ -358,6 +359,14 @@ final class AdminTest extends WebTestCase
         self::assertResponseStatusCodeSame(422);
         self::assertSelectorTextContains('form[name="team"]', 'A team is already named hosting.');
 
+        $this->client->request('GET', '/admin/teams/'.$team->getId().'/access');
+        self::assertSelectorTextContains('main', 'This team has no access yet.');
+        self::getContainer()->get(CommandBus::class)->dispatch(new GrantTeamAccess((int) $team->getId(), $this->scene->dupont->getId(), null, 'developer'));
+        $this->client->request('GET', '/admin/teams/'.$team->getId().'/access');
+        self::assertSelectorTextContains('main', 'The whole Maison Dupont workspace');
+        $this->client->request('GET', '/admin/workspaces/MD/access');
+        self::assertSelectorTextContains('main', 'Hosting');
+
         $this->client->request('GET', '/admin/teams/'.$team->getId().'/settings');
         self::assertSelectorNotExists('[name="team[nature]"]', 'whether it is internal does not change');
         $this->client->submitForm('Save', ['team[name]' => 'Hosting & networks']);
@@ -371,7 +380,7 @@ final class AdminTest extends WebTestCase
 
         $this->client->submit($crawler->filter('form[action$="/delete"]')->form());
         self::assertResponseRedirects('/admin/teams');
-        self::assertNull($this->entity(Team::class, ['name' => 'Hosting & networks']));
+        self::assertNull($this->entity(Team::class, ['name' => 'Hosting & networks']), 'its accesses went with it');
     }
 
     public function testMakingAMemberOfAnInternalTeamExternalIsRefusedWithTheReason(): void

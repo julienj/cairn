@@ -4,7 +4,12 @@ declare(strict_types=1);
 
 namespace App\Tests\Controller\Project;
 
+use App\Entity\Team;
 use App\Entity\Tracker;
+use App\Message\Command\Team\AddTeamMember;
+use App\Message\Command\Team\CreateTeam;
+use App\Message\Command\Team\GrantTeamAccess;
+use App\Message\CommandBus;
 use App\Repository\TrackerRepository;
 use App\Tests\Scene\ShopScene;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -46,6 +51,24 @@ final class SettingsTest extends WebTestCase
             $this->client->request('GET', $url);
             self::assertResponseStatusCodeSame(403, $url);
         }
+    }
+
+    public function testTheAccessPageListsPeopleThenTheTeams(): void
+    {
+        $commands = self::getContainer()->get(CommandBus::class);
+        $team = $commands->dispatch(new CreateTeam('Hosting', true));
+        \assert($team instanceof Team);
+        $commands->dispatch(new AddTeamMember((int) $team->getId(), (int) $this->scene->user('marc.petit@cairn.test')->getId()));
+        $commands->dispatch(new GrantTeamAccess((int) $team->getId(), null, $this->scene->shop->getId(), 'developer'));
+
+        $this->signInAs('thomas.girard@cairn.test');
+        $this->client->request('GET', '/MD/SPT/access');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('main', 'Nadia Benali');
+        self::assertSelectorTextContains('main', 'Teams');
+        self::assertSelectorTextContains('main', 'Hosting');
+        self::assertSelectorTextContains('main', 'Marc Petit');
     }
 
     public function testTheManagerCreatesATracker(): void

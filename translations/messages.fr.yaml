@@ -574,7 +574,19 @@ admin:
             members: Membres
         tab:
             members: Membres
+            access: Accès
             settings: Paramètres
+        access:
+            title: Équipes
+            intro: Chaque membre de l'équipe tient le rôle accordé ici. L'accès à un espace vaut pour tous ses projets ; un accès direct à un projet ne peut que l'élargir.
+            help_workspace: chaque membre d'une équipe tient son rôle sur tous les projets de l'espace
+            help_project: chaque membre d'une équipe tient son rôle sur ce projet
+            empty_team: Cette équipe n'a pas encore d'accès.
+            empty_workspace: Aucune équipe n'a encore accès à cet espace.
+            empty_project: Aucune équipe ne tient de rôle directement sur ce projet.
+            choose_team: Choisir une équipe…
+            search_team: Rechercher une équipe…
+            incomplete: Choisissez l'équipe ou l'endroit où accorder l'accès, et le rôle.
         members:
             count: '{0}Aucun membre|{1}1 membre|]1,Inf[ %count% membres'
             intro_internal: Seuls les utilisateurs internes peuvent rejoindre cette équipe.
@@ -1123,6 +1135,8 @@ admin:
         in_internal_teams: '%name% est membre d''équipes internes (%teams%) : retirez cette personne de ces équipes avant de la passer en externe.'
         team_name_taken: 'Une équipe porte déjà le nom %name%.'
         team_internal_only: '%name% est externe : l''équipe %team% est réservée aux utilisateurs internes.'
+        team_internal_only_role: 'L''équipe %team% est externe : le rôle « %role% » est réservé aux équipes internes.'
+        team_not_wider: 'Le rôle « %role% » n''élargit pas le rôle « %inherited% » que l''équipe tient sur l''espace.'
         deactivated: "%name% est désactivé : réactivez d'abord le compte."
         already_activated: '%name% a déjà choisi un mot de passe : « Mot de passe oublié ? » sur la page de connexion lui en donne un nouveau.'
         not_member: "%name% n'a aucun rôle sur %project%."
@@ -1131,7 +1145,7 @@ admin:
         external_only_from_project: Un compte créé depuis un projet est externe.
         config:
             permission_internal_only: 'Le rôle « %role% » est ouvert aux externes : ce droit est pour les rôles réservés aux internes.'
-            role_held_by_externals: '{1}Un utilisateur externe porte le rôle « %role% » : révoquez d''abord cet accès.|]1,Inf[ %count% accès d''utilisateurs externes portent le rôle « %role% » : révoquez-les d''abord.'
+            role_held_by_externals: '{1}Un utilisateur ou une équipe externe porte le rôle « %role% » : révoquez d''abord cet accès.|]1,Inf[ %count% accès d''utilisateurs ou d''équipes externes portent le rôle « %role% » : révoquez-les d''abord.'
             role_has_internal_permissions: 'Le rôle « %role% » a des droits réservés aux internes : retirez-les d''abord.'
             role_held: '{1}Un accès porte le rôle « %role% » : révoquez-le ou donnez-lui d''abord un autre rôle.|]1,Inf[ %count% accès portent le rôle « %role% » : révoquez-les ou donnez-leur d''abord un autre rôle.'
             role_in_actions: 'Le rôle « %role% » déclenche des actions : %actions%. Retirez-le d''abord de ces actions.'
@@ -1261,6 +1275,7 @@ project:
         invite_hint: Une invitation sera envoyée par e-mail.
         intro: "Les rôles détenus sur l'espace %workspace% valent pour tous ses projets. Un rôle accordé ici ne vaut que pour ce projet et ne peut qu'élargir le rôle hérité."
         inherited: "Hérités de l'espace %workspace%"
+        teams_inherited: "Équipes de l'espace %workspace%"
         edit_in_workspace: "Modifier dans l'espace →"
         no_inherited: "Personne n'a de rôle sur l'espace."
         direct: Accès du projet

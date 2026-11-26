@@ -15,6 +15,7 @@ use App\Entity\Membership;
 use App\Entity\Project;
 use App\Entity\Release;
 use App\Entity\Tag;
+use App\Entity\TeamAccess;
 use App\Entity\Tracker;
 use App\Forge\ForgeApiException;
 use App\Forge\ForgeApiLocator;
@@ -43,7 +44,7 @@ use Symfony\Component\Messenger\Stamp\DispatchAfterCurrentBusStamp;
 final class ProjectRemoval
 {
     /** What belongs to a project beside its issues, in the order the foreign keys allow. */
-    private const array BELONGINGS = [AutomationRule::class, Release::class, Tag::class, Budget::class, Tracker::class, Import::class, CodeRepository::class, Membership::class];
+    private const array BELONGINGS = [AutomationRule::class, Release::class, Tag::class, Budget::class, Tracker::class, Import::class, CodeRepository::class, Membership::class, TeamAccess::class];
 
     public function __construct(
         private readonly IssueEraser $eraser,

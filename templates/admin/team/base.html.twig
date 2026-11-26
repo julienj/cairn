@@ -1,4 +1,4 @@
-{# Base of the pages of a team: its name, whether it is internal, its tabs (one route each). Pages fill `team_content`. #}
+{# Base of the pages of a team: its name, whether it is internal, its tabs (one route each: members, accesses, settings). Pages fill `team_content`. #}
 {% extends 'layout/admin.html.twig' %}
 
 {% block page_title %}{{ team.name }}{% endblock %}
@@ -20,6 +20,7 @@
         </div>
         <nav class="flex items-center gap-1 border-b border-line">
             <twig:Ui:Tab href="{{ path('app_admin_team', teamRoute) }}" :active="app.current_route == 'app_admin_team'">{{ 'admin.team.tab.members'|trans }}</twig:Ui:Tab>
+            <twig:Ui:Tab href="{{ path('app_admin_team_access', teamRoute) }}" :active="app.current_route == 'app_admin_team_access'">{{ 'admin.team.tab.access'|trans }}</twig:Ui:Tab>
             <twig:Ui:Tab href="{{ path('app_admin_team_settings', teamRoute) }}" icon="settings" right :active="app.current_route == 'app_admin_team_settings'">{{ 'admin.team.tab.settings'|trans }}</twig:Ui:Tab>
         </nav>
         {% block team_content %}{% endblock %}

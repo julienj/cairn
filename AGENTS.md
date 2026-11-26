@@ -99,6 +99,7 @@ translation keys. Never mix them.
 | `Project`        | Project           | Projet           |                                                                  |
 | `Role`           | Role              | Rôle             | Managed in the administration, with its permissions and how it moves issues: freely, or by the actions of the workflows. |
 | `Membership`     | Access            | Accès            | Role of a user on a project or a workspace.                      |
+| `Team`           | Team              | Équipe           | People who answer as one, internal or external for good; holds a role on a project or a workspace as a user does (`TeamAccess`). |
 | `internal` flag  | Internal/External | Interne/Externe  | Internal user (who runs the instance) vs external user (a client). |
 | `company`        | Company           | Société          | Free text on a user.                                             |
 | `private`        | Private           | Privé            | Hidden from external users.                                      |
@@ -221,8 +222,9 @@ src/
 ### Authorization and visibility
 
 - **One authorization service.** `Security/AccessControl` takes the acting
-  user as an explicit argument and resolves the effective role (project or
-  workspace membership, the broadest wins). Handlers call it directly;
+  user as an explicit argument and resolves the effective role (a
+  membership or the access of a team, on the project or its workspace, the
+  broadest wins). Handlers call it directly;
   voters are thin adapters for `#[IsGranted]` and Twig. The signed-in user
   is read from `Security/Viewer`.
 - **The account says what one sees, the role what one does.** Being
@@ -253,6 +255,19 @@ src/
   workflow only: a role that is freed leaves those that named it, for
   good (`UpdateRoleHandler`), which its dialog says before it is done. An
   action may name no role: nobody takes it, and the diagram leaves it out.
+- **A team holds a role as a person does, and nothing else.**
+  `AccessControl::roleOn()` reads the accesses of the teams someone is
+  part of with their memberships (`RoleGrant`): the broadest wins,
+  whoever it was granted to, and a team never narrows what a member
+  holds. The SQL side is in `Visibility::restrictProjects()` and
+  `ListProjectMembersHandler`. A team is internal or external for good:
+  an internal team takes internal users only, and an internal-only role
+  goes to an internal team only, so the rule is read on the team and
+  nobody walks its members. On a project its role must widen the one the
+  team holds on the workspace; it is compared with itself only, never
+  with what its members hold. Teams are the administration's, and a
+  project manager grants one a role on their project. A referent stays a
+  person: `Membership` alone carries the mark.
 - **Four permissions are internal-only** (`Permission::internalOnly()`):
   those that show what external users never see. What is only risky goes
   to any role an administrator chooses.

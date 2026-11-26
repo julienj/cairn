@@ -27,7 +27,8 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * The teams: people who answer as one, internal or external. A team page
- * has a route per tab: its members, its settings (name, deletion).
+ * has a route per tab: its members, the roles it holds, its settings
+ * (name, deletion).
  */
 #[IsGranted('ROLE_ADMIN')]
 #[Route('/admin/teams')]
@@ -73,6 +74,12 @@ final class TeamController extends AbstractController
     public function members(#[MapEntity] Team $team): Response
     {
         return $this->render('admin/team/members.html.twig', ['team' => $team]);
+    }
+
+    #[Route('/{id}/access', name: 'app_admin_team_access', requirements: ['id' => '\\d+'], methods: ['GET'])]
+    public function access(#[MapEntity] Team $team): Response
+    {
+        return $this->render('admin/team/access.html.twig', ['team' => $team]);
     }
 
     #[Route('/{id}/settings', name: 'app_admin_team_settings', requirements: ['id' => '\\d+'], methods: ['GET', 'POST'])]

@@ -201,7 +201,7 @@ final class ConfigurationTest extends WebTestCase
         $this->client->request('GET', '/admin/configuration/role/client');
         $this->client->submitForm('Save', ['role[internalOnly]' => true]);
         self::assertResponseStatusCodeSame(422);
-        self::assertSelectorTextContains('turbo-frame#modal', 'accesses of external users carry the role "Client"');
+        self::assertSelectorTextContains('turbo-frame#modal', 'accesses of external users or teams carry the role "Client"');
 
         // What cannot be deleted says why, beside a button that cannot be pressed.
         $this->client->request('GET', '/admin/configuration/role/client');
