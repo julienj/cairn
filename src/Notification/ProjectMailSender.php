@@ -8,6 +8,7 @@ use App\Entity\Enum\Criticality;
 use App\Entity\Enum\MailGrouping;
 use App\Entity\PendingNotification;
 use App\Repository\IssueSubscriptionRepository;
+use App\Repository\IssueTeamSubscriptionRepository;
 use App\Repository\PendingNotificationRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -49,6 +50,7 @@ final class ProjectMailSender
     public function __construct(
         private readonly PendingNotificationRepository $pending,
         private readonly IssueSubscriptionRepository $subscriptions,
+        private readonly IssueTeamSubscriptionRepository $teamSubscriptions,
         private readonly ChangeFilter $filter,
         private readonly IssueMailer $mailer,
         private readonly EntityManagerInterface $entityManager,
@@ -176,7 +178,9 @@ final class ProjectMailSender
         foreach ($rows as $row) {
             $issue = $row->getIssue();
             $issueId = (int) $issue->getId();
-            $followed[$issueId] ??= $recipient->isActive() && $recipient->getMailGrouping()->sendsMails() && null !== $this->subscriptions->findOne($issue, $recipient);
+            $followed[$issueId] ??= $recipient->isActive() && $recipient->getMailGrouping()->sendsMails()
+                // still following when the mail leaves: by themselves, or through a team they are part of
+                && (null !== $this->subscriptions->findOne($issue, $recipient) || $this->teamSubscriptions->followsThroughTeam($issue, $recipient));
             if (!$followed[$issueId]) {
                 continue;
             }

@@ -7,12 +7,17 @@ namespace App\Tests\Notification;
 use App\Entity\Comment;
 use App\Entity\Enum\Criticality;
 use App\Entity\Enum\MailGrouping;
+use App\Entity\Team;
 use App\Entity\Tracker;
 use App\Message\Command\Automation\CreateRule;
 use App\Message\Command\Issue\AddComment;
 use App\Message\Command\Issue\ApplyTransition;
 use App\Message\Command\Issue\UnfollowIssue;
 use App\Message\Command\Issue\UpdateIssue;
+use App\Message\Command\Team\AddTeamMember;
+use App\Message\Command\Team\CreateTeam;
+use App\Message\Command\Team\GrantTeamAccess;
+use App\Message\Command\Team\RemoveTeamMember;
 use App\Message\Command\User\UpdateUser;
 use App\Message\CommandBus;
 use App\Message\Notification\NotifyIssueChange;
@@ -116,6 +121,34 @@ final class ProjectMailSenderTest extends KernelTestCase
         foreach ($comments as $comment) {
             self::assertEmailHtmlBodyContains($toClaire, \sprintf('href="http://localhost/MD/SPT/issues/%d#comment-%d"', $issue->getNumber(), $comment->getId()));
         }
+    }
+
+    public function testAMailNamesTheTeamTheIssueIsGivenToAndReachesItsMembers(): void
+    {
+        $marc = $this->fixtures->access->user('marc@agency.test', internal: true);
+        $team = $this->commands->dispatch(new CreateTeam('Hosting', true));
+        self::assertInstanceOf(Team::class, $team);
+        $this->commands->dispatch(new AddTeamMember((int) $team->getId(), (int) $marc->getId()));
+        $this->commands->dispatch(new GrantTeamAccess((int) $team->getId(), $this->fixtures->access->workspace->getId(), null, 'developer'));
+        $issue = $this->fixtures->createIssue($this->fixtures->client);
+        $this->async->reset();
+
+        $this->commands->dispatch(new UpdateIssue((int) $this->fixtures->manager->getId(), $issue->getKey(), assigneeTeamId: $team->getId()));
+        $this->queue();
+        $this->clock->sleep(ProjectMailSender::CALM);
+        self::assertSame(2, $this->sender->sendDue(), 'Claire, who follows it, and Marc, through his team');
+
+        $toMarc = $this->emailTo('marc@agency.test');
+        self::assertEmailHtmlBodyContains($toMarc, 'Hosting', 'the card of the issue names who holds it, and the change says who it went to');
+        self::assertEmailHtmlBodyNotContains($toMarc, 'Unassigned');
+        self::assertEmailHtmlBodyContains($this->emailTo('claire@client.test'), 'Hosting');
+
+        // Whoever left the team since is not written to, though the change waited for them.
+        $this->commands->dispatch(new AddComment((int) $this->fixtures->manager->getId(), $issue->getKey(), 'Any news?'));
+        $this->queue();
+        $this->commands->dispatch(new RemoveTeamMember((int) $team->getId(), (int) $marc->getId()));
+        $this->clock->sleep(ProjectMailSender::CALM);
+        self::assertSame(1, $this->sender->sendDue(), 'Claire alone');
     }
 
     public function testTheIssuesOfAProjectShareAMailAndTwoProjectsDoNot(): void
