@@ -6,10 +6,12 @@ namespace App\Tests\Controller\Project;
 
 use App\Entity\WidgetSite;
 use App\Entity\WidgetToken;
+use App\Message\Command\Config\GrantPermission;
 use App\Message\Command\Widget\AddWidgetSite;
 use App\Message\CommandBus;
 use App\Repository\WidgetSiteRepository;
 use App\Repository\WidgetTokenRepository;
+use App\Security\Permission;
 use App\Tests\Scene\ShopScene;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -52,6 +54,20 @@ final class WidgetSettingsTest extends WebTestCase
         }
     }
 
+    public function testThePermissionOfTheWidgetOpensItsPageAndNoOther(): void
+    {
+        self::getContainer()->get(CommandBus::class)->dispatch(new GrantPermission('developer', Permission::WidgetManage));
+        $this->signInAs('nadia.benali@cairn.test');
+
+        $this->client->request('GET', '/MD/SPT/issues');
+        self::assertSelectorExists('aside a[href="/MD/SPT/settings/widget"]');
+        self::assertSelectorNotExists('aside a[href="/MD/SPT/settings/general"]');
+        $this->client->request('GET', '/MD/SPT/settings/widget');
+        self::assertResponseIsSuccessful();
+        $this->client->request('GET', '/MD/SPT/settings/general');
+        self::assertResponseStatusCodeSame(403);
+    }
+
     public function testTheManagerDeclaresASiteByItsAddress(): void
     {
         $this->signInAs('thomas.girard@cairn.test');
@@ -86,6 +102,8 @@ final class WidgetSettingsTest extends WebTestCase
         $this->client->submitForm('Add the site', ['widget_site[address]' => 'https://staging.maison-dupont.test']);
         self::assertResponseStatusCodeSame(422);
         self::assertSelectorTextContains('form[name="widget_site"]', 'already has the site');
+
+        self::assertSame('https://xn--caf-dma.example.fr', WidgetSite::normalise('https://Café.example.fr/'), 'an accented domain is kept as the browsers send it');
     }
 
     public function testASiteWithoutHttpsIsSaidToHaveNoScreenshot(): void
@@ -106,8 +124,8 @@ final class WidgetSettingsTest extends WebTestCase
         $other = $this->site('https://preprod.maison-dupont.test');
         $entityManager = self::getContainer()->get(EntityManagerInterface::class);
         $claire = $this->scene->user('claire.martin@maison-dupont.test');
-        $entityManager->persist(new WidgetToken($claire, $site->getProject(), $site->getOrigin(), WidgetToken::newSecret()));
-        $entityManager->persist(new WidgetToken($claire, $other->getProject(), $other->getOrigin(), WidgetToken::newSecret()));
+        $entityManager->persist(new WidgetToken($claire, $site, WidgetToken::newSecret()));
+        $entityManager->persist(new WidgetToken($claire, $other, WidgetToken::newSecret()));
         $entityManager->flush();
 
         $this->signInAs('thomas.girard@cairn.test');
@@ -124,7 +142,7 @@ final class WidgetSettingsTest extends WebTestCase
         $entityManager->clear();
         self::assertNull(self::getContainer()->get(WidgetSiteRepository::class)->find($site->getId()));
         $tokens = self::getContainer()->get(WidgetTokenRepository::class)->findAll();
-        self::assertSame(['https://preprod.maison-dupont.test'], array_map(static fn (WidgetToken $token): string => $token->getOrigin(), $tokens));
+        self::assertSame(['https://preprod.maison-dupont.test'], array_map(static fn (WidgetToken $token): string => $token->getSite()->getOrigin(), $tokens));
     }
 
     private function site(string $address): WidgetSite

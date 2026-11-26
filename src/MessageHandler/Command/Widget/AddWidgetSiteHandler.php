@@ -28,7 +28,7 @@ final class AddWidgetSiteHandler
     public function __invoke(AddWidgetSite $command): WidgetSite
     {
         $project = $this->projects->find($command->projectId) ?? throw WidgetException::notFound('Project', $command->projectId);
-        $this->actor->denyUnlessGranted($command->actorId, Permission::ProjectConfigure, $project);
+        $this->actor->denyUnlessGranted($command->actorId, Permission::WidgetManage, $project);
         $origin = WidgetSite::normalise($command->address) ?? throw WidgetException::notAnOrigin(trim($command->address));
         // Lock the project row so that the same site declared twice at once is refused once.
         $this->entityManager->lock($project, LockMode::PESSIMISTIC_WRITE);

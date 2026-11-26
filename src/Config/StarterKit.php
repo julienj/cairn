@@ -180,6 +180,7 @@ final class StarterKit
                 Permission::TagManage->value => self::INTERNAL,
                 Permission::AutomationManage->value => self::MANAGERS,
                 Permission::RepositoryManage->value => self::INTERNAL,
+                Permission::WidgetManage->value => self::MANAGERS,
                 Permission::ProjectManageMembers->value => self::MANAGERS,
                 Permission::ReleaseManage->value => self::MANAGERS,
                 Permission::BudgetManage->value => self::MANAGERS,

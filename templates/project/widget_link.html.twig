@@ -29,7 +29,7 @@
                 <twig:User:Avatar :user="app.user" size="sm" />
                 <span class="min-w-0 truncate">{{ app.user.fullName }} · {{ app.user.email }}</span>
             </div>
-            <form method="post" action="{{ path('app_widget_link_confirm', { workspaceKey: project.workspace.key, projectKey: project.key }) }}" class="flex justify-end gap-2" data-turbo="false">
+            <form method="post" action="{{ path('app_widget_link_confirm', { workspaceKey: project.workspace.key, projectKey: project.key, challenge: challenge }) }}" class="flex justify-end gap-2" data-turbo="false">
                 <input type="hidden" name="_token" value="{{ csrf_token('submit') }}" data-controller="csrf-protection">
                 <twig:Ui:Button variant="ghost" data-controller="widget-linked" data-widget-linked-silent-value="true" data-action="widget-linked#leave">{{ 'admin.cancel'|trans }}</twig:Ui:Button>
                 <twig:Ui:Button type="submit" variant="primary">{{ 'widget.link.confirm'|trans }}</twig:Ui:Button>

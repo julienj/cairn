@@ -18,7 +18,8 @@ const AJAX = ['fetch', 'xmlhttprequest'];
  * what a request carried or received is read.
  *
  * - fetch and XMLHttpRequest are watched, for their method and for the
- *   requests that got no answer at all (status 0);
+ *   requests that got no answer at all (status 0), but not those the
+ *   page gave up itself (abort);
  * - everything else the browser timed with a status in error is noted as
  *   it tells it, from the start of the page, before the widget was there
  *   too (not Safari, which gives no status);
@@ -70,7 +71,10 @@ export function watchNetwork(ignored, noted) {
 
             return response;
         }, (error) => {
-            ajax(method, address, 0);
+            // given up by the page itself (AbortController): not a failure of the network
+            if ('AbortError' !== error?.name) {
+                ajax(method, address, 0);
+            }
             throw error;
         });
     };
@@ -81,14 +85,16 @@ export function watchNetwork(ignored, noted) {
         const opened = new WeakMap();
         XMLHttpRequest.prototype.open = function (method, address) {
             if (!opened.has(this)) {
+                // given up by the page itself: not a failure of the network
+                this.addEventListener('abort', () => { opened.get(this).given = true; });
                 this.addEventListener('loadend', () => {
-                    if (0 === this.status || this.status >= 400) {
-                        const last = opened.get(this);
+                    const last = opened.get(this);
+                    if (!last.given && (0 === this.status || this.status >= 400)) {
                         ajax(last.method, last.address, this.status);
                     }
                 });
             }
-            opened.set(this, { method, address });
+            opened.set(this, { method, address, given: false });
 
             return open.apply(this, arguments);
         };

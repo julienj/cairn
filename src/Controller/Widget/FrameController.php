@@ -6,11 +6,14 @@ namespace App\Controller\Widget;
 
 use App\Controller\Project\CurrentProject;
 use App\Entity\Project;
+use App\Entity\User;
 use App\Entity\WidgetSite;
 use App\Entity\Workspace;
 use App\Message\Command\Widget\RedeemWidgetLink;
+use App\Message\Command\Widget\UnlinkWidget;
 use App\Message\CommandBus;
 use App\Repository\WidgetSiteRepository;
+use App\Security\WidgetTokenHandler;
 use App\Widget\FrameHeaders;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -18,13 +21,15 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * What the widget of a project answers before anybody is known: whether
  * a site is one of its own (what the script of the site asks before it
  * shows its button), the frame the site puts in its panel, and the
- * exchange that gives that frame its token. Each is asked in the name of
+ * exchange that gives that frame its token; and, with that token, the
+ * way to give it up. Each is asked in the name of
  * a site and answers that site only: for any other, as for a project
  * without a widget or one that does not exist, everything here is a 404,
  * so that nobody learns from outside which projects there are nor where
@@ -92,6 +97,19 @@ final class FrameController extends AbstractController
         $token = \is_string($verifier) ? $this->commands->dispatch(new RedeemWidgetLink((int) $project->getId(), $verifier)) : null;
 
         return null === $token ? new Response(null, Response::HTTP_NO_CONTENT) : self::secret(['token' => $token]);
+    }
+
+    /**
+     * The frame gives up the token it signs this request with: the account
+     * is no longer linked in this browser, whatever its rights are by now.
+     */
+    #[Route('/unlink', name: 'app_widget_unlink', methods: ['POST'])]
+    public function unlink(#[CurrentProject] Project $project, #[CurrentUser] User $user, Request $request): Response
+    {
+        $token = WidgetTokenHandler::tokenOf($request) ?? throw $this->createAccessDeniedException('Only a widget token gives itself up.');
+        $this->commands->dispatch(new UnlinkWidget((int) $user->getId(), (int) $token->getId()));
+
+        return new Response(null, Response::HTTP_NO_CONTENT);
     }
 
     /**

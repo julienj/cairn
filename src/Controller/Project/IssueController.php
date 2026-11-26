@@ -11,7 +11,7 @@ use App\Entity\Workspace;
 use App\Message\Query\Issue\IssueDetail;
 use App\Message\Query\Issue\ShowIssue;
 use App\Message\QueryBus;
-use App\Widget\TechnicalReport;
+use App\Repository\IssueReportRepository;
 use App\Workflow\WorkflowProvider;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -63,9 +63,10 @@ final class IssueController extends AbstractController
         #[CurrentUser]
         User $viewer,
         int $number,
+        IssueReportRepository $reports,
     ): Response {
         $detail = $this->detail($project, $viewer, $number);
-        $report = TechnicalReport::from($detail->issue->getReport()) ?? throw $this->createNotFoundException(\sprintf('%s has no technical report.', $detail->issue->getKey()));
+        $report = $reports->reportOf($detail->issue) ?? throw $this->createNotFoundException(\sprintf('%s has no technical report.', $detail->issue->getKey()));
 
         return $this->renderWithDialog($request, 'project/issue.html.twig', ['project' => $project, 'detail' => $detail, 'workflow' => null, 'report' => $report], static fn (): array => []);
     }

@@ -1556,8 +1556,20 @@ widget:
     sent:
         title: 'Issue %key% created'
         text: The team of the project is told.
+        report_lost: The technical report could not be attached to it.
         open: Open it in Cairn
         another: Report another problem
+
+connected_site:
+    title: Connected sites
+    intro: "You signed in on these sites to report problems from them. Disconnecting a site deletes nothing: you will simply be asked to sign in again there next time."
+    connected_on: 'Connected on %date%'
+    expires_on: 'Expires on %date%'
+    disconnect: Disconnect
+    disconnect_confirm: This browser will have to sign in again on this site.
+    disconnected: 'Site %site% disconnected.'
+    empty: No connected site
+    empty_hint: A site shows here once you sign in on it to report a problem.
 
 release:
     title: Releases
@@ -1609,6 +1621,7 @@ account:
         profile: Profile
         notifications: Notifications
         security: Security
+        sites: Connected sites
         two_factor: Two-factor authentication
         integrations: Integrations
         api: API
@@ -1814,6 +1827,10 @@ permission:
         manage:
             label: Manage repositories
             help: Link the code repositories of the project, install and remove their webhooks, and unlink them.
+    widget:
+        manage:
+            label: Manage the widget
+            help: Declare the sites the widget of the project is shown on, and remove them, which signs out whoever connected there.
     release:
         manage:
             label: Manage releases

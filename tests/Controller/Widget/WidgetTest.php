@@ -12,12 +12,14 @@ use App\Entity\Tracker;
 use App\Entity\User;
 use App\Entity\WidgetToken;
 use App\Message\Command\Project\UpdateProject;
+use App\Message\Command\User\ChangePassword;
 use App\Message\Command\Widget\AddWidgetSite;
 use App\Message\Command\Widget\LinkWidget;
 use App\Message\Command\Widget\RedeemWidgetLink;
 use App\Message\Command\Widget\RemoveWidgetSite;
 use App\Message\CommandBus;
 use App\MessageHandler\Command\Widget\WidgetException;
+use App\Repository\IssueReportRepository;
 use App\Repository\IssueRepository;
 use App\Repository\IssueTagRepository;
 use App\Repository\ProjectRepository;
@@ -57,6 +59,8 @@ final class WidgetTest extends WebTestCase
     {
         $this->client = self::createClient();
         $this->scene = ShopScene::load(self::getContainer());
+        // the exchange of the token has its pace, by address: each test starts with all of it
+        self::getContainer()->get('cache.rate_limiter')->clear();
         $this->shop = $this->scene->issue('MD-SPT-1')->getProject();
         $this->commands()->dispatch(new AddWidgetSite((int) $this->scene->user(self::THOMAS)->getId(), (int) $this->shop->getId(), self::SITE));
     }
@@ -134,7 +138,7 @@ final class WidgetTest extends WebTestCase
 
         // nothing was started: the page of the link says so, and agrees to nothing
         $this->client->loginUser($this->scene->user(self::CLAIRE));
-        $this->client->request('GET', '/MD/SPT/widget/link');
+        $this->client->request('GET', '/MD/SPT/widget/link/'.$challenge);
         self::assertSelectorTextContains('main', 'This link has expired');
         self::assertSelectorNotExists('main form');
     }
@@ -149,15 +153,15 @@ final class WidgetTest extends WebTestCase
 
         $pair = $this->pair();
         $this->client->request('GET', '/MD/SPT/widget/connect?site='.urlencode(self::SITE).'&challenge='.$pair['challenge'], server: self::FROM_THE_FRAME);
-        self::assertResponseRedirects('/MD/SPT/widget/link');
+        self::assertResponseRedirects('/MD/SPT/widget/link/'.$pair['challenge']);
         $this->client->followRedirect();
         self::assertResponseRedirects('/login');
         self::assertNull($this->redeem($pair['verifier']), 'nobody agreed yet');
 
-        $this->client->request('GET', '/MD/SPT/widget/link');
+        $this->client->request('GET', '/MD/SPT/widget/link/'.$pair['challenge']);
         $this->client->followRedirect();
         $this->client->submitForm('Sign in', ['email' => self::CLAIRE, 'password' => 'a password of the test']);
-        self::assertResponseRedirects('http://localhost/MD/SPT/widget/link', null, 'back to where the sign-in page was asked from');
+        self::assertResponseRedirects('http://localhost/MD/SPT/widget/link/'.$pair['challenge'], null, 'back to where the sign-in page was asked from');
         $this->client->followRedirect();
         self::assertSelectorTextContains('main', 'Link your Cairn account to this site?');
         self::assertSelectorTextContains('main', 'staging.maison-dupont.test');
@@ -165,7 +169,7 @@ final class WidgetTest extends WebTestCase
         self::assertResponseHeaderSame('X-Frame-Options', 'DENY');
         self::assertNull($this->redeem($pair['verifier']), 'reading the page is not agreeing');
 
-        $this->client->request('GET', '/MD/SPT/widget/link');
+        $this->client->request('GET', '/MD/SPT/widget/link/'.$pair['challenge']);
         $this->client->submitForm('Link my account');
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('main', 'Your account is linked');
@@ -177,7 +181,7 @@ final class WidgetTest extends WebTestCase
 
         $token = self::getContainer()->get(EntityManagerInterface::class)->getRepository(WidgetToken::class)->findOneBy(['hash' => WidgetToken::hash($secret)]);
         self::assertNotNull($token);
-        self::assertSame([self::CLAIRE, 'MD-SPT', self::SITE], [$token->getUser()->getEmail(), $token->getProject()->getIssuePrefix(), $token->getOrigin()]);
+        self::assertSame([self::CLAIRE, 'MD-SPT', self::SITE], [$token->getUser()->getEmail(), $token->getSite()->getProject()->getIssuePrefix(), $token->getSite()->getOrigin()]);
     }
 
     public function testOnlyWhoMayCreateIssuesLinksTheirAccount(): void
@@ -274,6 +278,69 @@ final class WidgetTest extends WebTestCase
         self::assertResponseStatusCodeSame(401, 'the site removed');
     }
 
+    public function testAnAccountIsTakenBackByItsFrameOrByAChangeOfItsPassword(): void
+    {
+        $secret = $this->link(self::CLAIRE);
+        $this->widget('POST', '/widget/MD/SPT/unlink', null);
+        self::assertResponseStatusCodeSame(401, 'only a token gives itself up');
+        $this->widget('POST', '/widget/MD/SPT/unlink', $secret);
+        self::assertResponseStatusCodeSame(204);
+        $this->widget('GET', '/widget/MD/SPT/report', $secret);
+        self::assertResponseStatusCodeSame(401, 'the token its frame gave up');
+
+        $secret = $this->link(self::CLAIRE);
+        $claire = $this->account(self::CLAIRE);
+        $claire->setPassword(self::getContainer()->get(UserPasswordHasherInterface::class)->hashPassword($claire, 'the old password'));
+        self::getContainer()->get(EntityManagerInterface::class)->flush();
+        $this->commands()->dispatch(new ChangePassword((int) $claire->getId(), 'the old password', 'a new password'));
+        $this->widget('GET', '/widget/MD/SPT/report', $secret);
+        self::assertResponseStatusCodeSame(401, 'a new password links the account nowhere');
+    }
+
+    public function testTheExchangeOfTheTokenKeepsToItsPace(): void
+    {
+        $this->client->request('POST', '/widget/MD/SPT/token', server: ['CONTENT_TYPE' => 'application/json'], content: (string) json_encode(['site' => self::SITE]));
+        self::assertResponseIsSuccessful();
+        // what is left of the pace of this address, taken at once
+        self::getContainer()->get('limiter.widget_link')->create('127.0.0.1')->consume(119);
+        $this->client->request('POST', '/widget/MD/SPT/token', server: ['CONTENT_TYPE' => 'application/json'], content: (string) json_encode(['site' => self::SITE]));
+        self::assertResponseStatusCodeSame(429);
+        self::assertResponseHasHeader('Retry-After');
+        $this->client->request('GET', '/widget/MD/SPT/site', server: ['HTTP_ORIGIN' => self::SITE]);
+        self::assertResponseIsSuccessful('asking whether a site is known has no pace');
+    }
+
+    public function testTwoSitesOfAProjectAreLinkedSideBySide(): void
+    {
+        $other = 'https://admin.maison-dupont.test';
+        $this->commands()->dispatch(new AddWidgetSite((int) $this->scene->user(self::THOMAS)->getId(), (int) $this->shop->getId(), $other));
+        $front = $this->pair();
+        $back = $this->pair();
+
+        // two windows wait for the same person at once: the one of the front office, then the one of the back office
+        $this->client->loginUser($this->scene->user(self::CLAIRE));
+        $this->client->request('GET', '/MD/SPT/widget/connect?site='.urlencode(self::SITE).'&challenge='.$front['challenge'], server: self::FROM_THE_FRAME);
+        $first = $this->client->followRedirect();
+        self::assertSelectorTextContains('main', 'staging.maison-dupont.test');
+        $this->client->request('GET', '/MD/SPT/widget/connect?site='.urlencode($other).'&challenge='.$back['challenge'], server: ['HTTP_SEC_FETCH_SITE' => 'same-origin', 'HTTP_REFERER' => 'http://localhost/widget/MD/SPT?site='.urlencode($other)]);
+        $second = $this->client->followRedirect();
+        self::assertSelectorTextContains('main', 'admin.maison-dupont.test');
+
+        // each agrees to what it shows
+        $this->client->submit($first->selectButton('Link my account')->form());
+        self::assertResponseIsSuccessful();
+        $this->client->submit($second->selectButton('Link my account')->form());
+        self::assertResponseIsSuccessful();
+        $this->client->getCookieJar()->clear();
+
+        $tokens = self::getContainer()->get(EntityManagerInterface::class)->getRepository(WidgetToken::class);
+        foreach ([[$front, self::SITE], [$back, $other]] as [$pair, $site]) {
+            $secret = $this->redeem($pair['verifier']);
+            self::assertNotNull($secret, $site.' was linked');
+            self::assertSame($site, $tokens->findOneBy(['hash' => WidgetToken::hash($secret)])?->getSite()->getOrigin());
+        }
+    }
+
     // --- reporting a problem
 
     public function testTheFormAsksWhatTheCategoryRequiresAndWhatTheReporterMayQualify(): void
@@ -295,7 +362,7 @@ final class WidgetTest extends WebTestCase
 
         // another category: the form is drawn again for it with what was typed, and nothing is created
         $before = self::getContainer()->get(IssueRepository::class)->count([]);
-        $this->widget('POST', '/widget/MD/SPT/report', $this->link(self::CLAIRE), ['report' => ['tracker' => (string) $feature->getId(), 'title' => 'A wish list', 'description' => ''], 'refresh' => '1', 'attachments' => ['2f1c1d1e-0b7a-4c58-9d0e-6a3b1f2c4d5e' => 'capture.png']]);
+        $this->widget('POST', '/widget/MD/SPT/report/redraw', $this->link(self::CLAIRE), ['report' => ['tracker' => (string) $feature->getId(), 'title' => 'A wish list', 'description' => ''], 'attachments' => ['2f1c1d1e-0b7a-4c58-9d0e-6a3b1f2c4d5e' => 'capture.png']]);
         self::assertResponseIsSuccessful();
         self::assertSelectorExists(\sprintf('select[name="report[tracker]"] option[value="%d"][selected]', $feature->getId()));
         self::assertInputValueSame('report[title]', 'A wish list');
@@ -309,7 +376,7 @@ final class WidgetTest extends WebTestCase
         self::assertSelectorExists('select[name="report[tracker]"] option:contains("Internal task")');
         self::assertSelectorExists('[name="report[private]"]');
         self::assertSelectorTextNotContains('form[name="report"]', 'Everyone on the project will see this issue.');
-        $this->widget('POST', '/widget/MD/SPT/report', $this->link(self::THOMAS), ['report' => ['tracker' => (string) $this->tracker('Internal task')->getId()], 'refresh' => '1']);
+        $this->widget('POST', '/widget/MD/SPT/report/redraw', $this->link(self::THOMAS), ['report' => ['tracker' => (string) $this->tracker('Internal task')->getId()]]);
         self::assertSelectorNotExists('[name="report[private]"]', 'an internal category is private whatever one chooses');
         self::assertSelectorTextContains('form[name="report"] footer', 'Private category: hidden from external users.');
         self::assertSame((string) $bug->getId(), $crawler->filter('select[name="report[tracker]"] option')->first()->attr('value'));
@@ -371,10 +438,10 @@ final class WidgetTest extends WebTestCase
         self::assertSame(1, self::getContainer()->get(IssueTagRepository::class)->count(['issue' => $issue, 'tag' => $tag]));
         $attachment = self::getContainer()->get(EntityManagerInterface::class)->getRepository(Attachment::class)->findOneBy(['uuid' => $file['uuid']]);
         self::assertSame($issue->getId(), $attachment?->getIssue()?->getId(), 'the screenshot is the issue\'s');
-        $report = $issue->getReport();
+        $report = self::getContainer()->get(IssueReportRepository::class)->reportOf($issue);
         self::assertNotNull($report);
-        self::assertSame(self::SITE.'/lamps', $report['page']['url']);
-        self::assertArrayNotHasKey('cookies', $report);
+        self::assertSame(self::SITE.'/lamps', $report->page()['url']);
+        self::assertArrayNotHasKey('cookies', $report->toArray());
 
         $this->widget('GET', '/widget/MD/SPT/report/sent/'.$issue->getNumber(), $secret);
         self::assertSelectorTextContains('turbo-frame#widget-report', 'Issue '.$issue->getKey().' created');
@@ -407,18 +474,29 @@ final class WidgetTest extends WebTestCase
 
         $this->widget('POST', '/widget/MD/SPT/report', $this->link(self::CLAIRE), ['report' => $form]);
         self::assertResponseStatusCodeSame(303);
-        self::assertNull($this->lastIssue()->getReport(), 'the box was not ticked');
+        self::assertFalse(self::getContainer()->get(IssueReportRepository::class)->has($this->lastIssue()), 'the box was not ticked');
 
         $this->widget('POST', '/widget/MD/SPT/report', $this->link(self::THOMAS), ['report' => $form + ['private' => '1', 'includeReport' => '1']]);
         self::assertResponseStatusCodeSame(303);
         $issue = $this->lastIssue();
         self::assertSame([self::THOMAS, true], [$issue->getAuthor()->getEmail(), $issue->isPrivate()]);
-        self::assertNotNull($issue->getReport());
+        self::assertTrue(self::getContainer()->get(IssueReportRepository::class)->has($issue));
 
         // the report of a private issue is as private as the issue
         $this->client->loginUser($this->scene->user(self::CLAIRE));
         $this->client->request('GET', \sprintf('/MD/SPT/issues/%d/report', $issue->getNumber()));
         self::assertResponseStatusCodeSame(404);
+
+        // a report nothing can be read of does not hold the issue back, and the frame says it was left out
+        $secret = $this->link(self::CLAIRE);
+        $this->widget('POST', '/widget/MD/SPT/report', $secret, ['report' => ['technical' => '{"nothing": "of a report"}', 'includeReport' => '1'] + $form]);
+        $issue = $this->lastIssue();
+        self::assertResponseRedirects(\sprintf('/widget/MD/SPT/report/sent/%d?report=lost', $issue->getNumber()), 303);
+        self::assertFalse(self::getContainer()->get(IssueReportRepository::class)->has($issue));
+        $this->widget('GET', \sprintf('/widget/MD/SPT/report/sent/%d?report=lost', $issue->getNumber()), $secret);
+        self::assertSelectorTextContains('turbo-frame#widget-report', 'The technical report could not be attached');
+        $this->widget('GET', \sprintf('/widget/MD/SPT/report/sent/%d', $issue->getNumber()), $secret);
+        self::assertSelectorTextNotContains('turbo-frame#widget-report', 'could not be attached');
     }
 
     // --- helpers

@@ -6,6 +6,7 @@ namespace App\MessageHandler\Command\User;
 
 use App\Message\Command\User\ChangePassword;
 use App\Repository\UserRepository;
+use App\Repository\WidgetTokenRepository;
 use App\Security\PasswordTokens;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -24,6 +25,7 @@ final class ChangePasswordHandler
         private readonly UserRepository $users,
         private readonly UserPasswordHasherInterface $passwordHasher,
         private readonly PasswordTokens $tokens,
+        private readonly WidgetTokenRepository $widgetTokens,
     ) {
     }
 
@@ -36,5 +38,7 @@ final class ChangePasswordHandler
 
         $user->setPassword($this->passwordHasher->hashPassword($user, $command->plainPassword));
         $this->tokens->forget($user);
+        // whoever held the old password holds nothing of the account any more, on the sites it was linked on either
+        $this->widgetTokens->removeOfUser($user);
     }
 }

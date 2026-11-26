@@ -28,8 +28,9 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
  *
  * `connect` is the way in, open to anybody: it only takes a request the
  * frame of the widget made (which only the sites of the project can
- * show), notes in the session which site asks and under
- * which challenge, and goes on to `link`. Another site can therefore not
+ * show), notes in the session which site asks under which challenge,
+ * and goes on to `link` for that challenge: two sites of a project may
+ * be linked side by side, each in its window. Another site can therefore not
  * send someone here to link their account to a widget of its own making.
  *
  * `link` is an ordinary page: whoever is not signed in goes through the
@@ -40,8 +41,9 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[Route('/{workspaceKey}/{projectKey}/widget', requirements: ['workspaceKey' => Workspace::KEY_FORMAT, 'projectKey' => Project::KEY_FORMAT])]
 final class WidgetLinkController extends AbstractController
 {
-    /** The session key of what `connect` noted, per project. */
-    private const string PENDING = 'widget_link.%d';
+    /** The session key of what `connect` noted, per project and per challenge: two sites of a project may be linked side by side. */
+    private const string PENDING = 'widget_link.%d.%s';
+    private const string CHALLENGE = '[0-9a-f]{64}';
 
     public function __construct(
         private readonly WidgetSiteRepository $sites,
@@ -57,41 +59,43 @@ final class WidgetLinkController extends AbstractController
         if ('same-origin' !== $request->headers->get('Sec-Fetch-Site')
             || !$this->fromTheFrame($project, $request)
             || null === $origin || null === $this->sites->findOneByOrigin($project, $origin)
-            || 1 !== preg_match('/^[0-9a-f]{64}$/', $challenge)
+            || 1 !== preg_match('/^'.self::CHALLENGE.'$/', $challenge)
         ) {
             throw new NotFoundHttpException('Linking an account starts from the widget of a site of the project.');
         }
-        $request->getSession()->set(\sprintf(self::PENDING, $project->getId()), ['origin' => $origin, 'challenge' => $challenge]);
+        $request->getSession()->set(\sprintf(self::PENDING, $project->getId(), $challenge), $origin);
 
-        return $this->redirectToRoute('app_widget_link', ['workspaceKey' => $project->getWorkspace()->getKey(), 'projectKey' => $project->getKey()]);
+        return $this->redirectToRoute('app_widget_link', ['workspaceKey' => $project->getWorkspace()->getKey(), 'projectKey' => $project->getKey(), 'challenge' => $challenge]);
     }
 
-    #[Route('/link', name: 'app_widget_link', methods: ['GET'])]
+    #[Route('/link/{challenge}', name: 'app_widget_link', requirements: ['challenge' => self::CHALLENGE], methods: ['GET'])]
     #[IsGranted('issue.create', subject: 'project')]
-    public function link(#[CurrentProject] Project $project, Request $request): Response
+    public function link(#[CurrentProject] Project $project, string $challenge, Request $request): Response
     {
         return $this->render('project/widget_link.html.twig', [
             'project' => $project,
-            'origin' => $this->pending($project, $request)['origin'] ?? null,
+            'challenge' => $challenge,
+            'origin' => $this->pending($project, $challenge, $request),
             'linked' => false,
         ]);
     }
 
-    #[Route('/link', name: 'app_widget_link_confirm', methods: ['POST'])]
+    #[Route('/link/{challenge}', name: 'app_widget_link_confirm', requirements: ['challenge' => self::CHALLENGE], methods: ['POST'])]
     #[IsGranted('issue.create', subject: 'project')]
     #[IsCsrfTokenValid('submit')]
-    public function confirm(#[CurrentProject] Project $project, #[CurrentUser] User $actor, Request $request): Response
+    public function confirm(#[CurrentProject] Project $project, string $challenge, #[CurrentUser] User $actor, Request $request): Response
     {
-        $pending = $this->pending($project, $request);
-        if (null !== $pending) {
-            $request->getSession()->remove(\sprintf(self::PENDING, $project->getId()));
-            $this->commands->dispatch(new LinkWidget((int) $actor->getId(), (int) $project->getId(), $pending['origin'], $pending['challenge']));
+        $origin = $this->pending($project, $challenge, $request);
+        if (null !== $origin) {
+            $request->getSession()->remove(\sprintf(self::PENDING, $project->getId(), $challenge));
+            $this->commands->dispatch(new LinkWidget((int) $actor->getId(), (int) $project->getId(), $origin, $challenge));
         }
 
         return $this->render('project/widget_link.html.twig', [
             'project' => $project,
-            'origin' => $pending['origin'] ?? null,
-            'linked' => null !== $pending,
+            'challenge' => $challenge,
+            'origin' => $origin,
+            'linked' => null !== $origin,
         ]);
     }
 
@@ -107,19 +111,12 @@ final class WidgetLinkController extends AbstractController
     }
 
     /**
-     * What `connect` noted for the project, if the site is still one of its own.
-     *
-     * @return array{origin: string, challenge: string}|null
+     * The site `connect` noted for the project under that challenge, if it is still one of its own.
      */
-    private function pending(Project $project, Request $request): ?array
+    private function pending(Project $project, string $challenge, Request $request): ?string
     {
-        $pending = $request->getSession()->get(\sprintf(self::PENDING, $project->getId()));
-        if (!\is_array($pending) || !\is_string($pending['origin'] ?? null) || !\is_string($pending['challenge'] ?? null)
-            || null === $this->sites->findOneByOrigin($project, $pending['origin'])
-        ) {
-            return null;
-        }
+        $origin = $request->getSession()->get(\sprintf(self::PENDING, $project->getId(), $challenge));
 
-        return ['origin' => $pending['origin'], 'challenge' => $pending['challenge']];
+        return \is_string($origin) && null !== $this->sites->findOneByOrigin($project, $origin) ? $origin : null;
     }
 }

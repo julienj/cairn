@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Security;
 
 use App\Entity\WidgetToken;
-use App\Repository\WidgetSiteRepository;
 use App\Repository\WidgetTokenRepository;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -16,9 +15,9 @@ use Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge;
 
 /**
  * Authenticates a request of the `widget` firewall from its bearer token:
- * a token of ours, not expired, given for the project the address names
- * and for a site that project still has (the firewall's UserChecker
- * refuses a deactivated account). Every refusal reads the same from
+ * a token of ours, not expired, given for a site of the project the
+ * address names: a token goes with its site, so one that is found still
+ * has it (the firewall's UserChecker refuses a deactivated account). Every refusal reads the same from
  * outside. The token found is left on the request, where tokenOf() reads
  * it. What its user may do there is asked of AccessControl, as anywhere.
  */
@@ -29,7 +28,6 @@ final class WidgetTokenHandler implements AccessTokenHandlerInterface
 
     public function __construct(
         private readonly WidgetTokenRepository $tokens,
-        private readonly WidgetSiteRepository $sites,
         private readonly RequestStack $requests,
         private readonly ClockInterface $clock,
     ) {
@@ -56,11 +54,8 @@ final class WidgetTokenHandler implements AccessTokenHandlerInterface
         if (null === $request || null === $token || $token->isExpired($this->clock->now())) {
             throw new BadCredentialsException('Invalid credentials.');
         }
-        $project = $token->getProject();
-        if ($project->getKey() !== $request->attributes->get('projectKey')
-            || $project->getWorkspace()->getKey() !== $request->attributes->get('workspaceKey')
-            || null === $this->sites->findOneByOrigin($project, $token->getOrigin())
-        ) {
+        $project = $token->getSite()->getProject();
+        if ($project->getKey() !== $request->attributes->get('projectKey') || $project->getWorkspace()->getKey() !== $request->attributes->get('workspaceKey')) {
             throw new BadCredentialsException('Invalid credentials.');
         }
 

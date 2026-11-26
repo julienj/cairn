@@ -26,6 +26,8 @@ const SAVE_WAIT = 250;
 const DRAFT_VERSION = 1;
 /* The controls somebody writes in: what they hold says an issue is begun. */
 const WRITTEN = ['text', 'textarea', 'url', 'email', 'tel', 'number', 'date', 'search'];
+/* What Cairn names a file by: a draft, which the browser kept, is not written into the page without being one. */
+const UUID = /^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;
 /* Where the pictures of a draft are kept, by the key of the draft: files are too heavy for the sessionStorage. */
 const PICTURES = { database: 'cairn-widget', store: 'pictures', version: 1 };
 
@@ -254,7 +256,7 @@ export default class extends Controller {
         if (this.refreshing) {
             return;
         }
-        for (const file of arrived.splice(0)) {
+        for (const file of arrived.splice(0).filter((one) => UUID.test(one.uuid))) {
             const holder = document.createElement('template');
             // a function, not a text: a `$` of the name would be read as a pattern of the replacement
             holder.innerHTML = this.templateTarget.innerHTML.replaceAll('__uuid__', file.uuid).replaceAll('__name__', () => this.escape(file.name));

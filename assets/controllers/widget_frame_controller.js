@@ -1,7 +1,8 @@
 import { Controller } from '@hotwired/stimulus';
 
 const CONTEXT_WAIT = 1500;
-const POLL_EVERY = 1500;
+/* The window that links the account says so itself: asking is what is left when the two windows are no longer tied. */
+const POLL_EVERY = 5000;
 const POLL_FOR = 5 * 60 * 1000;
 
 /*
@@ -32,6 +33,7 @@ export default class extends Controller {
         project: String,
         site: String,
         tokenUrl: String,
+        unlinkUrl: String,
         reportUrl: String,
         connectUrl: String,
     };
@@ -131,7 +133,7 @@ export default class extends Controller {
         const status = event.detail.fetchResponse.response.status;
         if (401 === status) {
             event.preventDefault();
-            this.unlink();
+            this.forget();
         } else if (403 === status || 404 === status) {
             event.preventDefault();
             this.frameTarget.hidden = true;
@@ -139,7 +141,19 @@ export default class extends Controller {
         }
     }
 
-    unlink() {
+    /* The account is taken back from this browser: Cairn deletes the token, which the frame forgets whatever Cairn answers. */
+    async unlink() {
+        const token = this.token;
+        this.forget();
+        if (null !== token) {
+            try {
+                await fetch(this.unlinkUrlValue, { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
+            } catch { /* Cairn cannot be reached: the token is gone from here, and ends with its time there */ }
+        }
+    }
+
+    /* A token Cairn no longer takes is only forgotten. */
+    forget() {
         this.token = null;
         this.show();
     }

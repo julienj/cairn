@@ -132,6 +132,6 @@
             <p class="font-medium text-strong">{{ 'widget.form.drop'|trans }}</p>
         </div>
         {# What a change of category submits the form with. After the button that sends the issue: the first one of a form is the one Enter presses. #}
-        <button type="submit" name="refresh" value="1" formnovalidate hidden data-widget-report-target="refresher"></button>
+        <button type="submit" formaction="{{ path('app_widget_report_redraw', reportRoute) }}" formnovalidate hidden data-widget-report-target="refresher"></button>
     {{ form_end(form) }}
 </turbo-frame>

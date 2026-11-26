@@ -8,6 +8,8 @@ const KEY = 'cairn-widget-actions';
 
 const ACTED = 'a[href], button, summary, input[type="submit"], input[type="button"], input[type="reset"], input[type="image"], [role="button"], [role="link"], [role="tab"], [role="menuitem"], [role="option"], [role="switch"], [role="checkbox"], [role="radio"]';
 const FIELD = 'input, select, textarea';
+/* What is acted on to choose among values: what it shows is the value chosen, never kept. */
+const CHOICE = 'input[type="radio"], [role="option"], [role="radio"], [role="checkbox"], [role="switch"], [role="menuitemradio"], [role="menuitemcheckbox"]';
 const ROLES = { a: 'link', button: 'button', summary: 'button', select: 'combobox', textarea: 'textbox', form: 'form' };
 
 /*
@@ -101,11 +103,12 @@ function role(element) {
 
 /*
  * The name the page gives to what was acted on: what a button or a link
- * shows, the label of a field. Never the content of a field, and nothing
- * in a zone the site keeps private.
+ * shows, the label of a field. Never the content of a field, never what
+ * a choice shows (an option of a list, a box of a group: that is the
+ * value chosen), and nothing in a zone the site keeps private.
  */
 function name(element) {
-    if (element.closest('[data-cairn-private]')) {
+    if (element.closest('[data-cairn-private]') || element.matches(CHOICE)) {
         return null;
     }
     let text = element.getAttribute('aria-label');

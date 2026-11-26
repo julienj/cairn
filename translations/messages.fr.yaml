@@ -1556,8 +1556,20 @@ widget:
     sent:
         title: 'Demande %key% créée'
         text: L'équipe du projet est prévenue.
+        report_lost: Le rapport technique n'a pas pu y être joint.
         open: L'ouvrir dans Cairn
         another: Signaler un autre problème
+
+connected_site:
+    title: Sites connectés
+    intro: "Vous vous êtes connecté sur ces sites pour y signaler des problèmes. Déconnecter un site ne supprime rien : il vous sera simplement demandé de vous reconnecter la prochaine fois."
+    connected_on: 'Connecté le %date%'
+    expires_on: 'Expire le %date%'
+    disconnect: Déconnecter
+    disconnect_confirm: Ce navigateur devra se reconnecter sur ce site.
+    disconnected: 'Site %site% déconnecté.'
+    empty: Aucun site connecté
+    empty_hint: Un site apparaît ici lorsque vous vous y connectez pour signaler un problème.
 
 release:
     title: Versions
@@ -1609,6 +1621,7 @@ account:
         profile: Profil
         notifications: Notifications
         security: Sécurité
+        sites: Sites connectés
         two_factor: Double authentification
         integrations: Intégrations
         api: API
@@ -1814,6 +1827,10 @@ permission:
         manage:
             label: Gérer les dépôts
             help: Lier les dépôts de code du projet, installer et retirer leurs webhooks, et les délier.
+    widget:
+        manage:
+            label: Gérer le widget
+            help: Déclarer les sites sur lesquels le widget du projet s'affiche, et les retirer, ce qui déconnecte ceux qui s'y étaient connectés.
     release:
         manage:
             label: Gérer les versions

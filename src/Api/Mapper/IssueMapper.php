@@ -17,10 +17,10 @@ use App\Entity\Issue;
 use App\Entity\Tag;
 use App\Message\Query\Issue\IssueDetail;
 use App\Repository\IssueFieldValueRepository;
+use App\Repository\IssueReportRepository;
 use App\Repository\IssueTagRepository;
 use App\Security\AccessControl;
 use App\Security\Viewer;
-use App\Widget\TechnicalReport;
 use App\Workflow\WorkflowProvider;
 
 /**
@@ -38,6 +38,7 @@ final class IssueMapper
         private readonly WorkflowProvider $workflows,
         private readonly IssueFieldValueRepository $held,
         private readonly IssueTagRepository $issueTags,
+        private readonly IssueReportRepository $reports,
     ) {
     }
 
@@ -82,7 +83,7 @@ final class IssueMapper
             );
         }
 
-        $report = TechnicalReport::from($issue->getReport());
+        $report = $this->reports->reportOf($issue);
 
         return $this->map($issue, $this->issueTags->tagsOf($issue), $issue->getDescription(), $fields, array_map($this->refs->file(...), $detail->issueAttachments()), $transitions, null === $report ? null : SiteReport::of($report));
     }

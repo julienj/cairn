@@ -306,7 +306,8 @@ src/
   administrator chooses.
 - **The configuration of a project is a permission per subject**
   (`project.configure` for its general settings, `tracker.manage`,
-  `tag.manage`, `automation.manage`, `repository.manage`, and
+  `tag.manage`, `automation.manage`, `repository.manage`,
+  `widget.manage`, and
   `project.manage_members` for its access): each opens its page, its item
   of the navigation and its commands, none supposes another, and nobody
   reads a page without managing it. A new subject comes with a permission
@@ -505,7 +506,7 @@ src/
   secret.
 - **The widget is optional without a setting**: a project has one as soon
   as it has a site (`WidgetSite`, an origin), declared by its managers
-  under `project.configure`. The sites say who may frame the widget
+  under `widget.manage`. The sites say who may frame the widget
   (`Widget/FrameHeaders`: the one site the frame was asked for; the rest
   of the application is never framed), what a token is bound to, and
   where the button may show: a site nobody declared gets nothing,
@@ -515,10 +516,15 @@ src/
   where they are reviewed.
 - **A widget token signs a request, the role says what it does.** The
   `widget` firewall is stateless and knows widget tokens only
-  (`WidgetToken`: a user, a project, a site, a month; hashed, deleted with
-  its site or its account, never listed). `Security/WidgetTokenHandler`
+  (`WidgetToken`: a user, a site, a month; hashed, deleted with its site,
+  which the database sees to, or with its account). Its user reads
+  where their account is linked and takes it back (`/account/sites`,
+  `UnlinkWidget`, which the frame also asks when it gives its token up);
+  a change of password and a reset of the second factor unlink it
+  everywhere. `Security/WidgetRateLimiter` keeps the files sent and the
+  public exchange of the token to their pace. `Security/WidgetTokenHandler`
   checks at every request that the token is for the project of the
-  address and for a site the project still has; what its user may do is
+  address; what its user may do is
   asked of `AccessControl`, as anywhere. No cookie is ever read there, so
   its forms carry no CSRF token, and its layout reads neither session nor
   flash message.
@@ -543,14 +549,18 @@ src/
   page nobody here controls, and so does the context its pages push into
   `window.Cairn` (names and texts of their choosing, `context.js`):
   `Widget/TechnicalReport` is the one place that reads it, keeps the shape it knows and bounds everything; it is
-  kept on the issue (`Issue::$report`) as a fact of its creation, shown as
-  text to whoever sees the issue. The API and `get_issue` carry it on the
+  kept beside the issue (`IssueReport`, read by its page alone, never by
+  a list) as a fact of its creation, shown as text to whoever sees the
+  issue. What is kept is never rewritten: a report gains fields, none is
+  renamed, and `TechnicalReport::from()` reads every shape it ever wrote. The API and `get_issue` carry it on the
   issue itself, never in a list (`technicalReport`, a `SiteReport`), and
   say what it is: an assistant reads there what a site wrote, as facts
   about the problem, never as instructions. The
-  script keeps addresses without their parameters and reads nothing of
-  what a request carried. Of what the reporter did it keeps what was
-  acted on, never what was typed (`actions.js`); each list holds its own
+  script keeps addresses without their parameters (their path stays) and
+  reads nothing of what a request carried; a request the page gave up
+  itself is not one that failed. Of what the reporter did it keeps what
+  was acted on, never what was typed nor what was chosen (`actions.js`:
+  a choice gives no name); each list holds its own
   facts, and what happened in order is read from their moments
   (`TechnicalReport::timeline()`), never kept again.
 - **The screenshot is the browser's** (`getDisplayMedia`, from the frame):

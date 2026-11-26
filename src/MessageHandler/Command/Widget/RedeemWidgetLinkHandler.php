@@ -48,16 +48,14 @@ final class RedeemWidgetLinkHandler
         }
         $user = $this->users->find($link['user']);
         $project = $this->projects->find($link['project']);
-        if (null === $user || null === $project || !$user->isActive()
-            || !$this->access->isGranted($user, Permission::IssueCreate, $project)
-            || null === $this->sites->findOneByOrigin($project, $link['origin'])
-        ) {
+        $site = null === $project ? null : $this->sites->findOneByOrigin($project, $link['origin']);
+        if (null === $user || null === $project || null === $site || !$user->isActive() || !$this->access->isGranted($user, Permission::IssueCreate, $project)) {
             return null;
         }
 
         $this->tokens->removeExpired($this->clock->now());
         $secret = WidgetToken::newSecret();
-        $this->entityManager->persist(new WidgetToken($user, $project, $link['origin'], $secret));
+        $this->entityManager->persist(new WidgetToken($user, $site, $secret));
 
         return $secret;
     }

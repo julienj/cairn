@@ -42,6 +42,8 @@ enum Permission: string
     case AutomationManage = 'automation.manage';
     /** Link the code repositories of the project, install and remove their webhooks, unlink them. */
     case RepositoryManage = 'repository.manage';
+    /** Declare the sites the widget of the project is shown on, and remove them. */
+    case WidgetManage = 'widget.manage';
     /** Grant, change and revoke the roles held directly on the project. */
     case ProjectManageMembers = 'project.manage_members';
     /** Create the releases of the project, change, deliver and abandon them. */
@@ -61,7 +63,7 @@ enum Permission: string
             self::IssueAssign, self::IssueSetCriticality, self::IssueSetRelease, self::IssueSetTags, self::IssueLink, self::IssueRank => PermissionGroup::Tracking,
             self::CommentCreate, self::CommentEdit, self::CommentSetPrivate => PermissionGroup::Comments,
             self::ProjectManageMembers, self::ReleaseManage => PermissionGroup::Project,
-            self::ProjectConfigure, self::TrackerManage, self::TagManage, self::AutomationManage, self::RepositoryManage => PermissionGroup::Configuration,
+            self::ProjectConfigure, self::TrackerManage, self::TagManage, self::AutomationManage, self::RepositoryManage, self::WidgetManage => PermissionGroup::Configuration,
             self::BudgetView, self::BudgetManage => PermissionGroup::Budgets,
         };
     }
@@ -80,7 +82,7 @@ enum Permission: string
     public function internalOnly(): bool
     {
         return match ($this) {
-            self::ProjectConfigure, self::TrackerManage, self::TagManage, self::AutomationManage, self::RepositoryManage,
+            self::ProjectConfigure, self::TrackerManage, self::TagManage, self::AutomationManage, self::RepositoryManage, self::WidgetManage,
             self::ProjectManageMembers, self::IssueSetPrivate, self::CommentSetPrivate => true,
             default => false,
         };

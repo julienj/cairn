@@ -335,7 +335,7 @@
                 {% endif %}
             {% endif %}
             {# What the widget noted on the site the issue was reported from, when it was: a dialog of the page, for whoever sees the issue. #}
-            {% if issue.report %}
+            {% if this.hasReport %}
                 <div class="{{ propertiesRowClasses }}">
                     <div class="{{ propertiesLabelClasses }}">{{ 'widget.report.row'|trans }}</div>
                     <div class="min-w-0 flex-1">

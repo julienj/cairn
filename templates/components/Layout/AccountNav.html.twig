@@ -1,13 +1,17 @@
-{# Account level: the pages of one's own account, then the integrations for whoever may use the API.
+{# Account level: the pages of one's own account (the sites the account is linked on through the widget show once there is one), then the integrations for whoever may use the API.
    `this` is read before the nested components, whose blocks see their own `this`. #}
 {% set accountNavRoute = app.current_route ?? '' %}
 {% set accountNavCanUseApi = this.canUseApi %}
+{% set accountNavHasSites = this.hasConnectedSites or accountNavRoute starts with 'app_account_site' %}
 <twig:Ui:Layout:Sidebar :title="'account.title'|trans">
     <twig:Ui:Layout:Sidebar:Section :label="'account.title'|trans">
         <twig:Ui:Layout:Sidebar:Item href="{{ path('app_account') }}" icon="user" :active="accountNavRoute == 'app_account'">{{ 'account.nav.profile'|trans }}</twig:Ui:Layout:Sidebar:Item>
         <twig:Ui:Layout:Sidebar:Item href="{{ path('app_account_notifications') }}" icon="bell" :active="accountNavRoute == 'app_account_notifications'">{{ 'account.nav.notifications'|trans }}</twig:Ui:Layout:Sidebar:Item>
         <twig:Ui:Layout:Sidebar:Item href="{{ path('app_account_security') }}" icon="lock" :active="accountNavRoute == 'app_account_security'">{{ 'account.nav.security'|trans }}</twig:Ui:Layout:Sidebar:Item>
         <twig:Ui:Layout:Sidebar:Item href="{{ path('app_account_two_factor') }}" icon="shield-check" :active="accountNavRoute starts with 'app_account_two_factor'">{{ 'account.nav.two_factor'|trans }}</twig:Ui:Layout:Sidebar:Item>
+        {% if accountNavHasSites %}
+            <twig:Ui:Layout:Sidebar:Item href="{{ path('app_account_sites') }}" icon="globe" :active="accountNavRoute starts with 'app_account_site'">{{ 'account.nav.sites'|trans }}</twig:Ui:Layout:Sidebar:Item>
+        {% endif %}
     </twig:Ui:Layout:Sidebar:Section>
     {% if accountNavCanUseApi %}
         <twig:Ui:Layout:Sidebar:Section :label="'account.nav.integrations'|trans">

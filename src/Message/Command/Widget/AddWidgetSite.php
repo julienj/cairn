@@ -8,7 +8,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * Declares a site the widget of a project is shown on, by its address:
- * only its origin is kept. The actor needs `project.configure`. Handled
+ * only its origin is kept. The actor needs `widget.manage`. Handled
  * by AddWidgetSiteHandler, which returns the WidgetSite.
  */
 final readonly class AddWidgetSite

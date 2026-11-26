@@ -7,7 +7,7 @@ namespace App\Message\Command\Widget;
 /**
  * Removes a site from the widget of its project, with the tokens given
  * for it: whoever linked their account there is signed out of the widget.
- * The actor needs `project.configure`.
+ * The actor needs `widget.manage`.
  */
 final readonly class RemoveWidgetSite
 {

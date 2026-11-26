@@ -27,6 +27,7 @@ use App\Repository\TagRepository;
 use App\Security\AccessControl;
 use App\Security\Permission;
 use App\Widget\TechnicalReport;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\FormInterface;
@@ -62,37 +63,54 @@ final class ReportController extends AbstractController
         private readonly AccessControl $access,
         private readonly TagRepository $tags,
         private readonly TranslatorInterface $translator,
+        private readonly LoggerInterface $logger,
     ) {
     }
 
     /**
-     * The form, drawn for one category: the first one, or the one chosen.
-     * Changing the category sends the form back with `refresh`, to be
-     * drawn again for the other one with what was typed, creating nothing.
+     * The form, empty, drawn for the first category.
      */
-    #[Route('/report', name: 'app_widget_report', methods: ['GET', 'POST'])]
-    public function report(#[CurrentProject] Project $project, #[CurrentUser] User $reporter, Request $request): Response
+    #[Route('/report', name: 'app_widget_report', methods: ['GET'])]
+    public function form(#[CurrentProject] Project $project, #[CurrentUser] User $reporter, Request $request): Response
     {
-        $trackers = array_values(array_filter($this->queries->ask(new ListTrackers($reporter, $project)), static fn (Tracker $tracker): bool => !$tracker->isArchived()));
-        if ([] === $trackers) {
-            throw new NotFoundHttpException(\sprintf('%s has no category to report into.', $project->getIssuePrefix()));
-        }
-        $asked = $request->request->all('report')['tracker'] ?? null;
-        $tracker = array_find($trackers, static fn (Tracker $tracker): bool => (string) $tracker->getId() === $asked) ?? $trackers[0];
-        $files = self::files($request);
+        [$trackers, $tracker] = $this->trackers($project, $reporter, $request);
 
-        $data = new ReportData();
-        $data->tracker = $tracker;
-        $form = $this->form($project, $reporter, $trackers, $tracker, $data);
+        return $this->draw($project, $tracker, $this->formFor($project, $reporter, $trackers, $tracker, self::data($tracker)), [], Response::HTTP_OK);
+    }
+
+    /**
+     * Another category was chosen: the form is drawn again for it with
+     * what was typed, creating nothing. Its fields are other fields: what
+     * was typed for those of the first one is not kept.
+     */
+    #[Route('/report/redraw', name: 'app_widget_report_redraw', methods: ['POST'])]
+    public function redraw(#[CurrentProject] Project $project, #[CurrentUser] User $reporter, Request $request): Response
+    {
+        [$trackers, $tracker] = $this->trackers($project, $reporter, $request);
+        $data = self::data($tracker);
+        $this->formFor($project, $reporter, $trackers, $tracker, $data)->handleRequest($request);
+        $data->fields = [];
+
+        return $this->draw($project, $tracker, $this->formFor($project, $reporter, $trackers, $tracker, $data), self::files($request), Response::HTTP_OK);
+    }
+
+    /**
+     * Creates the issue. The report of the site goes with it when the
+     * reporter left it there; one that cannot be read does not hold the
+     * issue back, and the frame says it was left out.
+     */
+    #[Route('/report', name: 'app_widget_report_create', methods: ['POST'])]
+    public function create(#[CurrentProject] Project $project, #[CurrentUser] User $reporter, Request $request): Response
+    {
+        [$trackers, $tracker] = $this->trackers($project, $reporter, $request);
+        $files = self::files($request);
+        $data = self::data($tracker);
+        $form = $this->formFor($project, $reporter, $trackers, $tracker, $data);
         $form->handleRequest($request);
 
-        if ($form->isSubmitted() && $request->request->has('refresh')) {
-            // Another category, other fields: what was typed for those of the first one is not kept.
-            $data->fields = [];
-
-            return $this->render('widget/report.html.twig', ['project' => $project, 'form' => $this->form($project, $reporter, $trackers, $tracker, $data), 'files' => $files, 'private' => $tracker->isPrivate()]);
-        }
         if ($form->isSubmitted() && $form->isValid()) {
+            $report = $data->includeReport ? self::decoded($data->technical) : null;
+            $lost = $data->includeReport && '' !== (string) $data->technical && null === TechnicalReport::from($report);
             try {
                 $issue = $this->commands->dispatch(new CreateIssue(
                     actorId: (int) $reporter->getId(),
@@ -105,18 +123,21 @@ final class ReportController extends AbstractController
                     fields: array_filter($data->fields, static fn (mixed $value): bool => null !== $value && '' !== $value),
                     attachments: array_keys($files),
                     tagIds: array_map(static fn (Tag $tag): int => (int) $tag->getId(), $data->tags),
-                    report: $data->includeReport ? self::decoded($data->technical) : null,
+                    report: $report,
                 ));
                 \assert($issue instanceof Issue);
+                if ($lost) {
+                    $this->logger->warning('The report of the site could not be kept with {issue}: {bytes} bytes received.', ['issue' => $issue->getKey(), 'bytes' => \strlen((string) $data->technical)]);
+                }
 
-                return $this->redirectToRoute('app_widget_sent', self::route($project) + ['number' => $issue->getNumber()], Response::HTTP_SEE_OTHER);
+                return $this->redirectToRoute('app_widget_sent', self::route($project) + ['number' => $issue->getNumber()] + ($lost ? ['report' => 'lost'] : []), Response::HTTP_SEE_OTHER);
             } catch (IssueException|TagException|AccessDeniedException) {
                 // A tag deleted or a right taken back while the issue was being written is a refusal like another.
                 $form->addError(new FormError($this->translator->trans('issue.create.refused')));
             }
         }
 
-        return $this->render('widget/report.html.twig', ['project' => $project, 'form' => $form, 'files' => $files, 'private' => $tracker->isPrivate()], new Response(null, $form->isSubmitted() ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_OK));
+        return $this->draw($project, $tracker, $form, $files, Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     /**
@@ -150,10 +171,47 @@ final class ReportController extends AbstractController
         return $this->json(['uuid' => $attachment->getUuid()->toRfc4122(), 'name' => $attachment->getFilename()], Response::HTTP_CREATED);
     }
 
+    /**
+     * The word that the issue was created, and that the report of the site was left out when it could not be kept.
+     */
     #[Route('/report/sent/{number}', name: 'app_widget_sent', requirements: ['number' => '\d+'], methods: ['GET'])]
-    public function sent(#[CurrentProject] Project $project, int $number): Response
+    public function sent(#[CurrentProject] Project $project, int $number, Request $request): Response
     {
-        return $this->render('widget/sent.html.twig', ['project' => $project, 'number' => $number]);
+        return $this->render('widget/sent.html.twig', ['project' => $project, 'number' => $number, 'reportLost' => 'lost' === $request->query->get('report')]);
+    }
+
+    /**
+     * The categories the reporter may file into, and the one the form is
+     * for: the one it names, else the first. A 404 when there is none.
+     *
+     * @return array{non-empty-list<Tracker>, Tracker}
+     */
+    private function trackers(Project $project, User $reporter, Request $request): array
+    {
+        $trackers = array_values(array_filter($this->queries->ask(new ListTrackers($reporter, $project)), static fn (Tracker $tracker): bool => !$tracker->isArchived()));
+        if ([] === $trackers) {
+            throw new NotFoundHttpException(\sprintf('%s has no category to report into.', $project->getIssuePrefix()));
+        }
+        $asked = $request->request->all('report')['tracker'] ?? null;
+
+        return [$trackers, array_find($trackers, static fn (Tracker $tracker): bool => (string) $tracker->getId() === $asked) ?? $trackers[0]];
+    }
+
+    private static function data(Tracker $tracker): ReportData
+    {
+        $data = new ReportData();
+        $data->tracker = $tracker;
+
+        return $data;
+    }
+
+    /**
+     * @param FormInterface<ReportData> $form
+     * @param array<string, string>     $files the files sent so far, uuid => name
+     */
+    private function draw(Project $project, Tracker $tracker, FormInterface $form, array $files, int $status): Response
+    {
+        return $this->render('widget/report.html.twig', ['project' => $project, 'form' => $form, 'files' => $files, 'private' => $tracker->isPrivate()], new Response(null, $status));
     }
 
     /**
@@ -161,12 +219,12 @@ final class ReportController extends AbstractController
      *
      * @return FormInterface<ReportData>
      */
-    private function form(Project $project, User $reporter, array $trackers, Tracker $tracker, ReportData $data): FormInterface
+    private function formFor(Project $project, User $reporter, array $trackers, Tracker $tracker, ReportData $data): FormInterface
     {
         $definition = $this->config->definition();
 
         return $this->createForm(ReportType::class, $data, [
-            'action' => $this->generateUrl('app_widget_report', self::route($project)),
+            'action' => $this->generateUrl('app_widget_report_create', self::route($project)),
             'trackers' => $trackers,
             'workflow' => $definition->workflow($tracker->getWorkflowId()),
             'definition' => $definition,

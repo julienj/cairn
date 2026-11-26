@@ -48,7 +48,7 @@ class WidgetSite
     /**
      * The origin of an address of the web, as browsers write it: scheme,
      * host and the port when it is not the one of the scheme, in lower
-     * case. Null for anything else, an address with a path included: a
+     * case, an accented domain in its ASCII form. Null for anything else, an address with a path included: a
      * site is declared, not a page.
      */
     public static function normalise(string $address): ?string
@@ -64,7 +64,8 @@ class WidgetSite
         if (isset($parts['user']) || isset($parts['pass']) || isset($parts['query']) || isset($parts['fragment']) || !\in_array($parts['path'] ?? '', ['', '/'], true)) {
             return null;
         }
-        $host = strtolower($parts['host']);
+        // as the browsers name it: an accented domain in its ASCII form (xn--…), which is what they send
+        $host = idn_to_ascii($parts['host']) ?: strtolower($parts['host']);
         if (1 !== preg_match('/^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$/', $host)) {
             return null;
         }

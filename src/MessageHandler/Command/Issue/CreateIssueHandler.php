@@ -6,6 +6,7 @@ namespace App\MessageHandler\Command\Issue;
 
 use App\Entity\Enum\Criticality;
 use App\Entity\Issue;
+use App\Entity\IssueReport;
 use App\Entity\IssueTag;
 use App\Entity\JournalEntry;
 use App\Event\IssueCreated;
@@ -84,12 +85,12 @@ final class CreateIssueHandler
         if ($command->private || $tracker->isPrivate()) {
             $issue->makePrivate();
         }
-        if (null !== $report = TechnicalReport::from($command->report)) {
-            $issue->attachReport($report->toArray());
-        }
 
         $this->support->arrive($issue);
         $this->entityManager->persist($issue);
+        if (null !== $report = TechnicalReport::from($command->report)) {
+            $this->entityManager->persist(new IssueReport($issue, $report));
+        }
         $this->support->writeFieldValues($issue, $command->fields);
         foreach ($tags as $tag) {
             $this->entityManager->persist(new IssueTag($issue, $tag));

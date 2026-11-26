@@ -38,7 +38,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  * exists as soon as a site does.
  */
 #[Route('/{workspaceKey}/{projectKey}/settings/widget', requirements: ['workspaceKey' => Workspace::KEY_FORMAT, 'projectKey' => Project::KEY_FORMAT])]
-#[IsGranted('project.configure', subject: 'project')]
+#[IsGranted('widget.manage', subject: 'project')]
 final class WidgetSettingsController extends AbstractController
 {
     use OpensDialog;
