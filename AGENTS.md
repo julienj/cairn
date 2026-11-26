@@ -78,7 +78,8 @@ without its Doctrine bridge), `symfony/mcp-bundle`, Mercure
   again. The accounts of the identity provider hold none and are never
   asked: the provider has its own, and `User::signInWithSso()` drops the
   secret. There are no backup codes: whoever lost their phone has the
-  administration reset it (`ResetTwoFactor`). A code is good once, at the
+  administration reset it (`ResetTwoFactor`), an administrator who lost
+  their own the console (`app:user:reset-two-factor`). A code is good once, at the
   sign-in and anywhere else (`Security/TwoFactorCodes` sends scheb's events,
   so its cache remembers it), and is guessed at five tries per account
   (`Security/TwoFactorThrottling`, `two_factor` limiter), at the sign-in

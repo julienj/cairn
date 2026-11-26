@@ -199,7 +199,7 @@ Someone who must and has not yet is sent to the page that sets it up, in the sig
 
 - **Accounts that sign in through single sign-on are never asked**: the provider has its own second factor.
 - **The API and the MCP server are not asked either**: a personal token signs their requests.
-- **Someone who lost their phone**: an administrator resets their second factor from their account in the administration; they sign in with the password and set it up again.
+- **Someone who lost their phone**: an administrator resets their second factor from their account in the administration; they sign in with the password and set it up again. An administrator who lost their own runs `bin/console app:user:reset-two-factor <email>` on the instance (`docker compose exec web bin/console …` with Docker).
 - **"Remember me" keeps the second factor for its two weeks**: the cookie is only given once the code was typed.
 - **The TOTP secrets are stored as they are in the database**: protect it and its backups as you do for the rest.
 
