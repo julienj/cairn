@@ -437,6 +437,13 @@ editor:
     upload_refused: Vous ne pouvez pas envoyer d'image ici.
     images_only: Seules les images peuvent être collées ici.
 
+draft:
+    leave:
+        title: Quitter cette page ?
+        message: Ce que vous avez écrit n'est pas enregistré et sera perdu.
+        stay: Continuer à écrire
+        leave: Quitter sans enregistrer
+
 attachment:
     title: Fichiers
     add: Ajouter

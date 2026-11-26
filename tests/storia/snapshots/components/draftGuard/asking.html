@@ -1,0 +1,20 @@
+<div  data-controller="draft-guard" data-action="input@window->draft-guard#note turbo:click@window->draft-guard#ask keydown.esc@window->draft-guard#stay" >
+        <div data-controller="dialog" data-action="keydown.esc@document->dialog#close"  data-draft-guard-target="dialog">
+            <div class="fixed inset-0 z-50 bg-black/40 transition-opacity duration-150 starting:opacity-0" ></div>
+        <div class="pointer-events-none fixed inset-0 z-50 overflow-y-auto px-4 pb-8 pt-24">
+    <div class="pointer-events-auto mx-auto w-full rounded-lg border border-line bg-overlay p-4 shadow-2xl space-y-3 transition duration-150 ease-out starting:opacity-0 motion-safe:starting:scale-95 max-w-md" role="dialog" aria-modal="true" aria-label="Leave this page?">
+        <div class="flex items-start gap-2">
+            <div class="min-w-0 flex-1">
+                <h2 class="font-semibold text-strong">Leave this page?</h2>
+                            </div>
+                    </div>
+                    <p class="text-sm text-body">What you wrote is not saved and will be lost.</p>
+                            <div class="flex items-center gap-2 border-t border-line-subtle pt-3">            <button type="button" class="inline-flex items-center justify-center gap-1.5 rounded-md whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-50 h-8 px-3 text-sm bg-brand-solid text-white font-medium hover:bg-brand-solid-hover"  data-draft-guard-target="stay" data-action="draft-guard#stay">
+        Keep writing</button>
+            <button type="button" class="inline-flex items-center justify-center gap-1.5 rounded-md whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-50 h-8 px-3 text-sm border border-red-line bg-surface text-red hover:bg-red-soft"  data-action="draft-guard#leave">
+        Leave without saving</button>
+        </div>
+            </div>
+    </div>
+</div>
+</div>

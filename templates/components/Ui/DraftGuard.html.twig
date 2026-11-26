@@ -1,0 +1,18 @@
+{# The one place that asks before a text being written is lost: once on a page where something is written, beside its components, it holds the link followed while a draft waits (the `draft-guard` controller) and shows this dialog, to stay or to leave. A draft is what was typed in an element marked `data-draft`, or a file waiting in it (`data-draft-pending`). The dialog waits in a template; `open` draws it at once, for the catalogue. #}
+{% props open = false %}
+{% set draftGuardClasses = html_cva() %}
+{% set draftGuardClass = draftGuardClasses.apply({}, attributes.render('class'))|tailwind_merge %}
+{% set draftGuardDialog %}
+    <twig:Ui:Dialog :title="'draft.leave.title'|trans" data-draft-guard-target="dialog">
+        <twig:block name="content">
+            <p class="text-sm text-body">{{ 'draft.leave.message'|trans }}</p>
+        </twig:block>
+        <twig:block name="footer">
+            <twig:Ui:Button variant="primary" data-draft-guard-target="stay" data-action="draft-guard#stay">{{ 'draft.leave.stay'|trans }}</twig:Ui:Button>
+            <twig:Ui:Button variant="danger" data-action="draft-guard#leave">{{ 'draft.leave.leave'|trans }}</twig:Ui:Button>
+        </twig:block>
+    </twig:Ui:Dialog>
+{% endset %}
+<div {% if draftGuardClass %}class="{{ draftGuardClass }}"{% endif %} data-controller="draft-guard" data-action="input@window->draft-guard#note turbo:click@window->draft-guard#ask keydown.esc@window->draft-guard#stay" {{ attributes }}>
+    {% if open %}{{ draftGuardDialog }}{% else %}<template data-draft-guard-target="template">{{ draftGuardDialog }}</template>{% endif %}
+</div>

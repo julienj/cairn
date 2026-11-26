@@ -34,6 +34,16 @@ final class CreateIssueTest extends WebTestCase
         self::assertSelectorTextNotContains('main', 'Internal task', 'private trackers are not offered');
     }
 
+    public function testWhatIsWrittenThereIsADraftThePageGuards(): void
+    {
+        $this->signInAs('claire.martin@maison-dupont.test');
+
+        $this->client->request('GET', '/MD/SPT/issues/new');
+
+        self::assertSelectorExists('[data-controller~="live"][data-draft]');
+        self::assertSelectorExists('[data-controller="draft-guard"] template[data-draft-guard-target="template"]');
+    }
+
     public function testWhoMayNotCreateIsRefused(): void
     {
         $this->signInAs('sophie.bernard@travelia.test');

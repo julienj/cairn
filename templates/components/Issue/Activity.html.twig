@@ -10,7 +10,7 @@
 {% set activityEditable = this.editableComments %}
 {% set activityPendingFiles = this.pendingFiles %}
 {% set activityEditorUrls = editor_urls(issue.project) %}
-<div {{ attributes }}>
+<div data-draft {{ attributes }}>
 
     <section class="mt-8">
         <div class="mb-3 flex flex-wrap items-center gap-2">
@@ -66,7 +66,7 @@
                                                          data-action="editor:submit->autosubmit#submit editor:cancel->live#action" data-live-action-param="cancelComment">{{ commentBody }}</twig:Ui:Form:Editor>
                                     {% set editPendingFiles = this.editPendingFiles %}
                                     {% if editPendingFiles is not empty %}
-                                        <div class="mt-2 flex flex-wrap gap-2">
+                                        <div class="mt-2 flex flex-wrap gap-2" data-draft-pending>
                                             {% for file in editPendingFiles %}
                                                 <twig:Ui:Attachment :name="file.filename" :size="file.size" :image="file.image" :href="attachment_url(file)" class="bg-surface py-1">
                                                     <twig:block name="actions">
@@ -169,7 +169,7 @@
                                          :issuesUrl="activityEditorUrls.issues" :usersUrl="activityEditorUrls.users" :uploadUrl="activityEditorUrls.upload"
                                          data-action="editor:submit->live#action editor:reset@window->editor#reset" data-live-action-param="submit">{{ body }}</twig:Ui:Form:Editor>
                     {% if activityPendingFiles is not empty %}
-                        <div class="flex flex-wrap gap-2 px-3 pb-2">
+                        <div class="flex flex-wrap gap-2 px-3 pb-2" data-draft-pending>
                             {% for file in activityPendingFiles %}
                                 <twig:Ui:Attachment :name="file.filename" :size="file.size" :image="file.image" :href="attachment_url(file)" class="bg-surface py-1">
                                     <twig:block name="actions">

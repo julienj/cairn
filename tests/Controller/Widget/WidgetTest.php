@@ -453,8 +453,8 @@ final class WidgetTest extends WebTestCase
             $this->client->request('GET', '/MD/SPT/issues/'.$issue->getNumber());
             self::assertSelectorExists(\sprintf('a[href="/MD/SPT/issues/%d/report"][data-turbo-frame="modal"]', $issue->getNumber()), $email);
             $this->client->request('GET', \sprintf('/MD/SPT/issues/%d/report', $issue->getNumber()));
-            self::assertSelectorTextContains('[role="dialog"]', 'Technical report');
-            self::assertSelectorTextContains('[role="dialog"]', 'Price not found');
+            self::assertSelectorTextContains('turbo-frame#modal [role="dialog"]', 'Technical report');
+            self::assertSelectorTextContains('turbo-frame#modal [role="dialog"]', 'Price not found');
         }
         $this->client->request('GET', '/MD/SPT/issues/1');
         self::assertSelectorNotExists('a[href="/MD/SPT/issues/1/report"]', 'an issue written in Cairn has no report');

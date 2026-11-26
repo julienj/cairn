@@ -92,6 +92,17 @@ final class IssueTest extends WebTestCase
         self::assertSelectorNotExists('main [data-live-name-value="Issue:Activity"] [data-live-transition-param]', 'and no action is offered under the thread');
     }
 
+    public function testACommentOrADescriptionBeingWrittenIsADraftThePageGuards(): void
+    {
+        $this->signInAs('claire.martin@maison-dupont.test');
+
+        $this->client->request('GET', '/MD/SPT/issues/4');
+
+        self::assertSelectorExists('main [data-live-name-value="Issue:Activity"][data-draft]');
+        self::assertSelectorExists('main [data-live-name-value="Issue:Description"][data-draft]');
+        self::assertSelectorExists('[data-controller="draft-guard"] template[data-draft-guard-target="template"]', 'the dialog waits in the page');
+    }
+
     public function testPrivateCommentsAreForInternalsOnly(): void
     {
         $comment = self::getContainer()->get(EntityManagerInterface::class)->getRepository(Comment::class)->findOneBy(['issue' => $this->scene->issue('MD-SPT-4'), 'private' => true]) ?? self::fail('no private comment');

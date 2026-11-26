@@ -3,7 +3,7 @@
 {% set createTrackers = this.trackers %}
 {% set createTracker = this.tracker %}
 {% set createPendingFiles = this.pendingFiles %}
-<div {{ attributes }}>
+<div data-draft {{ attributes }}>
     <div class="px-4 sm:px-6 pb-6 max-w-5xl space-y-6">
         <section>
             <div class="flex items-baseline gap-2 mb-2">
@@ -88,7 +88,7 @@
                     <twig:Ui:Callout tone="danger" size="sm" role="alert" class="mt-2">{{ attachError }}</twig:Ui:Callout>
                 {% endif %}
                 {% if createPendingFiles is not empty %}
-                    <div class="mt-2 flex flex-wrap gap-2">
+                    <div class="mt-2 flex flex-wrap gap-2" data-draft-pending>
                         {% for file in createPendingFiles %}
                             <twig:Ui:Attachment :name="file.filename" :size="file.size" :image="file.image" :href="attachment_url(file)" class="bg-surface">
                                 <twig:block name="actions">

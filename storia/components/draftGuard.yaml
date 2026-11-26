@@ -1,0 +1,4 @@
+component: Ui:DraftGuard
+variants:
+    waiting: { args: { open: false } }
+    asking: { args: { open: true } }

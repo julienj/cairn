@@ -32,6 +32,8 @@
             <twig:Issue:Activity :issue="issue" />
         </div>
     </div>
+    {# A comment or a description being written is a draft: a link followed by mistake asks first. #}
+    <twig:Ui:DraftGuard />
 {% endblock %}
 
 {# The workflow of the issue, drawn over its page when the address asks for it (`/workflow`), or the report of the site it was reported from (`/report`). The block is rendered alone for the frame: it reads `detail`, not what the page sets. #}

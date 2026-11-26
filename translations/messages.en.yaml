@@ -437,6 +437,13 @@ editor:
     upload_refused: You cannot send an image here.
     images_only: Only images can be pasted here.
 
+draft:
+    leave:
+        title: Leave this page?
+        message: What you wrote is not saved and will be lost.
+        stay: Keep writing
+        leave: Leave without saving
+
 attachment:
     title: Files
     add: Add

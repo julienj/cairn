@@ -668,6 +668,13 @@ src/
   (`IssueHandlerSupport::claimAttachments()`). A file follows what it goes
   with, privacy included. A file input in a live component goes through the
   `file-picker` controller.
+- **A text being written is a draft, and a link followed by mistake asks
+  first** (`Ui:DraftGuard`, once on a page where something is written):
+  what is typed in an element marked `data-draft`, or a file waiting
+  there (`data-draft-pending`), as long as it differs from what was
+  there. Only links are held: a visit the page makes itself (the redirect
+  after a save) is none, closing the tab gets the browser's own warning,
+  and going back in the history gets nothing. Nothing is kept anywhere.
 - **Discreet actions are icon buttons shown on hover** (`hover-actions`).
   A deletion confirms in place, never through `confirm()`.
 - **Creating: a dialog to name, a page to compose.** A dialog when the form

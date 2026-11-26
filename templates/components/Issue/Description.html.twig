@@ -1,6 +1,6 @@
 {# The text of the issue, read or rewritten in place by its author (or whoever may edit the issues of others). #}
 {% set descriptionEditorUrls = editor_urls(issue.project) %}
-<div {{ attributes }}>
+<div data-draft {{ attributes }}>
     {% if error %}
         <twig:Ui:Callout tone="danger" size="sm" role="alert" class="mb-2">{{ error }}</twig:Ui:Callout>
     {% endif %}

@@ -7,4 +7,6 @@
         <h1 class="px-4 sm:px-6 text-xl font-semibold text-strong">{{ 'issue.create.title'|trans }}</h1>
         <twig:Issue:CreateForm :project="project" />
     </div>
+    {# What is typed in the form is a draft: a link followed by mistake asks first. #}
+    <twig:Ui:DraftGuard />
 {% endblock %}
