@@ -18,22 +18,22 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
  * the whole application: the events are the ones scheb sends at the sign-in, so the same cache remembers it, and one
  * that signed someone in (or set it up) does not turn it off a few seconds later.
  */
-final readonly class TwoFactorCodes
+final class TwoFactorCodes
 {
     public function __construct(
-        private TotpAuthenticatorInterface $totp,
-        private EventDispatcherInterface $events,
+        private readonly TotpAuthenticatorInterface $totp,
+        private readonly EventDispatcherInterface $events,
     ) {
     }
 
     public function isValid(User $user, string $code): bool
     {
-        return $user->isTotpAuthenticationEnabled() && $this->check($user, $user, $this->clean($code));
+        return $user->isTotpAuthenticationEnabled() && $this->check($user, $user, self::clean($code));
     }
 
     public function isValidForSecret(User $user, string $secret, string $code): bool
     {
-        return $this->check($user, new PendingTotp($secret, $user->getUserIdentifier()), $this->clean($code));
+        return $this->check($user, new PendingTotp($secret, $user->getUserIdentifier()), self::clean($code));
     }
 
     private function check(User $user, TwoFactorInterface $totpUser, string $code): bool
@@ -51,7 +51,7 @@ final readonly class TwoFactorCodes
         return true;
     }
 
-    private function clean(string $code): string
+    public static function clean(string $code): string
     {
         return (string) preg_replace('/\s+/', '', $code);
     }

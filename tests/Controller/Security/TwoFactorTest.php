@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Tests\Controller\Security;
 
 use App\Factory\UserFactory;
+use App\Repository\UserRepository;
 use App\Tests\KernelHelpers;
 use App\Tests\Security\TwoFactorHelpers;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
@@ -100,6 +102,35 @@ final class TwoFactorTest extends WebTestCase
         self::assertResponseRedirects('/security/2fa', null, 'the same code, even in its window, is not taken twice');
         $this->client->request('GET', '/');
         self::assertResponseRedirects('/security/2fa');
+    }
+
+    public function testACodeTypedWithASpaceIsTheSameCode(): void
+    {
+        $code = self::totpCode($this->secret);
+        $this->signIn();
+        $this->submitCode($code);
+        self::assertResponseRedirects('/');
+
+        $this->client->request('GET', '/logout');
+        $this->signIn();
+        $this->submitCode(substr($code, 0, 3).' '.substr($code, 3));
+
+        self::assertResponseRedirects('/security/2fa', null, 'a space does not make it another code');
+    }
+
+    public function testACodeThatSignedInWithASpaceDoesNotTurnTheSecondFactorOff(): void
+    {
+        $code = self::totpCode($this->secret);
+        $this->signIn();
+        $this->submitCode(substr($code, 0, 3).' '.substr($code, 3));
+        self::assertResponseRedirects('/', null, 'as an app shows it, in two groups');
+
+        $this->client->request('GET', '/account/two-factor');
+        $this->client->submitForm('Turn off', ['disable[code]' => $code]);
+
+        self::assertResponseStatusCodeSame(422);
+        self::getContainer()->get(EntityManagerInterface::class)->clear();
+        self::assertTrue(self::getContainer()->get(UserRepository::class)->findOneBy(['email' => 'claire@client.test'])?->hasTotp());
     }
 
     public function testTheCodesAreGuessedAtAFewTriesOnly(): void

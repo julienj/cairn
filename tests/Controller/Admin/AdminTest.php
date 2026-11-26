@@ -310,6 +310,22 @@ final class AdminTest extends WebTestCase
         self::assertFalse($thomas->hasTotp());
     }
 
+    public function testNobodyResetsTheirOwnSecondFactor(): void
+    {
+        $julie = $this->scene->user('julie.admin@cairn.test');
+        $this->enableTwoFactorOn($julie, self::totpSecret());
+        $this->signInAsAdmin();
+
+        $this->client->request('GET', '/admin/users/'.$julie->getId());
+        self::assertResponseIsSuccessful();
+        self::assertSelectorNotExists('form[action$="/two-factor/reset"]', 'one\'s own is turned off with a code');
+        $this->client->request('POST', '/admin/users/'.$julie->getId().'/two-factor/reset');
+
+        self::assertResponseStatusCodeSame(403);
+        $julie = $this->entity(User::class, ['email' => 'julie.admin@cairn.test']) ?? self::fail('no Julie');
+        self::assertTrue($julie->hasTotp());
+    }
+
     public function testOnlyAnAdministratorResetsASecondFactor(): void
     {
         $nadia = $this->entity(User::class, ['email' => 'nadia.benali@cairn.test']) ?? self::fail('no Nadia');

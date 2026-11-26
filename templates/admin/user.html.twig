@@ -66,7 +66,7 @@
             <twig:Membership:Grants :user="user" />
         </section>
 
-        {% if user.hasTotp %}
+        {% if user.hasTotp and user.id != app.user.id %}
             <section class="rounded-lg border border-line bg-surface p-4 sm:p-5">
                 <h2 class="font-semibold text-strong">{{ 'admin.user.two_factor.title'|trans }}</h2>
                 <p class="text-xs text-muted">{{ 'admin.user.two_factor.help'|trans }}</p>

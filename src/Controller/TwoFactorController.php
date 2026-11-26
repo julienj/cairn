@@ -28,8 +28,8 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * The second factor of the signed-in user, kept up from the account: where it stands, a way to the page that sets it
- * up (Security/TwoFactorEnableController) and turning it off unless the instance holds the account to it. Every
- * code typed here counts against the limit of the sign-in, and is forgotten at the first that is right.
+ * up (Security/TwoFactorEnableController) and turning it off unless the instance holds the account to it. The
+ * codes typed here have a limit of their own, apart from the sign-in's, forgotten at the first that is right.
  */
 final class TwoFactorController extends AbstractController
 {

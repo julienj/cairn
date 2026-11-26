@@ -11,9 +11,9 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
  * The one place that says whether an account must hold a second factor. The accounts of the identity provider
  * never do: it has its own, which the instance cannot see.
  */
-final readonly class TwoFactorPolicy
+final class TwoFactorPolicy
 {
-    public function __construct(#[Autowire('%env(enum:App\Security\TwoFactorRequirement:CAIRN_TWO_FACTOR)%')] private TwoFactorRequirement $requirement)
+    public function __construct(#[Autowire('%env(enum:App\Security\TwoFactorRequirement:CAIRN_TWO_FACTOR)%')] private readonly TwoFactorRequirement $requirement)
     {
     }
 

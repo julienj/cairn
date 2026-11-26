@@ -37,7 +37,7 @@ final class TwoFactorEnableController extends AbstractController
 {
     use TargetPathTrait;
 
-    /** The secret being scanned, kept from one request to the other until it is confirmed. */
+    /** The secret being scanned, kept from one request to the other until it is confirmed, under the id of its account. */
     private const string SECRET = 'two_factor_secret';
 
     public function __construct(
@@ -57,9 +57,11 @@ final class TwoFactorEnableController extends AbstractController
         }
 
         $session = $request->getSession();
-        $secret = $session->get(self::SECRET);
+        // The session outlives a sign-in: a secret shown to one account is never offered to the next.
+        $key = self::SECRET.'.'.$user->getId();
+        $secret = $session->get($key);
         if (!\is_string($secret)) {
-            $session->set(self::SECRET, $secret = $this->totp->generateSecret());
+            $session->set($key, $secret = $this->totp->generateSecret());
         }
 
         $data = new TwoFactorCodeData();
@@ -68,7 +70,7 @@ final class TwoFactorEnableController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             try {
                 $this->commands->dispatch(new EnableTwoFactor((int) $user->getId(), $secret, (string) $data->code));
-                $session->remove(self::SECRET);
+                $session->remove($key);
                 // Signing in again forgets the page that was asked.
                 $target = $this->getTargetPath($session, 'main');
                 // The secret ended every other session of the account (isEqualTo); this one went through the code

@@ -139,12 +139,17 @@ final class UserController extends AbstractController
     }
 
     /**
-     * Takes the second factor off an account whose person lost their phone.
+     * Takes the second factor off an account whose person lost their phone; nobody resets their own, which is
+     * turned off with a code (or from the console, the phone lost).
      */
     #[Route('/{id}/two-factor/reset', name: 'app_admin_user_two_factor_reset', requirements: ['id' => '\\d+'], methods: ['POST'])]
     #[IsCsrfTokenValid('submit')]
-    public function resetTwoFactor(#[MapEntity] User $user): RedirectResponse
+    public function resetTwoFactor(#[MapEntity] User $user, #[CurrentUser] User $viewer): RedirectResponse
     {
+        if ($user->getId() === $viewer->getId()) {
+            throw $this->createAccessDeniedException('Nobody resets their own second factor.');
+        }
+
         try {
             $this->commands->dispatch(new ResetTwoFactor((int) $user->getId()));
             $this->addFlash('success', $this->translator->trans('admin.user.two_factor.reset_done', ['%name%' => $user->getFullName()]));

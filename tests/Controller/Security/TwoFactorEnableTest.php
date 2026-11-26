@@ -109,6 +109,33 @@ final class TwoFactorEnableTest extends WebTestCase
         self::assertResponseRedirects('/account/two-factor');
     }
 
+    public function testAPictureIsNotAPageToGoBackTo(): void
+    {
+        $this->client->request('GET', '/projects');
+        // What a page left open in another tab asks meanwhile.
+        $this->client->request('GET', '/avatars/01234567-89ab-cdef-0123-456789abcdef.webp', server: ['HTTP_ACCEPT' => 'image/avif,image/webp,image/*,*/*;q=0.8']);
+        self::assertResponseRedirects('/security/2fa/enable');
+        $secret = $this->scannedSecret();
+
+        $this->client->submitForm('Turn on', ['enable[code]' => self::totpCode($secret)]);
+
+        self::assertResponseRedirects('http://localhost/projects');
+    }
+
+    public function testTheSecretShownToOneAccountIsNotOfferedToTheNext(): void
+    {
+        UserFactory::createOne(['email' => 'paul@client.test']);
+        // A sign-in form left open in a tab, sent once Claire is on the page that sets it up.
+        $this->client->request('GET', '/logout');
+        $signIn = $this->client->request('GET', '/login')->selectButton('Sign in')->form(['email' => 'paul@client.test', 'password' => UserFactory::DEFAULT_PASSWORD]);
+        $this->client->loginUser($this->claire);
+        $secretOfClaire = $this->scannedSecret();
+
+        $this->client->submit($signIn);
+
+        self::assertNotSame($secretOfClaire, $this->scannedSecret(), 'Claire has seen that one');
+    }
+
     public function testAWrongCodeTurnsNothingOnAndIsNotCountedAgainstThePerson(): void
     {
         $secret = $this->scannedSecret();
