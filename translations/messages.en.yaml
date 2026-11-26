@@ -782,6 +782,7 @@ admin:
                 tracking: 'Tracking'
                 comments: 'Comments'
                 project: 'Project'
+                configuration: 'Project configuration'
                 budgets: 'Budgets'
         places:
             title: 'Steps'
@@ -1616,11 +1617,27 @@ permission:
             help: Rewrite or delete someone else's comment. Authors always handle their own.
     project:
         configure:
-            label: Configure the project
-            help: Change its name and description, create, arrange, archive and delete its categories, link its code repositories and write its automation rules.
+            label: Change the general settings
+            help: Change the name of the project, its description and the unit of its budgets.
         manage_members:
             label: Manage access to the project
             help: Grant, change and revoke the roles held on the project itself, and designate the referent of each role there. Workspace roles stay with the administration.
+    tracker:
+        manage:
+            label: Manage categories
+            help: Create the categories of the project, change, arrange, archive and delete them.
+    tag:
+        manage:
+            label: Manage tags
+            help: Create the tags of the project, rename, recolour and delete them.
+    automation:
+        manage:
+            label: Manage automations
+            help: Write the automation rules of the project, switch them on and off, and read what they did.
+    repository:
+        manage:
+            label: Manage repositories
+            help: Link the code repositories of the project, install and remove their webhooks, and unlink them.
     release:
         manage:
             label: Manage releases

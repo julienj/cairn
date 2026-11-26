@@ -34,7 +34,7 @@ final class UpdateRepositoryHandler
     public function __invoke(UpdateRepository $command): void
     {
         $repository = $this->repositories->find($command->codeRepositoryId) ?? throw CodeRepositoryException::notFound('Repository', $command->codeRepositoryId);
-        $this->actor->denyUnlessGranted($command->actorId, Permission::ProjectConfigure, $repository->getProject());
+        $this->actor->denyUnlessGranted($command->actorId, Permission::RepositoryManage, $repository->getProject());
         $api = $this->apis->for($repository->getForge());
         if (true === $command->installed && !$repository->isInstalled() && $api->hasInstanceHook()) {
             throw CodeRepositoryException::instanceHook($repository->getForge());

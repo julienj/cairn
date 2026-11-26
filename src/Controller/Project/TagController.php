@@ -33,13 +33,13 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
- * The tags of a project, for its manager: the list, and a dialog that
+ * The tags of a project, for who manages them: the list, and a dialog that
  * creates one or changes one (its name, its colour, deleting it), which
  * has an address of its own and renders the list with it open. Issues are
  * tagged from their own page, their creation or the selection page.
  */
 #[Route('/{workspaceKey}/{projectKey}/settings/tags', requirements: ['workspaceKey' => Workspace::KEY_FORMAT, 'projectKey' => Project::KEY_FORMAT])]
-#[IsGranted('project.configure', subject: 'project')]
+#[IsGranted('tag.manage', subject: 'project')]
 final class TagController extends AbstractController
 {
     use OpensDialog;

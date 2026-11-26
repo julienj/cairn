@@ -11,7 +11,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  * its value. `active` is a property, not an action. The tracker and the
  * definition are checked together, a step may name a place of the
  * tracker: `trackerId` NO_TRACKER makes the rule hold on every tracker.
- * The actor, when there is one, needs `project.configure`. Handled by
+ * The actor, when there is one, needs `automation.manage`. Handled by
  * UpdateRuleHandler.
  */
 final readonly class UpdateRule

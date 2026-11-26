@@ -22,7 +22,7 @@ final class UpdateTrackerHandler
     public function __invoke(UpdateTracker $command): void
     {
         $tracker = $this->trackers->find($command->trackerId) ?? throw TrackerException::notFound('Tracker', $command->trackerId);
-        $this->actor->denyUnlessGranted($command->actorId, Permission::ProjectConfigure, $tracker->getProject());
+        $this->actor->denyUnlessGranted($command->actorId, Permission::TrackerManage, $tracker->getProject());
 
         if (null !== $command->name) {
             $tracker->rename($command->name);

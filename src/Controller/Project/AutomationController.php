@@ -30,13 +30,13 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
- * The automation rules of a project, for who configures it: the list of
+ * The automation rules of a project, for who writes them: the list of
  * the rules, each switched on or off in place, the editor of one (the
  * live component Automation:RuleForm does the writing) and the history
  * of their executions.
  */
 #[Route('/{workspaceKey}/{projectKey}/settings/automations', requirements: ['workspaceKey' => Workspace::KEY_FORMAT, 'projectKey' => Project::KEY_FORMAT])]
-#[IsGranted('project.configure', subject: 'project')]
+#[IsGranted('automation.manage', subject: 'project')]
 final class AutomationController extends AbstractController
 {
     public function __construct(

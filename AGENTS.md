@@ -297,9 +297,17 @@ src/
   one team. `Repository/RoleUsage` is the one place that counts where a
   role is in use: people, teams, templates. A referent stays a
   person: `Membership` alone carries the mark.
-- **Four permissions are internal-only** (`Permission::internalOnly()`):
-  those that show what external users never see. What is only risky goes
-  to any role an administrator chooses.
+- **Some permissions are internal-only** (`Permission::internalOnly()`):
+  those that show what external users never see, the configuration of a
+  project among them, as a whole. What is only risky goes to any role an
+  administrator chooses.
+- **The configuration of a project is a permission per subject**
+  (`project.configure` for its general settings, `tracker.manage`,
+  `tag.manage`, `automation.manage`, `repository.manage`, and
+  `project.manage_members` for its access): each opens its page, its item
+  of the navigation and its commands, none supposes another, and nobody
+  reads a page without managing it. A new subject comes with a permission
+  of its own.
 - **A live component that shows private data checks who draws it, each
   time** (`guard()`): its endpoint is not under the route of its page, so
   neither `/admin` nor the page's `#[IsGranted]` protects it. The components
@@ -340,7 +348,7 @@ src/
 - **Releases are optional, without a setting**: a project without any
   release shows none of it.
 - **Tags are optional the same way, and belong to one project**: a closed
-  list its managers keep (`project.configure`), in a colour of a closed
+  list its managers keep (`tag.manage`), in a colour of a closed
   palette (`TagColour`, a token each). An issue carries several
   (`IssueTag`), put on and taken off one at a time (`TagIssue`,
   `UntagIssue`, under `issue.set_tags`), each journaled; deleting a tag

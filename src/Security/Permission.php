@@ -32,8 +32,16 @@ enum Permission: string
     /** Edit or delete the comments of others; authors always handle their own. */
     case CommentEdit = 'comment.edit';
     case CommentSetPrivate = 'comment.set_private';
-    /** Change the project's name and description, create and arrange its trackers, link its repositories, write its automation rules. */
+    /** Change the general settings of the project: its name, its description, the unit of its budgets. */
     case ProjectConfigure = 'project.configure';
+    /** Create the trackers of the project, change, arrange, archive and delete them. */
+    case TrackerManage = 'tracker.manage';
+    /** Keep the list of the tags of the project: create, change and delete them. */
+    case TagManage = 'tag.manage';
+    /** Write the automation rules of the project, switch them on and off, read what they did. */
+    case AutomationManage = 'automation.manage';
+    /** Link the code repositories of the project, install and remove their webhooks, unlink them. */
+    case RepositoryManage = 'repository.manage';
     /** Grant, change and revoke the roles held directly on the project. */
     case ProjectManageMembers = 'project.manage_members';
     /** Create the releases of the project, change, deliver and abandon them. */
@@ -52,24 +60,28 @@ enum Permission: string
             self::IssueCreate, self::IssueEdit, self::IssueDelete, self::IssueSetPrivate => PermissionGroup::Issues,
             self::IssueAssign, self::IssueSetCriticality, self::IssueSetRelease, self::IssueSetTags, self::IssueLink, self::IssueRank => PermissionGroup::Tracking,
             self::CommentCreate, self::CommentEdit, self::CommentSetPrivate => PermissionGroup::Comments,
-            self::ProjectConfigure, self::ProjectManageMembers, self::ReleaseManage => PermissionGroup::Project,
+            self::ProjectManageMembers, self::ReleaseManage => PermissionGroup::Project,
+            self::ProjectConfigure, self::TrackerManage, self::TagManage, self::AutomationManage, self::RepositoryManage => PermissionGroup::Configuration,
             self::BudgetView, self::BudgetManage => PermissionGroup::Budgets,
         };
     }
 
     /**
      * Whether using the permission takes seeing what external users never
-     * see: the project configuration shows private trackers, managing
-     * members shows every account of the instance, and what is made
-     * private is hidden from an external user who made it so. That is the
-     * one reason: what is only risky (deleting an issue) is for the
-     * administrators to grant as they see fit. The configuration grants
-     * these to internal-only roles, which ConfigValidator enforces.
+     * see: the configuration of a project, a permission per subject, shows
+     * private trackers and the code behind the issues and is kept among
+     * internal users as a whole, managing members shows every account of
+     * the instance, and what is made private is hidden from an external
+     * user who made it so. That is the one reason: what is only risky
+     * (deleting an issue) is for the administrators to grant as they see
+     * fit. The configuration grants these to internal-only roles, which
+     * ConfigValidator enforces.
      */
     public function internalOnly(): bool
     {
         return match ($this) {
-            self::ProjectConfigure, self::ProjectManageMembers, self::IssueSetPrivate, self::CommentSetPrivate => true,
+            self::ProjectConfigure, self::TrackerManage, self::TagManage, self::AutomationManage, self::RepositoryManage,
+            self::ProjectManageMembers, self::IssueSetPrivate, self::CommentSetPrivate => true,
             default => false,
         };
     }

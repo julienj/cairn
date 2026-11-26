@@ -30,7 +30,7 @@ final class CreateTrackerHandler
     public function __invoke(CreateTracker $command): Tracker
     {
         $project = $this->projects->find($command->projectId) ?? throw TrackerException::notFound('Project', $command->projectId);
-        $this->actor->denyUnlessGranted($command->actorId, Permission::ProjectConfigure, $project);
+        $this->actor->denyUnlessGranted($command->actorId, Permission::TrackerManage, $project);
         if (!$this->config->definition()->hasWorkflow($command->workflowId)) {
             throw TrackerException::unknownWorkflow($command->workflowId);
         }

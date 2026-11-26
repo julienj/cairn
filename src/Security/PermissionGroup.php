@@ -15,6 +15,7 @@ enum PermissionGroup: string
     case Tracking = 'tracking';
     case Comments = 'comments';
     case Project = 'project';
+    case Configuration = 'configuration';
     case Budgets = 'budgets';
 
     /**

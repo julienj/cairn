@@ -27,7 +27,7 @@ final class LinkRepositoryHandler
     public function __invoke(LinkRepository $command): CodeRepository
     {
         $project = $this->projects->find($command->projectId) ?? throw CodeRepositoryException::notFound('Project', $command->projectId);
-        $this->actor->denyUnlessGranted($command->actorId, Permission::ProjectConfigure, $project);
+        $this->actor->denyUnlessGranted($command->actorId, Permission::RepositoryManage, $project);
         if (!$command->forge->isAvailable()) {
             throw CodeRepositoryException::forgeUnavailable($command->forge);
         }

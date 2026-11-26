@@ -8,7 +8,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * Creates a tracker at the end of its project's list, bound for good to a
- * workflow of the configuration. The actor needs `project.configure`;
+ * workflow of the configuration. The actor needs `tracker.manage`;
  * without one, the administration acts (an import). Handled by CreateTrackerHandler, which returns the Tracker.
  */
 final readonly class CreateTracker

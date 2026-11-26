@@ -28,7 +28,7 @@ final class CreateTagHandler
     public function __invoke(CreateTag $command): Tag
     {
         $project = $this->projects->find($command->projectId) ?? throw TagException::notFound('Project', $command->projectId);
-        $this->actor->denyUnlessGranted($command->actorId, Permission::ProjectConfigure, $project);
+        $this->actor->denyUnlessGranted($command->actorId, Permission::TagManage, $project);
         // Lock the project row so that two tags created at once are not given the same name.
         $this->entityManager->lock($project, LockMode::PESSIMISTIC_WRITE);
         if (null !== $this->tags->findOneByName($project, $command->name)) {

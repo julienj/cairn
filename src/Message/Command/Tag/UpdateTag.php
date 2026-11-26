@@ -10,7 +10,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 /**
  * Changes a tag, PATCH style: a property left null keeps its value. The
  * issues that carry it follow, their journal keeps the name of the time.
- * The actor needs `project.configure`. Handled by UpdateTagHandler.
+ * The actor needs `tag.manage`. Handled by UpdateTagHandler.
  */
 final readonly class UpdateTag
 {

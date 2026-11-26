@@ -56,16 +56,16 @@ final class Order
     }
 
     /**
-     * The list is drawn, and redrawn, only for who may configure the
-     * project, whatever page or request holds it. The command guards the
-     * writing.
+     * The list is drawn, and redrawn, only for who manages the trackers
+     * of the project, whatever page or request holds it. The command
+     * guards the writing.
      */
     #[PostMount]
     #[PostHydrate]
     public function guard(): void
     {
-        if (!$this->access->isGranted($this->viewer->get(), Permission::ProjectConfigure, $this->project)) {
-            throw new AccessDeniedException('Arranging the trackers needs project.configure.');
+        if (!$this->access->isGranted($this->viewer->get(), Permission::TrackerManage, $this->project)) {
+            throw new AccessDeniedException('Arranging the trackers needs tracker.manage.');
         }
     }
 

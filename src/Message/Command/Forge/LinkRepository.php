@@ -12,7 +12,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  * Links a repository of a forge to a project, with a secret of its own,
  * without touching the forge: UpdateRepository does, or the manager
  * installs the webhook by hand. The actor, when there is one, needs
- * `project.configure`. Handled by LinkRepositoryHandler, which returns the
+ * `repository.manage`. Handled by LinkRepositoryHandler, which returns the
  * CodeRepository.
  */
 final readonly class LinkRepository

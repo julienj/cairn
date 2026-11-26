@@ -36,7 +36,7 @@ final class UpdateRuleHandler
     {
         $rule = $this->rules->find($command->ruleId) ?? throw AutomationException::notFound('Rule', $command->ruleId);
         $project = $rule->getProject();
-        $this->actor->denyUnlessGranted($command->actorId, Permission::ProjectConfigure, $project);
+        $this->actor->denyUnlessGranted($command->actorId, Permission::AutomationManage, $project);
 
         $tracker = $rule->getTracker();
         if (null !== $command->trackerId) {

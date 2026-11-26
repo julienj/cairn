@@ -10,7 +10,7 @@ namespace App\Message\Command\Forge;
  * removes it (false); `regenerateSecret` gives it a new secret, told to
  * the forge first when the webhook is installed through the API, to
  * paste by hand otherwise. The actor, when there is one, needs
- * `project.configure`. Handled by UpdateRepositoryHandler.
+ * `repository.manage`. Handled by UpdateRepositoryHandler.
  */
 final readonly class UpdateRepository
 {
