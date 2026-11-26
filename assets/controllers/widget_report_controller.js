@@ -20,6 +20,8 @@ let current = null;
 const arrived = [];
 /* The shape of a draft: one kept in another shape is not read. */
 const DRAFT_VERSION = 1;
+/* The controls somebody writes in: what they hold says an issue is begun. */
+const WRITTEN = ['text', 'textarea', 'url', 'email', 'tel', 'number', 'date', 'search'];
 /* Where the pictures of a draft are kept, by the key of the draft: files are too heavy for the sessionStorage. */
 const PICTURES = { database: 'cairn-widget', store: 'pictures', version: 1 };
 
@@ -93,6 +95,7 @@ export default class extends Controller {
         this.hold();
         this.take();
         this.recall();
+        this.tell();
     }
 
     disconnect() {
@@ -334,6 +337,18 @@ export default class extends Controller {
         try {
             window.sessionStorage.setItem(this.draft, JSON.stringify({ version: DRAFT_VERSION, fields, files }));
         } catch { /* no storage: the draft lasts as long as the page */ }
+        this.tell();
+    }
+
+    /*
+     * Whether an issue is begun, something written or a file sent, told to
+     * the frame, which tells the site: its button shows it. What every
+     * form starts with (its category, its criticality) begins nothing.
+     */
+    tell(begun = null) {
+        begun ??= null !== this.filesTarget.querySelector('li[data-uuid]')
+            || this.controls().some((control) => WRITTEN.includes(control.type) && '' !== control.value.trim());
+        window.dispatchEvent(new CustomEvent('widget:draft', { detail: { begun } }));
     }
 
     restore() {
@@ -422,6 +437,7 @@ export default class extends Controller {
         } catch { /* no storage, no draft */ }
         const key = this.draft;
         writing = writing.then(() => pictureStore('readwrite', (store) => store.delete(key)));
+        this.tell(false);
     }
 
     // --- the pictures, kept beside the draft

@@ -12,7 +12,7 @@
          data-widget-frame-token-url-value="{{ path('app_widget_token', frameRoute) }}"
          data-widget-frame-report-url-value="{{ path('app_widget_report', frameRoute) }}"
          data-widget-frame-connect-url-value="{{ path('app_widget_connect', frameRoute) }}"
-         data-action="message@window->widget-frame#received keydown.esc@window->widget-frame#escape:capture turbo:frame-load->widget-frame#loaded turbo:before-fetch-request@document->widget-frame#sign turbo:before-fetch-response@document->widget-frame#answered widget:collapse@window->widget-frame#collapse widget:expand@window->widget-frame#expand widget:widen@window->widget-frame#widen widget:narrow@window->widget-frame#narrow widget:context@window->widget-frame#provide dragover@window->widget-frame#refuse drop@window->widget-frame#refuse">
+         data-action="message@window->widget-frame#received keydown.esc@window->widget-frame#escape:capture turbo:frame-load->widget-frame#loaded turbo:before-fetch-request@document->widget-frame#sign turbo:before-fetch-response@document->widget-frame#answered widget:collapse@window->widget-frame#collapse widget:expand@window->widget-frame#expand widget:widen@window->widget-frame#widen widget:narrow@window->widget-frame#narrow widget:draft@window->widget-frame#drafted widget:context@window->widget-frame#provide dragover@window->widget-frame#refuse drop@window->widget-frame#refuse">
         <header class="flex h-12 shrink-0 items-center gap-2 border-b border-line pl-4 pr-2">
             <twig:Ui:Logo size="sm" />
             <h1 class="font-semibold text-strong">{{ 'widget.title'|trans }}</h1>

@@ -1,6 +1,7 @@
 import { buttonStyles, clamp, createButton, MARGIN, SIZE, viewport } from './button.js';
 
 const KEY = 'cairn-widget-open';
+const BEGUN = 'cairn-widget-begun';
 /* How long what is noted waits before going to the frame, so that a burst goes as one message, in milliseconds. */
 const NOTED_WAIT = 300;
 /* The panel beside its button: how wide and how tall it gets, and what it leaves between them, in pixels. */
@@ -32,7 +33,8 @@ const MARK = '<svg width="24" height="24" viewBox="0 0 64 64" fill="none" stroke
  * page while the screenshot is edited. It also tells the frame whether
  * the panel covers the button (`cairn:layout`), which otherwise closes it,
  * and to take the keyboard when the panel was opened by hand (`cairn:focus`).
- * Escape closes the panel, from the button as from the frame.
+ * Escape closes the panel, from the button as from the frame. The frame
+ * says when an issue is begun (`cairn:draft`): the button carries a dot.
  */
 export function createPanel({ cairn, address, label, report }) {
     const host = document.createElement('div');
@@ -191,6 +193,18 @@ iframe { display: block; width: 100%; height: 100%; border: 0; }
                 show(false);
                 button.focus();
                 break;
+            case 'cairn:draft':
+                // The frame says that an issue is begun, and nothing of it. Kept for the next page of this tab, where
+                // the button shows it before the frame is there.
+                button.begun(true === event.data.begun);
+                try {
+                    if (true === event.data.begun) {
+                        window.sessionStorage.setItem(BEGUN, '1');
+                    } else {
+                        window.sessionStorage.removeItem(BEGUN);
+                    }
+                } catch { /* no storage: the dot comes back with the frame */ }
+                break;
             case 'cairn:collapse':
                 // Out of the picture but still drawn: a frame that is not displayed is slowed down by the
                 // browser. Then two frames, for the page to be drawn without the widget.
@@ -221,6 +235,7 @@ iframe { display: block; width: 100%; height: 100%; border: 0; }
     // Beside the body, not in it: a site that replaces its body to change page (Turbo, htmx) would take the widget away.
     document.documentElement.appendChild(host);
     try {
+        button.begun('1' === window.sessionStorage.getItem(BEGUN));
         if ('1' === window.sessionStorage.getItem(KEY)) {
             show(true);
         }
