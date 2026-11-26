@@ -7,7 +7,7 @@
         'data-widget-report-attachment-url-value': path('app_widget_attachment', reportRoute),
         'data-widget-report-preview-url-value': path('app_widget_report_preview', reportRoute),
         'data-widget-report-failed-value': 'widget.form.upload_failed'|trans,
-        'data-action': 'widget:context-changed@window->widget-report#noted widget-capture:taken->widget-report#captured turbo:submit-end->widget-report#settled input->widget-report#save change->widget-report#save dragenter@window->widget-report#dragEnter:capture dragover@window->widget-report#dragOver:capture dragleave@window->widget-report#dragLeave:capture drop@window->widget-report#dropped:capture',
+        'data-action': 'keydown->widget-report#shortcut widget:context-changed@window->widget-report#noted widget-capture:taken->widget-report#captured turbo:submit-end->widget-report#settled input->widget-report#save change->widget-report#save dragenter@window->widget-report#dragEnter:capture dragover@window->widget-report#dragOver:capture dragleave@window->widget-report#dragLeave:capture drop@window->widget-report#dropped:capture',
     } }) }}
         <div class="flex flex-1 flex-col" data-widget-report-target="main">
             <div class="flex-1 space-y-4 p-4">

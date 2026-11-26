@@ -222,6 +222,17 @@ export default class extends Controller {
     }
 
     /* The form is not sent while a file is on its way: it would leave without it. */
+    /* Ctrl or Cmd with Enter sends the issue, from any field. */
+    shortcut(event) {
+        if ('Enter' !== event.key || !(event.metaKey || event.ctrlKey) || this.mainTarget.hidden) {
+            return;
+        }
+        event.preventDefault();
+        if (!this.submitTarget.disabled) {
+            this.element.requestSubmit(this.submitTarget);
+        }
+    }
+
     hold() {
         this.submitTarget.disabled = sending > 0;
     }

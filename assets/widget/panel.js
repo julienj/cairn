@@ -30,7 +30,9 @@ const MARK = '<svg width="24" height="24" viewBox="0 0 64 64" fill="none" stroke
  * a burst to end), closes the panel when asked to, takes the whole widget out of the
  * picture while the frame takes a screenshot, and makes the panel a dialog over the
  * page while the screenshot is edited. It also tells the frame whether
- * the panel covers the button (`cairn:layout`), which otherwise closes it.
+ * the panel covers the button (`cairn:layout`), which otherwise closes it,
+ * and to take the keyboard when the panel was opened by hand (`cairn:focus`).
+ * Escape closes the panel, from the button as from the frame.
  */
 export function createPanel({ cairn, address, label, report }) {
     const host = document.createElement('div');
@@ -130,8 +132,19 @@ iframe { display: block; width: 100%; height: 100%; border: 0; }
         panel.appendChild(frame);
     };
 
-    const show = (open) => {
+    // Opened by hand, the panel takes the keyboard: its frame is told to put it where the writing starts. A panel
+    // found open from the page before takes nothing from the site.
+    let handed = false;
+    const hand = () => {
+        if (handed && null !== frame) {
+            frame.focus({ preventScroll: true });
+            send({ type: 'cairn:focus' });
+        }
+    };
+
+    const show = (open, byHand = false) => {
         shown = open;
+        handed = open && byHand;
         if (open) {
             ask();
         }
@@ -152,9 +165,15 @@ iframe { display: block; width: 100%; height: 100%; border: 0; }
         if (open) {
             send({ type: 'cairn:context', report: report() });
             told();
+            hand();
         }
     };
-    const button = createButton(label, { onClick: () => show(!shown), onMove: () => { lay(); told(); }, onAim: ask });
+    const button = createButton(label, {
+        onClick: () => show(!shown, true),
+        onMove: () => { lay(); told(); },
+        onAim: ask,
+        onEscape: () => shown && show(false),
+    });
 
     window.addEventListener('message', (event) => {
         if (event.origin !== cairn || null === frame || event.source !== frame.contentWindow) {
@@ -163,11 +182,14 @@ iframe { display: block; width: 100%; height: 100%; border: 0; }
         switch (event.data?.type) {
             case 'cairn:ready':
                 waiting.classList.add('gone');
+                hand();
                 send({ type: 'cairn:context', report: report() });
                 told();
                 break;
             case 'cairn:close':
+                // closed from the keyboard or from the frame: the keyboard goes back to the button
                 show(false);
+                button.focus();
                 break;
             case 'cairn:collapse':
                 // Out of the picture but still drawn: a frame that is not displayed is slowed down by the
