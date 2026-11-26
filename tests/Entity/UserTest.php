@@ -61,4 +61,49 @@ final class UserTest extends TestCase
         self::assertTrue($user->isAdmin());
         self::assertSame(['ROLE_USER', 'ROLE_INTERNAL', 'ROLE_ADMIN'], $user->getRoles());
     }
+
+    public function testASecondFactorIsASecretThatCanBeTakenOff(): void
+    {
+        $user = new User('claire@example.com', 'Claire', 'Martin');
+        self::assertFalse($user->isTotpAuthenticationEnabled());
+        self::assertNull($user->getTotpAuthenticationConfiguration());
+
+        $user->enableTotp('JBSWY3DPEHPK3PXP');
+
+        self::assertTrue($user->isTotpAuthenticationEnabled());
+        self::assertSame('claire@example.com', $user->getTotpAuthenticationUsername());
+        self::assertSame('JBSWY3DPEHPK3PXP', $user->getTotpAuthenticationConfiguration()?->getSecret());
+
+        $user->disableTotp();
+        self::assertFalse($user->hasTotp());
+    }
+
+    public function testTheAccountOfTheProviderHoldsNoSecondFactor(): void
+    {
+        $user = new User('claire@example.com', 'Claire', 'Martin');
+        $user->enableTotp('JBSWY3DPEHPK3PXP');
+
+        $user->signInWithSso();
+
+        self::assertFalse($user->hasTotp(), 'the provider has its own, the secret goes with the password');
+        self::assertFalse($user->isTotpAuthenticationEnabled());
+        $this->expectException(\LogicException::class);
+        $user->enableTotp('JBSWY3DPEHPK3PXP');
+    }
+
+    public function testTurningTheSecondFactorOnOrOffEndsTheOtherSessions(): void
+    {
+        $before = new User('claire@example.com', 'Claire', 'Martin');
+        $after = clone $before;
+        self::assertTrue($after->isEqualTo($before));
+
+        $after->enableTotp('JBSWY3DPEHPK3PXP');
+        self::assertFalse($after->isEqualTo($before), 'a session opened without it is not the account any more');
+        self::assertFalse($before->isEqualTo($after));
+
+        $before->enableTotp('JBSWY3DPEHPK3PXP');
+        self::assertTrue($after->isEqualTo($before));
+        $after->disableTotp();
+        self::assertFalse($after->isEqualTo($before), 'nor the one opened with it, once it is off');
+    }
 }

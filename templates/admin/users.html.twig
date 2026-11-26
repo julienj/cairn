@@ -47,6 +47,7 @@
                                     <span class="block text-strong group-hover:text-brand truncate">
                                         {{ user.fullName }}
                                         {% if user.admin %}<twig:Ui:Badge tone="indigo" size="sm">{{ 'admin.user.admin_badge'|trans }}</twig:Ui:Badge>{% endif %}
+                                        {% if user.hasTotp %}<twig:Ui:Badge tone="emerald" size="sm" icon="shield-check" data-test="two-factor-badge">{{ 'admin.user.two_factor.badge'|trans }}</twig:Ui:Badge>{% endif %}
                                     </span>
                                     <span class="block text-xs text-muted truncate">{{ user.email }}{% if user.company %} · {{ user.company }}{% endif %}</span>
                                 </span>

@@ -35,6 +35,8 @@ x-cairn: &cairn
     MAILER_FROM: ${MAILER_FROM:-Cairn <no-reply@cairn.example>}
     # en or fr, for the whole instance.
     CAIRN_LOCALE: ${CAIRN_LOCALE:-en}
+    # Who must sign in with a second factor: optional, internal or all (README).
+    CAIRN_TWO_FACTOR: ${CAIRN_TWO_FACTOR:-optional}
     # The timezone of the instance ("Europe/Paris").
     TZ: ${TZ:-UTC}
     # Real time, through the hub built into the web server: where the worker publishes, and

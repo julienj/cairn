@@ -70,11 +70,20 @@ security:
             remember_me:
                 secret: '%kernel.secret%'
                 lifetime: 1209600 # 2 weeks
-                signature_properties: ['password']
+                # Turning the second factor on or off ends the cookies too.
+                signature_properties: ['password', 'totpSecret']
             # Brute force: five failed attempts per email and per IP, then a 15 minute wait.
             login_throttling:
                 max_attempts: 5
                 interval: '15 minutes'
+            # The second factor, after the password: scheb/2fa-bundle, TOTP. It guards what
+            # signs in through this firewall (the form and the identity provider, whose accounts hold none);
+            # the API has its tokens.
+            two_factor:
+                auth_form_path: 2fa_login
+                check_path: 2fa_login_check
+                enable_csrf: true
+                default_target_path: app_home
             logout:
                 path: app_logout
                 target: app_login
@@ -85,6 +94,7 @@ security:
         - { path: ^/login/sso(/callback)?$, roles: PUBLIC_ACCESS } # to the identity provider and back
         - { path: ^/password, roles: PUBLIC_ACCESS } # forgot password, set the password from a link
         - { path: ^/storia, roles: PUBLIC_ACCESS } # dev only: the bundle is disabled in prod
+        - { path: ^/security/2fa(/check)?$, roles: IS_AUTHENTICATED_2FA_IN_PROGRESS } # the code, between the password and the application
         # The API: its documentation is read signed in, by those who may use
         # it (AccessControl::canUseApi(): the internal users); reading the API
         # needs a token with the `read` scope, anything else `write`

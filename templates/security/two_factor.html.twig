@@ -1,0 +1,31 @@
+{# The code of the second factor, asked between the password and the application (scheb/2fa-bundle names the variables). #}
+{% extends 'security/layout.html.twig' %}
+
+{% block title %}{{ 'auth.two_factor.title'|trans }} · Cairn{% endblock %}
+
+{% block card %}
+    <form method="post" action="{{ checkPathUrl ?: path(checkPathRoute) }}" class="rounded-lg border border-line bg-surface p-6 space-y-4">
+        <div>
+            <h1 class="text-base font-semibold text-strong">{{ 'auth.two_factor.title'|trans }}</h1>
+            <p class="mt-1 text-sm text-muted">{{ 'auth.two_factor.intro'|trans }}</p>
+        </div>
+
+        {% if authenticationError %}
+            <twig:Ui:Callout tone="danger" size="sm" class="border-red-line bg-red-soft text-red" role="alert">
+                {{ authenticationError|trans(authenticationErrorData, 'SchebTwoFactorBundle') }}
+            </twig:Ui:Callout>
+        {% endif %}
+
+        <twig:Ui:Form:Field :label="'auth.two_factor.code'|trans" for="_auth_code" required>
+            <twig:Ui:Form:Input id="_auth_code" name="{{ authCodeParameterName }}" autocomplete="one-time-code" inputmode="numeric" spellcheck="false" required autofocus />
+        </twig:Ui:Form:Field>
+
+        {% if isCsrfProtectionEnabled %}
+            <input type="hidden" name="{{ csrfParameterName }}" value="{{ csrf_token(csrfTokenId) }}">
+        {% endif %}
+
+        <twig:Ui:Button variant="primary" size="lg" type="submit" class="w-full">{{ 'auth.two_factor.submit'|trans }}</twig:Ui:Button>
+
+        <a href="{{ logoutPath }}" class="block text-center text-xs text-brand hover:underline">{{ 'auth.two_factor.cancel'|trans }}</a>
+    </form>
+{% endblock %}

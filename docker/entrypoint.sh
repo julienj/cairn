@@ -15,6 +15,12 @@ case "${1:-}" in
 		[ -n "${APP_SECRET:-}" ] \
 			|| refuse 'APP_SECRET is not set. Give the instance a random string of its own, e.g. "openssl rand -hex 32".'
 
+		# Read on every request: a typo would answer 500 everywhere, the API and the MCP server included.
+		case "${CAIRN_TWO_FACTOR-optional}" in
+			optional | internal | all) ;;
+			*) refuse "CAIRN_TWO_FACTOR is \"$CAIRN_TWO_FACTOR\": expected optional, internal or all." ;;
+		esac
+
 		if [ -n "${MERCURE_JWT_SECRET:-}" ]; then
 			[ "${#MERCURE_JWT_SECRET}" -ge 32 ] \
 				|| refuse 'MERCURE_JWT_SECRET is too short: a random string of 32 characters or more.'

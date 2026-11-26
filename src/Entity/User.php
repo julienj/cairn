@@ -10,6 +10,9 @@ use App\Entity\Enum\MailGrouping;
 use App\Repository\UserRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Scheb\TwoFactorBundle\Model\Totp\TotpConfiguration;
+use Scheb\TwoFactorBundle\Model\Totp\TotpConfigurationInterface;
+use Scheb\TwoFactorBundle\Model\Totp\TwoFactorInterface;
 use Symfony\Component\Security\Core\User\EquatableInterface;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -28,10 +31,13 @@ use function Symfony\Component\Clock\now;
  * calls it, kept at its first sign-in. `company` is free text. The person chooses their picture (`avatar`, the name of a
  * file of Attachment/AvatarStorage) and how their notification mails are
  * grouped.
+ * An account that signs in with a password may also hold a TOTP secret (the
+ * second factor, asked after the password); the identity provider has its own
+ * second factor, so an account that signs in through it holds none.
  */
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: 'app_user')]
-class User implements UserInterface, PasswordAuthenticatedUserInterface, EquatableInterface
+class User implements UserInterface, PasswordAuthenticatedUserInterface, EquatableInterface, TwoFactorInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -77,6 +83,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Equatab
     /** @var list<string> the values of the ActivityKind this person leaves out of the thread of every issue */
     #[ORM\Column(type: Types::JSONB, options: ['default' => '[]'])]
     private array $hiddenActivity = [];
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $totpSecret = null;
 
     #[ORM\Column]
     private \DateTimeImmutable $createdAt;
@@ -290,6 +299,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Equatab
     {
         $this->authMethod = AuthMethod::Sso;
         $this->password = null;
+        $this->disableTotp();
     }
 
     /**
@@ -321,6 +331,49 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Equatab
         $this->oidcSubject = $subject;
     }
 
+    /**
+     * Turns the second factor on, or replaces it, with the secret the person
+     * scanned.
+     */
+    public function enableTotp(string $secret): void
+    {
+        if ($this->usesSso()) {
+            throw new \LogicException('An account that signs in through the identity provider has its second factor there.');
+        }
+
+        $this->totpSecret = $secret;
+    }
+
+    public function disableTotp(): void
+    {
+        $this->totpSecret = null;
+    }
+
+    public function hasTotp(): bool
+    {
+        return null !== $this->totpSecret;
+    }
+
+    public function getTotpSecret(): ?string
+    {
+        return $this->totpSecret;
+    }
+
+    public function isTotpAuthenticationEnabled(): bool
+    {
+        return $this->hasTotp() && !$this->usesSso();
+    }
+
+    public function getTotpAuthenticationUsername(): string
+    {
+        return $this->getUserIdentifier();
+    }
+
+    public function getTotpAuthenticationConfiguration(): ?TotpConfigurationInterface
+    {
+        return null === $this->totpSecret ? null : new TotpConfiguration($this->totpSecret, TotpConfiguration::ALGORITHM_SHA1, 30, 6);
+    }
+
     public function getPassword(): ?string
     {
         return $this->password;
@@ -335,7 +388,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Equatab
     /**
      * Whether the user of an open session is still the one in database.
      * Symfony compares password, identifier and roles on its own; `active`
-     * is added so that deactivating an account ends its sessions.
+     * is added so that deactivating an account ends its sessions, and the
+     * second factor's secret so that turning it on or off does the same.
      */
     public function isEqualTo(UserInterface $user): bool
     {
@@ -343,6 +397,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Equatab
             && $user->getId() === $this->getId()
             && $user->email === $this->email
             && $user->password === $this->password
+            && $user->totpSecret === $this->totpSecret
             && $user->active === $this->active
             && $user->getRoles() === $this->getRoles();
     }

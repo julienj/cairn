@@ -1,0 +1,45 @@
+{% extends 'layout/account.html.twig' %}
+
+{% block page_title %}{{ 'account.two_factor.title'|trans }}{% endblock %}
+
+{% block page_intro %}{{ 'account.two_factor.intro'|trans }}{% endblock %}
+
+{# The second factor of the signed-in user, in the `state` it is in: `sso` (the identity provider has its own), `off` (the page that sets it up is Security/TwoFactorEnableController's) or `enabled` (`disableForm`). `required` says the instance holds the account to it. #}
+{% block content %}
+    {% if state == 'sso' %}
+        <div class="rounded-lg border border-line bg-surface p-4 sm:p-5">
+            <h2 class="font-semibold text-strong">{{ 'account.two_factor.sso_title'|trans({ '%provider%': ssoName }) }}</h2>
+            <p class="mt-1 text-sm text-muted">{{ 'account.two_factor.sso_intro'|trans({ '%provider%': ssoName }) }}</p>
+        </div>
+    {% elseif state == 'off' %}
+        <div class="rounded-lg border border-line bg-surface p-4 sm:p-5">
+            <div class="flex items-center gap-2">
+                <h2 class="font-semibold text-strong">{{ 'account.two_factor.status.title'|trans }}</h2>
+                <twig:Ui:Badge tone="gray">{{ 'account.two_factor.status.off'|trans }}</twig:Ui:Badge>
+            </div>
+            <p class="mt-1 text-sm text-muted">{{ 'account.two_factor.status.off_help'|trans }}</p>
+            <twig:Ui:Button :href="path('app_two_factor_enable')" variant="primary" icon="shield-check" class="mt-3">{{ 'account.two_factor.setup.start'|trans }}</twig:Ui:Button>
+        </div>
+    {% else %}
+        <div class="rounded-lg border border-line bg-surface p-4 sm:p-5">
+            <div class="flex items-center gap-2">
+                <h2 class="font-semibold text-strong">{{ 'account.two_factor.status.title'|trans }}</h2>
+                <twig:Ui:Badge tone="emerald" icon="shield-check">{{ 'account.two_factor.status.on'|trans }}</twig:Ui:Badge>
+            </div>
+        </div>
+
+        {% if required %}
+            <twig:Ui:Callout tone="gray" size="sm">{{ 'account.two_factor.disable.required'|trans }}</twig:Ui:Callout>
+        {% else %}
+            {{ form_start(disableForm, { attr: { class: 'rounded-lg border border-red-line bg-surface p-4 sm:p-5 space-y-4' } }) }}
+                <div>
+                    <h2 class="font-semibold text-strong">{{ 'account.two_factor.disable.title'|trans }}</h2>
+                    <p class="mt-1 text-sm text-muted">{{ 'account.two_factor.disable.help'|trans }}</p>
+                </div>
+                {{ form_errors(disableForm) }}
+                <div class="sm:max-w-sm">{{ form_row(disableForm.code) }}</div>
+                <twig:Ui:Button type="submit" size="lg">{{ 'account.two_factor.disable.submit'|trans }}</twig:Ui:Button>
+            {{ form_end(disableForm) }}
+        {% endif %}
+    {% endif %}
+{% endblock %}

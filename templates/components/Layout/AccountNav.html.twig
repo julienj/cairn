@@ -7,6 +7,7 @@
         <twig:Ui:Layout:Sidebar:Item href="{{ path('app_account') }}" icon="user" :active="accountNavRoute == 'app_account'">{{ 'account.nav.profile'|trans }}</twig:Ui:Layout:Sidebar:Item>
         <twig:Ui:Layout:Sidebar:Item href="{{ path('app_account_notifications') }}" icon="bell" :active="accountNavRoute == 'app_account_notifications'">{{ 'account.nav.notifications'|trans }}</twig:Ui:Layout:Sidebar:Item>
         <twig:Ui:Layout:Sidebar:Item href="{{ path('app_account_security') }}" icon="lock" :active="accountNavRoute == 'app_account_security'">{{ 'account.nav.security'|trans }}</twig:Ui:Layout:Sidebar:Item>
+        <twig:Ui:Layout:Sidebar:Item href="{{ path('app_account_two_factor') }}" icon="shield-check" :active="accountNavRoute starts with 'app_account_two_factor'">{{ 'account.nav.two_factor'|trans }}</twig:Ui:Layout:Sidebar:Item>
     </twig:Ui:Layout:Sidebar:Section>
     {% if accountNavCanUseApi %}
         <twig:Ui:Layout:Sidebar:Section :label="'account.nav.integrations'|trans">

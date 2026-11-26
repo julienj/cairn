@@ -11,6 +11,7 @@ use App\Form\User\UserType;
 use App\Message\Command\User\CreateUser;
 use App\Message\Command\User\DeleteUser;
 use App\Message\Command\User\InviteUser;
+use App\Message\Command\User\ResetTwoFactor;
 use App\Message\Command\User\UpdateUser;
 use App\Message\CommandBus;
 use App\Message\Query\User\SearchUsers;
@@ -130,6 +131,28 @@ final class UserController extends AbstractController
         try {
             $this->commands->dispatch(new InviteUser((int) $user->getId()));
             $this->addFlash('success', $this->translator->trans('admin.user.invitation_sent', ['%email%' => $user->getEmail()]));
+        } catch (UserException $e) {
+            $this->addFlash('error', $e->trans($this->translator));
+        }
+
+        return $this->redirectToRoute('app_admin_user', ['id' => $user->getId()]);
+    }
+
+    /**
+     * Takes the second factor off an account whose person lost their phone; nobody resets their own, which is
+     * turned off with a code (or from the console, the phone lost).
+     */
+    #[Route('/{id}/two-factor/reset', name: 'app_admin_user_two_factor_reset', requirements: ['id' => '\\d+'], methods: ['POST'])]
+    #[IsCsrfTokenValid('submit')]
+    public function resetTwoFactor(#[MapEntity] User $user, #[CurrentUser] User $viewer): RedirectResponse
+    {
+        if ($user->getId() === $viewer->getId()) {
+            throw $this->createAccessDeniedException('Nobody resets their own second factor.');
+        }
+
+        try {
+            $this->commands->dispatch(new ResetTwoFactor((int) $user->getId()));
+            $this->addFlash('success', $this->translator->trans('admin.user.two_factor.reset_done', ['%name%' => $user->getFullName()]));
         } catch (UserException $e) {
             $this->addFlash('error', $e->trans($this->translator));
         }

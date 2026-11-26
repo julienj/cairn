@@ -17,6 +17,7 @@ use App\Message\CommandBus;
 use App\MessageHandler\Command\User\UserException;
 use App\Security\AccessControl;
 use App\Security\SingleSignOn;
+use App\Security\TwoFactorCondition;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\Attribute\Target;
@@ -36,7 +37,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  * The pages of the signed-in user's own account, one per subject: the
  * profile (their picture; who they are is shown, the administration
  * changes it), the notifications (how their mails are grouped) and the
- * security (their password). The API tokens are ApiTokenController's.
+ * security (their password; the second factor is TwoFactorController's). The API tokens are ApiTokenController's.
  * The pictures are served to whoever is signed in, wherever a person is
  * shown.
  */
@@ -114,7 +115,9 @@ final class AccountController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             try {
                 $this->commands->dispatch(new ChangePassword((int) $user->getId(), (string) $data->currentPassword, (string) $data->newPassword));
-                // The new password ended every session of the account; this one goes on.
+                // The new password ended every session of the account; this one goes on, past the second factor
+                // it already went through.
+                $request->attributes->set(TwoFactorCondition::SKIP, true);
                 $security->login($user, 'form_login', 'main');
                 $this->addFlash('success', $this->translator->trans('account.security.saved'));
 

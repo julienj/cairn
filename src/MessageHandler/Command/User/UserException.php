@@ -82,6 +82,26 @@ final class UserException extends \DomainException implements TranslatableInterf
         return new self('The current password is not the one typed.', 'account.refused.wrong_password');
     }
 
+    public static function wrongCode(): self
+    {
+        return new self('The code is not the one of the second factor.', 'account.refused.wrong_code');
+    }
+
+    public static function twoFactorAlreadyOn(): self
+    {
+        return new self('The account already has a second factor.', 'account.refused.two_factor_on');
+    }
+
+    public static function twoFactorNotOn(): self
+    {
+        return new self('The account has no second factor.', 'account.refused.two_factor_off');
+    }
+
+    public static function twoFactorRequired(): self
+    {
+        return new self('The instance holds this account to a second factor.', 'account.refused.two_factor_required');
+    }
+
     public static function hasHistory(string $userName): self
     {
         return new self(\sprintf('%s wrote or holds issues: the account is deactivated, not deleted.', $userName), 'admin.refused.has_history', ['%name%' => $userName]);

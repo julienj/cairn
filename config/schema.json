@@ -592,7 +592,8 @@
                                         "additionalProperties": {
                                             "$ref": "#/$defs/types/variable"
                                         },
-                                        "minProperties": 1
+                                        "minProperties": 1,
+                                        "minItems": 1
                                     }
                                 },
                                 "patternProperties": {
@@ -1331,7 +1332,8 @@
                                                 "identity_generation_preferences": []
                                             }
                                         },
-                                        "minProperties": 1
+                                        "minProperties": 1,
+                                        "minItems": 1
                                     },
                                     "resolve_target_entities": {
                                         "$ref": "#/$defs/types/object_null",
@@ -2797,7 +2799,7 @@
                                     },
                                     "save_path": {
                                         "$ref": "#/$defs/types/scalar",
-                                        "description": "Defaults to \"%kernel.cache_dir%/sessions\" if the \"handler_id\" option is not null."
+                                        "description": "Defaults to \"%kernel.share_dir%/sessions\" if the \"handler_id\" option is not null."
                                     },
                                     "metadata_update_threshold": {
                                         "$ref": "#/$defs/types/integer",
@@ -7922,7 +7924,8 @@
                                             },
                                             "additionalProperties": false
                                         },
-                                        "minProperties": 1
+                                        "minProperties": 1,
+                                        "minItems": 1
                                     }
                                 },
                                 "patternProperties": {
@@ -8597,6 +8600,119 @@
                     "utf8": true
                 }
             },
+            "scheb_two_factor": {
+                "$ref": "#/$defs/types/object_null",
+                "properties": {
+                    "persister": {
+                        "$ref": "#/$defs/types/scalar",
+                        "default": "scheb_two_factor.persister.doctrine"
+                    },
+                    "model_manager_name": {
+                        "$ref": "#/$defs/types/scalar",
+                        "default": null
+                    },
+                    "security_tokens": {
+                        "$ref": "#/$defs/types/array_null",
+                        "items": {
+                            "$ref": "#/$defs/types/scalar"
+                        },
+                        "default": [
+                            "Symfony\\Component\\Security\\Core\\Authentication\\Token\\UsernamePasswordToken",
+                            "Symfony\\Component\\Security\\Http\\Authenticator\\Token\\PostAuthenticationToken"
+                        ]
+                    },
+                    "ip_whitelist": {
+                        "$ref": "#/$defs/types/array_null",
+                        "items": {
+                            "$ref": "#/$defs/types/scalar"
+                        }
+                    },
+                    "ip_whitelist_provider": {
+                        "$ref": "#/$defs/types/scalar",
+                        "default": "scheb_two_factor.default_ip_whitelist_provider"
+                    },
+                    "two_factor_token_factory": {
+                        "$ref": "#/$defs/types/scalar",
+                        "default": "scheb_two_factor.default_token_factory"
+                    },
+                    "two_factor_provider_decider": {
+                        "$ref": "#/$defs/types/scalar",
+                        "default": "scheb_two_factor.default_provider_decider"
+                    },
+                    "two_factor_condition": {
+                        "$ref": "#/$defs/types/scalar",
+                        "default": null
+                    },
+                    "code_reuse_cache": {
+                        "$ref": "#/$defs/types/scalar",
+                        "default": null
+                    },
+                    "code_reuse_cache_duration": {
+                        "$ref": "#/$defs/types/integer",
+                        "default": 60
+                    },
+                    "code_reuse_default_handler": {
+                        "$ref": "#/$defs/types/scalar",
+                        "default": null
+                    },
+                    "totp": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/$defs/types/object_null",
+                                "properties": {
+                                    "enabled": {
+                                        "$ref": "#/$defs/types/scalar",
+                                        "default": false
+                                    },
+                                    "form_renderer": {
+                                        "$ref": "#/$defs/types/scalar",
+                                        "default": null
+                                    },
+                                    "issuer": {
+                                        "$ref": "#/$defs/types/scalar",
+                                        "default": null
+                                    },
+                                    "server_name": {
+                                        "$ref": "#/$defs/types/scalar",
+                                        "default": null
+                                    },
+                                    "leeway": {
+                                        "$ref": "#/$defs/types/integer",
+                                        "minimum": 0,
+                                        "default": 0
+                                    },
+                                    "parameters": {
+                                        "$ref": "#/$defs/types/array_null",
+                                        "items": {
+                                            "$ref": "#/$defs/types/scalar"
+                                        }
+                                    },
+                                    "template": {
+                                        "$ref": "#/$defs/types/scalar",
+                                        "default": "@SchebTwoFactor/Authentication/form.html.twig"
+                                    }
+                                },
+                                "additionalProperties": false
+                            },
+                            {
+                                "type": [
+                                    "boolean"
+                                ]
+                            }
+                        ],
+                        "default": {
+                            "enabled": false,
+                            "form_renderer": null,
+                            "issuer": null,
+                            "server_name": null,
+                            "leeway": 0,
+                            "parameters": [],
+                            "template": "@SchebTwoFactor/Authentication/form.html.twig"
+                        }
+                    }
+                },
+                "additionalProperties": false
+            },
             "scheduler": {
                 "anyOf": [
                     {
@@ -8839,6 +8955,7 @@
                             ]
                         },
                         "minProperties": 1,
+                        "minItems": 1,
                         "examples": [
                             {
                                 "App\\Entity\\User1": "auto",
@@ -9066,6 +9183,7 @@
                             "additionalProperties": false
                         },
                         "minProperties": 1,
+                        "minItems": 1,
                         "examples": [
                             {
                                 "my_memory_provider": {
@@ -11490,6 +11608,92 @@
                                         }
                                     },
                                     "additionalProperties": false
+                                },
+                                "two_factor": {
+                                    "$ref": "#/$defs/types/object_null",
+                                    "properties": {
+                                        "check_path": {
+                                            "$ref": "#/$defs/types/scalar",
+                                            "default": "/2fa_check"
+                                        },
+                                        "post_only": {
+                                            "$ref": "#/$defs/types/boolean",
+                                            "default": true
+                                        },
+                                        "auth_form_path": {
+                                            "$ref": "#/$defs/types/scalar",
+                                            "default": "/2fa"
+                                        },
+                                        "always_use_default_target_path": {
+                                            "$ref": "#/$defs/types/boolean",
+                                            "default": false
+                                        },
+                                        "default_target_path": {
+                                            "$ref": "#/$defs/types/scalar",
+                                            "default": "/"
+                                        },
+                                        "success_handler": {
+                                            "$ref": "#/$defs/types/scalar",
+                                            "default": null
+                                        },
+                                        "failure_handler": {
+                                            "$ref": "#/$defs/types/scalar",
+                                            "default": null
+                                        },
+                                        "authentication_required_handler": {
+                                            "$ref": "#/$defs/types/scalar",
+                                            "default": null
+                                        },
+                                        "auth_code_parameter_name": {
+                                            "$ref": "#/$defs/types/scalar",
+                                            "default": "_auth_code"
+                                        },
+                                        "trusted_parameter_name": {
+                                            "$ref": "#/$defs/types/scalar",
+                                            "default": "_trusted"
+                                        },
+                                        "remember_me_sets_trusted": {
+                                            "$ref": "#/$defs/types/scalar",
+                                            "default": false
+                                        },
+                                        "multi_factor": {
+                                            "$ref": "#/$defs/types/boolean",
+                                            "default": false
+                                        },
+                                        "prepare_on_login": {
+                                            "$ref": "#/$defs/types/boolean",
+                                            "default": false
+                                        },
+                                        "prepare_on_access_denied": {
+                                            "$ref": "#/$defs/types/boolean",
+                                            "default": false
+                                        },
+                                        "enable_csrf": {
+                                            "$ref": "#/$defs/types/scalar",
+                                            "default": false
+                                        },
+                                        "csrf_parameter": {
+                                            "$ref": "#/$defs/types/scalar",
+                                            "default": "_csrf_token"
+                                        },
+                                        "csrf_token_id": {
+                                            "$ref": "#/$defs/types/scalar",
+                                            "default": "two_factor"
+                                        },
+                                        "csrf_header": {
+                                            "$ref": "#/$defs/types/scalar",
+                                            "default": null
+                                        },
+                                        "csrf_token_manager": {
+                                            "$ref": "#/$defs/types/scalar",
+                                            "default": "scheb_two_factor.csrf_token_manager"
+                                        },
+                                        "provider": {
+                                            "$ref": "#/$defs/types/scalar",
+                                            "default": null
+                                        }
+                                    },
+                                    "additionalProperties": false
                                 }
                             },
                             "patternProperties": {
@@ -11525,7 +11729,8 @@
                             },
                             "additionalProperties": false
                         },
-                        "minProperties": 1
+                        "minProperties": 1,
+                        "minItems": 1
                     },
                     "access_control": {
                         "$ref": "#/$defs/types/array_null",
@@ -14221,7 +14426,8 @@
                                                         },
                                                         "additionalProperties": false
                                                     },
-                                                    "minProperties": 1
+                                                    "minProperties": 1,
+                                                    "minItems": 1
                                                 }
                                             ]
                                         },
@@ -14756,7 +14962,8 @@
                                                                 },
                                                                 "additionalProperties": false
                                                             },
-                                                            "minProperties": 1
+                                                            "minProperties": 1,
+                                                            "minItems": 1
                                                         }
                                                     ]
                                                 }
@@ -15201,7 +15408,8 @@
                                                 },
                                                 "additionalProperties": false
                                             },
-                                            "minProperties": 1
+                                            "minProperties": 1,
+                                            "minItems": 1
                                         }
                                     ]
                                 },
@@ -15736,7 +15944,8 @@
                                                         },
                                                         "additionalProperties": false
                                                     },
-                                                    "minProperties": 1
+                                                    "minProperties": 1,
+                                                    "minItems": 1
                                                 }
                                             ]
                                         }
@@ -16137,6 +16346,9 @@
         "router": {
             "$ref": "#/$defs/nodes/router"
         },
+        "scheb_two_factor": {
+            "$ref": "#/$defs/nodes/scheb_two_factor"
+        },
         "scheduler": {
             "$ref": "#/$defs/nodes/scheduler"
         },
@@ -16270,6 +16482,9 @@
                 },
                 "router": {
                     "$ref": "#/$defs/nodes/router"
+                },
+                "scheb_two_factor": {
+                    "$ref": "#/$defs/nodes/scheb_two_factor"
                 },
                 "scheduler": {
                     "$ref": "#/$defs/nodes/scheduler"
@@ -16412,6 +16627,9 @@
                 "router": {
                     "$ref": "#/$defs/nodes/router"
                 },
+                "scheb_two_factor": {
+                    "$ref": "#/$defs/nodes/scheb_two_factor"
+                },
                 "scheduler": {
                     "$ref": "#/$defs/nodes/scheduler"
                 },
@@ -16546,6 +16764,9 @@
                 },
                 "router": {
                     "$ref": "#/$defs/nodes/router"
+                },
+                "scheb_two_factor": {
+                    "$ref": "#/$defs/nodes/scheb_two_factor"
                 },
                 "scheduler": {
                     "$ref": "#/$defs/nodes/scheduler"

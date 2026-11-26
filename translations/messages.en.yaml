@@ -352,6 +352,12 @@ auth:
         forgot: Forgot password?
         or: or
         sso: Sign in with %name%
+    two_factor:
+        title: Two-factor authentication
+        intro: Enter the code shown by your authentication app.
+        code: Code
+        submit: Verify
+        cancel: Cancel and sign out
     logout: Log out
     password:
         back_to_login: Back to sign in
@@ -603,6 +609,13 @@ admin:
         create: Create the account
         created_sso: 'Account of %name% created. Nothing was mailed: they sign in with %provider%.'
         sso_pending: 'This account has not signed in with %provider% yet: it will be found there by its address, %email%.'
+        two_factor:
+            badge: 2FA
+            title: Two-factor authentication
+            help: 'This account uses an authentication app. If the person lost their phone, reset it: they sign in with their password and set it up again.'
+            reset: Reset
+            reset_confirm: 'Reset the second factor of %name%?'
+            reset_done: 'The second factor of %name% was reset.'
         auth_method:
             label: Sign-in method
             password: Password
@@ -1348,6 +1361,7 @@ account:
         profile: Profile
         notifications: Notifications
         security: Security
+        two_factor: Two-factor authentication
         integrations: Integrations
         api: API
         mcp: MCP server
@@ -1394,8 +1408,41 @@ account:
         too_many_attempts: Too many attempts. Try again in a few minutes.
         sso_title: 'You sign in with %provider%'
         sso_intro: 'This account has no password here: what protects it is managed at %provider%. An administrator can change how you sign in.'
+    two_factor:
+        title: Two-factor authentication
+        intro: After your password, Cairn asks for a code from an authentication app, so that a stolen password is not enough to sign in as you.
+        code: Code from your app
+        confirm_code: A code from your app
+        enabled: Two-factor authentication is on.
+        disabled: Two-factor authentication is off.
+        too_many_attempts: Too many attempts. Try again in a few minutes.
+        required_notice: This instance requires two-factor authentication. Set it up to go on using Cairn.
+        sso_title: 'You sign in with %provider%'
+        sso_intro: 'The second factor of this account is managed at %provider%, not here.'
+        setup:
+            title: Set up an authentication app
+            intro: Scan the QR code with an authentication app (Google Authenticator, 1Password, Aegis…), then type the code it shows to confirm.
+            qr_alt: QR code to scan with your authentication app
+            manual: 'Cannot scan it? Type this key in your app instead:'
+            submit: Turn on
+            start: Set up
+            cancel: Back to my account
+        status:
+            title: Authentication app
+            'on': 'On'
+            'off': 'Off'
+            off_help: Add a code from an authentication app to your password, so that a stolen password is not enough to sign in as you.
+        disable:
+            title: Turn off
+            help: Sign in with your password alone again. Confirm with a code.
+            submit: Turn off
+            required: This instance requires two-factor authentication, so it cannot be turned off. If you lose your phone, an administrator can reset it.
     refused:
         wrong_password: The current password is incorrect.
+        wrong_code: That code is incorrect.
+        two_factor_on: Two-factor authentication is already on.
+        two_factor_off: Two-factor authentication is not on.
+        two_factor_required: 'This instance requires two-factor authentication: it cannot be turned off.'
 
 mcp:
     title: MCP server

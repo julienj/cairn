@@ -63,6 +63,31 @@ without its Doctrine bridge), `symfony/mcp-bundle`, Mercure
   tokens until their account is deactivated here. Several providers
   would be a provider chosen on the account and an authenticator of our
   own: `oidc_login` knows one per firewall, from the configuration.
+- **Second factor**: optional, TOTP only, by `scheb/2fa-bundle`, on the
+  `main` firewall alone (the `api` firewall has its tokens). An account
+  that signs in with a password turns it on at `/security/2fa/enable`, in
+  the layout of the sign-in, from its account or when held to it
+  (`EnableTwoFactor`: the code of the scanned secret proves it works, with
+  no limit on the tries: the secret is on the screen). `CAIRN_TWO_FACTOR`
+  (`optional`, `internal`, `all`) says who must, and
+  `Security/TwoFactorPolicy` is the one place that answers: whoever must and
+  has none is sent to that page by `Security/TwoFactorEnrolment` after the
+  password, comes back to the page they asked for, and cannot turn it off.
+  Turning it on or off ends the other sessions of the account
+  (`User::isEqualTo()` compares the secret) and signs the current one in
+  again. The accounts of the identity provider hold none and are never
+  asked: the provider has its own, and `User::signInWithSso()` drops the
+  secret. There are no backup codes: whoever lost their phone has the
+  administration reset it (`ResetTwoFactor`), an administrator who lost
+  their own the console (`app:user:reset-two-factor`). A code is good once, at the
+  sign-in and anywhere else (`Security/TwoFactorCodes` sends scheb's events,
+  so its cache remembers it), and is guessed at five tries per account
+  (`Security/TwoFactorThrottling`, `two_factor` limiter), at the sign-in
+  and on the page that turns it off. A caller that signs a person in again
+  on the session that went through the code sets
+  `TwoFactorCondition::SKIP` on the request. Scheb reads the system clock,
+  not `ClockInterface`: tests compute codes with OTPHP
+  (`TwoFactorHelpers`).
 - **API**: REST under `/api` and an MCP server on `/mcp`, for internal
   users, over the same commands and queries as the pages (see [API](#api)).
 - **Configuration**: roles, permissions, steps, workflows, fields and link
@@ -157,7 +182,7 @@ src/
   | account     | `/account/…`                  | `Controller/` root     | `templates/account/`   |
   | project     | `/MD/SPT/…`                   | `Controller/Project/`  | `templates/project/`   |
   | admin       | `/admin/…`                    | `Controller/Admin/`    | `templates/admin/`     |
-  | security    | `/login`                      | `Controller/Security/` | `templates/security/`  |
+  | security    | `/login`, `/security/…`       | `Controller/Security/` | `templates/security/`  |
   | api         | `/api/…`, `/mcp`              | none: `Api/`           | none                   |
 
 - **URLs carry keys, not ids, and one route per need.** A project action
