@@ -9,6 +9,7 @@ use App\Entity\Enum\Criticality;
 use App\Entity\Issue;
 use App\Entity\Release;
 use App\Entity\Tag;
+use App\Entity\Team;
 use App\Entity\Tracker;
 use App\Entity\User;
 use App\Message\Command\Issue\AddComment;
@@ -74,6 +75,10 @@ final class Selection
     /** Null leaves the assignee, UpdateIssue::NOBODY unassigns. */
     #[LiveProp]
     public ?int $assigneeId = null;
+
+    /** The team every issue is given to, instead of a person: choosing one forgets the other. */
+    #[LiveProp]
+    public ?int $assigneeTeamId = null;
 
     #[LiveProp]
     public ?string $criticality = null;
@@ -201,6 +206,11 @@ final class Selection
         return array_find($this->getSelection()->assignees, fn (User $member): bool => $member->getId() === $this->assigneeId);
     }
 
+    public function getAssigneeTeam(): ?Team
+    {
+        return array_find($this->getSelection()->assigneeTeams, fn (Team $team): bool => $team->getId() === $this->assigneeTeamId);
+    }
+
     public function getRelease(): ?Release
     {
         return array_find($this->getSelection()->releases, fn (Release $release): bool => $release->getId() === $this->releaseId);
@@ -223,6 +233,8 @@ final class Selection
         $among = static fn (array $entities): bool => null === $value || (ctype_digit($value) && (UpdateIssue::NOBODY === (int) $value || array_any($entities, static fn (User|Release|Tag $entity): bool => $entity->getId() === (int) $value)));
         $offered = match ($property) {
             'assignee' => $selection->canAssign && $among($selection->assignees),
+            // A team is given the issues, never "no team": nobody is a choice of the people.
+            'assigneeTeam' => $selection->canAssign && null !== $value && ctype_digit($value) && array_any($selection->assigneeTeams, static fn (Team $team): bool => $team->getId() === (int) $value),
             'release' => [] !== $selection->releases && $among($selection->releases),
             // A tag is added, never taken off here: there is no "none" to choose.
             'tag' => (null === $value || 0 !== (int) $value) && $among($selection->tags),
@@ -236,7 +248,8 @@ final class Selection
         }
 
         match ($property) {
-            'assignee' => $this->assigneeId = null === $value ? null : (int) $value,
+            'assignee' => [$this->assigneeId, $this->assigneeTeamId] = [null === $value ? null : (int) $value, null],
+            'assigneeTeam' => [$this->assigneeId, $this->assigneeTeamId] = [null, (int) $value],
             'release' => $this->releaseId = null === $value ? null : (int) $value,
             'tag' => $this->tagId = null === $value ? null : (int) $value,
             'criticality' => $this->criticality = $value,
@@ -347,7 +360,7 @@ final class Selection
         }
 
         $properties = array_keys(array_filter([
-            'issue.show.assignee' => null !== $this->assigneeId,
+            'issue.show.assignee' => null !== $this->assigneeId || null !== $this->assigneeTeamId,
             'issue.show.criticality' => null !== $this->criticality,
             'issue.show.release' => null !== $this->releaseId,
             'issue.show.visibility' => null !== $this->private,
@@ -360,6 +373,7 @@ final class Selection
                 criticality: Criticality::tryFrom($this->criticality ?? ''),
                 private: $this->private,
                 releaseId: $this->releaseId,
+                assigneeTeamId: $this->assigneeTeamId,
             );
         }
 

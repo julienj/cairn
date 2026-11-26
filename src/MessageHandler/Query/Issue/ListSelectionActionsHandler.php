@@ -8,11 +8,13 @@ use App\Config\ConfigRegistry;
 use App\Config\Definition\PlaceDefinition;
 use App\Entity\Issue;
 use App\Entity\Project;
+use App\Entity\Team;
 use App\Entity\Tracker;
 use App\Entity\User;
 use App\Message\Query\Issue\ListSelectionActions;
 use App\Message\Query\Issue\SelectionActions;
 use App\Message\Query\Project\ListProjectMembers;
+use App\Message\Query\Project\ListProjectTeams;
 use App\Message\Query\Project\ListTrackers;
 use App\Message\QueryBus;
 use App\Repository\EntityList;
@@ -29,7 +31,8 @@ use Symfony\Component\Messenger\Attribute\AsMessageHandler;
  * Loads the selected issues the viewer sees (Security/Visibility, an id
  * they may not see is dropped), sorted as the lists sort them, then keeps
  * what may change on all of them: the rights that hold on every project;
- * the people who are members of every project, for the assignment; the
+ * the people who are members of every project and the teams that hold
+ * a role on each, for the assignment; the
  * open releases, the places the issues have in common and the trackers a
  * move may target, when the selection holds the issues of one project,
  * since releases and trackers belong to one.
@@ -78,6 +81,7 @@ final class ListSelectionActionsHandler
             tags: null !== $project && $everywhere(Permission::IssueSetTags) ? $this->tags->findByProject($project) : [],
             moveTrackers: null === $project ? [] : $this->moveTrackers($viewer, $project, $issues),
             places: null !== $project && $this->access->canMoveFreely($viewer, $project) ? $this->commonPlaces($issues) : [],
+            assigneeTeams: $canAssign ? $this->commonTeams($projects) : [],
         );
     }
 
@@ -154,6 +158,25 @@ final class ListSelectionActionsHandler
         }
 
         return array_values($members ?? []);
+    }
+
+    /**
+     * @param array<int, Project> $projects
+     *
+     * @return list<Team>
+     */
+    private function commonTeams(array $projects): array
+    {
+        $teams = null;
+        foreach ($projects as $project) {
+            $ofProject = [];
+            foreach ($this->queries->ask(new ListProjectTeams($project)) as $team) {
+                $ofProject[(int) $team->getId()] = $team;
+            }
+            $teams = null === $teams ? $ofProject : array_intersect_key($teams, $ofProject);
+        }
+
+        return array_values($teams ?? []);
     }
 
     /**
