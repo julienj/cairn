@@ -49,7 +49,8 @@ final readonly class TwoFactorEnrolment
             return;
         }
 
-        if ($request->isMethod('GET') && !$request->isXmlHttpRequest() && $request->hasSession()) {
+        // Only a page the person asked for goes back to: not a frame, a live component or a profiler panel.
+        if ($request->isMethod('GET') && $request->hasSession() && !$request->isXmlHttpRequest() && !$request->headers->has('Turbo-Frame') && !str_starts_with((string) $request->attributes->get('_route'), '_')) {
             $this->saveTargetPath($request->getSession(), 'main', $request->getUri());
         }
         $event->setResponse(new RedirectResponse($this->urls->generate('app_two_factor_enable')));

@@ -98,6 +98,17 @@ final class TwoFactorEnableTest extends WebTestCase
         self::assertResponseRedirects('http://localhost/projects');
     }
 
+    public function testAFrameIsNotAPageToGoBackTo(): void
+    {
+        $this->client->request('GET', '/projects', server: ['HTTP_TURBO_FRAME' => 'modal']);
+        self::assertResponseRedirects('/security/2fa/enable');
+        $secret = $this->scannedSecret();
+
+        $this->client->submitForm('Turn on', ['enable[code]' => self::totpCode($secret)]);
+
+        self::assertResponseRedirects('/account/two-factor');
+    }
+
     public function testAWrongCodeTurnsNothingOnAndIsNotCountedAgainstThePerson(): void
     {
         $secret = $this->scannedSecret();
