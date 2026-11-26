@@ -1,4 +1,4 @@
-{# Project level: the issue lists and the releases, the trackers the viewer may see (archived ones at their place, under the archive icon), each list with its count of open issues, then the configuration of the project, one item per subject, for those who manage it (the access under `project.manage_members`, the rest under `project.configure`). On a wide screen it folds away (`sidebar-collapsed`), from the button of the breadcrumb (`layout/project.html.twig`). #}
+{# Project level: the issue lists and the releases, the trackers the viewer may see (archived ones at their place, under the archive icon), each list with its count of open issues, then the configuration of the project, one item per subject, each under a permission of its own: the section shows once the viewer holds one of them, with the items that are theirs. On a wide screen it folds away (`sidebar-collapsed`), from the button of the breadcrumb (`layout/project.html.twig`). #}
 {% set route = { workspaceKey: project.workspace.key, projectKey: project.key } %}
 {% set navTrackers = this.trackers %}
 {% set navCounts = this.counts %}
@@ -24,20 +24,32 @@
             {% endfor %}
         </twig:Ui:Layout:Sidebar:Section>
     {% endif %}
-    {% set navManagesMembers = is_granted('project.manage_members', project) %}
-    {% set navConfigures = is_granted('project.configure', project) %}
-    {% if navManagesMembers or navConfigures %}
+    {% set navConfiguration = {
+        general: is_granted('project.configure', project),
+        trackers: is_granted('tracker.manage', project),
+        tags: is_granted('tag.manage', project),
+        access: is_granted('project.manage_members', project),
+        automations: is_granted('automation.manage', project),
+        repositories: is_granted('repository.manage', project),
+    } %}
+    {% if true in navConfiguration %}
         <twig:Ui:Layout:Sidebar:Section :label="'nav.project.configuration.title'|trans">
-            {% if navConfigures %}
+            {% if navConfiguration.general %}
                 <twig:Ui:Layout:Sidebar:Item href="{{ path('app_project_settings_general', route) }}" icon="settings" :active="navRoute == 'app_project_settings_general'">{{ 'nav.project.configuration.general'|trans }}</twig:Ui:Layout:Sidebar:Item>
+            {% endif %}
+            {% if navConfiguration.trackers %}
                 <twig:Ui:Layout:Sidebar:Item href="{{ path('app_project_settings', route) }}" icon="kanban" :active="navRoute in ['app_project_settings', 'app_project_settings_tracker', 'app_project_settings_tracker_new']">{{ 'nav.project.configuration.trackers'|trans }}</twig:Ui:Layout:Sidebar:Item>
+            {% endif %}
+            {% if navConfiguration.tags %}
                 <twig:Ui:Layout:Sidebar:Item href="{{ path('app_project_settings_tags', route) }}" icon="tags" :active="navRoute starts with 'app_project_settings_tag'">{{ 'nav.project.configuration.tags'|trans }}</twig:Ui:Layout:Sidebar:Item>
             {% endif %}
-            {% if navManagesMembers %}
+            {% if navConfiguration.access %}
                 <twig:Ui:Layout:Sidebar:Item href="{{ path('app_project_access', route) }}" icon="users" :active="navRoute == 'app_project_access'">{{ 'nav.project.configuration.access'|trans }}</twig:Ui:Layout:Sidebar:Item>
             {% endif %}
-            {% if navConfigures %}
+            {% if navConfiguration.automations %}
                 <twig:Ui:Layout:Sidebar:Item href="{{ path('app_project_settings_automations', route) }}" icon="zap" :active="navRoute starts with 'app_project_settings_automation'">{{ 'nav.project.configuration.automations'|trans }}</twig:Ui:Layout:Sidebar:Item>
+            {% endif %}
+            {% if navConfiguration.repositories %}
                 <twig:Ui:Layout:Sidebar:Item href="{{ path('app_project_settings_repositories', route) }}" icon="git-branch" :active="navRoute starts with 'app_project_settings_repositor'">{{ 'nav.project.configuration.repositories'|trans }}</twig:Ui:Layout:Sidebar:Item>
             {% endif %}
         </twig:Ui:Layout:Sidebar:Section>

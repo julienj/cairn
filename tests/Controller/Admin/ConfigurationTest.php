@@ -80,7 +80,7 @@ final class ConfigurationTest extends WebTestCase
         self::assertSelectorTextContains('#config-roles-client', 'Guided workflow');
         self::assertSelectorTextContains('#config-roles-project_manager', '1 access', 'Thomas on Maison Dupont');
 
-        self::assertSame(['Issues', 'Tracking', 'Comments', 'Project', 'Budgets'], $crawler->filter('main tbody th[scope=colgroup]')->each(static fn ($title): string => $title->text()), 'the rights come group by group');
+        self::assertSame(['Issues', 'Tracking', 'Comments', 'Project', 'Project configuration', 'Budgets'], $crawler->filter('main tbody th[scope=colgroup]')->each(static fn ($title): string => $title->text()), 'the rights come group by group');
         $tracking = $crawler->filter('main tbody')->reduce(static fn ($group): bool => str_starts_with($group->text(), 'Tracking'));
         self::assertStringContainsString('Assign issues', $tracking->text());
         self::assertStringNotContainsString('Make an issue private', $tracking->text(), 'with the issues');

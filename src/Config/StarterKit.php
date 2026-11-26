@@ -174,7 +174,12 @@ final class StarterKit
                 Permission::CommentCreate->value => self::INTERNAL_AND_CLIENT,
                 Permission::CommentSetPrivate->value => self::INTERNAL,
                 Permission::CommentEdit->value => self::MANAGERS,
+                // The configuration of a project, a permission per subject: what is technical goes to the developers too.
                 Permission::ProjectConfigure->value => self::MANAGERS,
+                Permission::TrackerManage->value => self::MANAGERS,
+                Permission::TagManage->value => self::INTERNAL,
+                Permission::AutomationManage->value => self::MANAGERS,
+                Permission::RepositoryManage->value => self::INTERNAL,
                 Permission::ProjectManageMembers->value => self::MANAGERS,
                 Permission::ReleaseManage->value => self::MANAGERS,
                 Permission::BudgetManage->value => self::MANAGERS,

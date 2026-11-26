@@ -31,7 +31,7 @@ final class DeleteTagHandler
     public function __invoke(DeleteTag $command): void
     {
         $tag = $this->tags->find($command->tagId) ?? throw TagException::notFound('Tag', $command->tagId);
-        $this->actor->denyUnlessGranted($command->actorId, Permission::ProjectConfigure, $tag->getProject());
+        $this->actor->denyUnlessGranted($command->actorId, Permission::TagManage, $tag->getProject());
 
         $this->issueTags->removeTag($tag);
         $this->entityManager->remove($tag);

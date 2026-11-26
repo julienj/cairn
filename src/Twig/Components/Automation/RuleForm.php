@@ -68,14 +68,14 @@ final class RuleForm extends AbstractController
 
     /**
      * The editor shows the private trackers and the members of the
-     * project: it is drawn, and redrawn, only for who may configure it,
+     * project: it is drawn, and redrawn, only for who writes its rules,
      * whatever page or request holds it. The commands guard the writing.
      */
     #[PostMount]
     #[PostHydrate]
     public function guard(): void
     {
-        $this->denyAccessUnlessGranted(Permission::ProjectConfigure->value, $this->project);
+        $this->denyAccessUnlessGranted(Permission::AutomationManage->value, $this->project);
         if (null !== $this->rule && $this->rule->getProject()->getId() !== $this->project->getId()) {
             throw $this->createNotFoundException();
         }

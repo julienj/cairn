@@ -37,7 +37,7 @@ final class DeleteTrackerHandler
     {
         $tracker = $this->trackers->find($command->trackerId) ?? throw TrackerException::notFound('Tracker', $command->trackerId);
         $project = $tracker->getProject();
-        $this->actor->denyUnlessGranted($command->actorId, Permission::ProjectConfigure, $project);
+        $this->actor->denyUnlessGranted($command->actorId, Permission::TrackerManage, $project);
         $issues = $this->issues->count(['tracker' => $tracker]);
         if ($issues > 0) {
             throw TrackerException::hasIssues($tracker->getName(), $issues);

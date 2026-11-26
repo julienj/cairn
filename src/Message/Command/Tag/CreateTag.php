@@ -9,7 +9,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * Creates a tag in a project, under a name no other tag of the project
- * has. The actor needs `project.configure`. Handled by CreateTagHandler,
+ * has. The actor needs `tag.manage`. Handled by CreateTagHandler,
  * which returns the Tag.
  */
 final readonly class CreateTag

@@ -9,7 +9,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 /**
  * Changes a tracker, PATCH style: a property left null keeps its value.
  * Its workflow never changes. A position moves it within its project's
- * list, the others making room. The actor needs `project.configure`.
+ * list, the others making room. The actor needs `tracker.manage`.
  * Handled by UpdateTrackerHandler.
  */
 final readonly class UpdateTracker

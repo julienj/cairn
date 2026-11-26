@@ -4,16 +4,23 @@ declare(strict_types=1);
 
 namespace App\Tests\Controller\Project;
 
+use App\Entity\Enum\TagColour;
 use App\Entity\Team;
 use App\Entity\Tracker;
+use App\Message\Command\Config\GrantPermission;
+use App\Message\Command\Project\UpdateProject;
+use App\Message\Command\Tag\CreateTag;
 use App\Message\Command\Team\AddTeamMember;
 use App\Message\Command\Team\CreateTeam;
 use App\Message\Command\Team\GrantTeamAccess;
+use App\Message\Command\Tracker\CreateTracker;
 use App\Message\CommandBus;
 use App\Repository\TrackerRepository;
+use App\Security\Permission;
 use App\Tests\Scene\ShopScene;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 
 /**
  * The configuration and the access of a project, for its manager: Thomas
@@ -47,10 +54,64 @@ final class SettingsTest extends WebTestCase
     public function testWhoDoesNotManageTheProjectIsRefused(): void
     {
         $this->signInAs('nadia.benali@cairn.test');
-        foreach (['/MD/SPT/settings', '/MD/SPT/settings/general', '/MD/SPT/access'] as $url) {
+        foreach (['/MD/SPT/settings', '/MD/SPT/settings/trackers/new', '/MD/SPT/settings/general', '/MD/SPT/settings/tags', '/MD/SPT/settings/automations', '/MD/SPT/settings/repositories', '/MD/SPT/access'] as $url) {
             $this->client->request('GET', $url);
             self::assertResponseStatusCodeSame(403, $url);
         }
+    }
+
+    public function testEachSubjectOfTheConfigurationHasItsOwnPermission(): void
+    {
+        $this->signInAs('nadia.benali@cairn.test');
+        $this->client->request('GET', '/MD/SPT/issues');
+        self::assertSelectorTextNotContains('aside', 'Configuration', 'the section has no title while none of its items is offered');
+
+        $commands = self::getContainer()->get(CommandBus::class);
+        $commands->dispatch(new GrantPermission('developer', Permission::TagManage));
+        $commands->dispatch(new GrantPermission('developer', Permission::RepositoryManage));
+
+        $this->client->request('GET', '/MD/SPT/issues');
+        self::assertSelectorTextContains('aside', 'Configuration');
+        $offered = ['/MD/SPT/settings/tags', '/MD/SPT/settings/repositories'];
+        $kept = ['/MD/SPT/settings', '/MD/SPT/settings/general', '/MD/SPT/settings/automations', '/MD/SPT/access'];
+        foreach ($offered as $url) {
+            self::assertSelectorExists('aside a[href="'.$url.'"]', $url);
+        }
+        foreach ($kept as $url) {
+            self::assertSelectorNotExists('aside a[href="'.$url.'"]', $url);
+        }
+        foreach ($offered as $url) {
+            $this->client->request('GET', $url);
+            self::assertResponseIsSuccessful($url);
+        }
+        foreach ($kept as $url) {
+            $this->client->request('GET', $url);
+            self::assertResponseStatusCodeSame(403, $url);
+        }
+    }
+
+    public function testACommandOfAnotherSubjectIsRefusedToWhoManagesOne(): void
+    {
+        $commands = self::getContainer()->get(CommandBus::class);
+        $commands->dispatch(new GrantPermission('developer', Permission::TagManage));
+        $nadia = (int) $this->scene->user('nadia.benali@cairn.test')->getId();
+        $shop = (int) $this->scene->shop->getId();
+
+        $commands->dispatch(new CreateTag($nadia, $shop, 'Checkout', TagColour::Blue));
+
+        $refused = [
+            new CreateTracker($nadia, $shop, 'Chores', 'bug'),
+            new UpdateProject($shop, 'Shop', '', actorId: $nadia),
+        ];
+        $denied = 0;
+        foreach ($refused as $command) {
+            try {
+                $commands->dispatch($command);
+            } catch (AccessDeniedException) {
+                ++$denied;
+            }
+        }
+        self::assertSame(\count($refused), $denied, 'managing the tags opens neither the trackers nor the general settings');
     }
 
     public function testTheAccessPageListsPeopleThenTheTeams(): void

@@ -6,7 +6,7 @@ namespace App\Message\Command\Tag;
 
 /**
  * Deletes a tag, whatever carries it: its issues lose it, without a word
- * in their history nor a mail. The actor needs `project.configure`.
+ * in their history nor a mail. The actor needs `tag.manage`.
  * Handled by DeleteTagHandler.
  */
 final readonly class DeleteTag

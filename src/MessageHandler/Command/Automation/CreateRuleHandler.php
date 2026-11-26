@@ -31,7 +31,7 @@ final class CreateRuleHandler
     public function __invoke(CreateRule $command): AutomationRule
     {
         $project = $this->projects->find($command->projectId) ?? throw AutomationException::notFound('Project', $command->projectId);
-        $this->actor->denyUnlessGranted($command->actorId, Permission::ProjectConfigure, $project);
+        $this->actor->denyUnlessGranted($command->actorId, Permission::AutomationManage, $project);
 
         $tracker = null === $command->trackerId ? null : $this->trackers->find($command->trackerId);
         if (null !== $command->trackerId && $tracker?->getProject() !== $project) {

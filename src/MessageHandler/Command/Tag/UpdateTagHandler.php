@@ -25,7 +25,7 @@ final class UpdateTagHandler
     public function __invoke(UpdateTag $command): void
     {
         $tag = $this->tags->find($command->tagId) ?? throw TagException::notFound('Tag', $command->tagId);
-        $this->actor->denyUnlessGranted($command->actorId, Permission::ProjectConfigure, $tag->getProject());
+        $this->actor->denyUnlessGranted($command->actorId, Permission::TagManage, $tag->getProject());
         if (null !== $command->name) {
             // Lock the project row so that two tags renamed or created at once are not given the same name.
             $this->entityManager->lock($tag->getProject(), LockMode::PESSIMISTIC_WRITE);

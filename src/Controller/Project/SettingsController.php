@@ -48,14 +48,17 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
- * The configuration of a project, for its manager: its trackers (the list,
- * the dialog creating one, the settings of one, where it is archived or deleted), its general settings and
- * the repositories of the forges linked to it (the list, the dialog
- * linking one). A dialog has an address of its own, which renders the
- * list with it open. Archiving the project stays in the administration.
+ * The configuration of a project, each subject under a permission of its
+ * own: its trackers (the list, the dialog creating one, the settings of
+ * one, where it is archived or deleted) under `tracker.manage`, its
+ * general settings under `project.configure` and the repositories of the
+ * forges linked to it (the list, the dialog linking one) under
+ * `repository.manage`. A dialog has an address of its own, which renders
+ * the list with it open. Archiving the project stays in the
+ * administration.
  */
 #[Route('/{workspaceKey}/{projectKey}/settings', requirements: ['workspaceKey' => Workspace::KEY_FORMAT, 'projectKey' => Project::KEY_FORMAT])]
-#[IsGranted('project.configure', subject: 'project')]
+#[IsGranted('view', subject: 'project')]
 final class SettingsController extends AbstractController
 {
     use OpensDialog;
@@ -72,6 +75,7 @@ final class SettingsController extends AbstractController
      * others are listed beside it; the bare list while there is none.
      */
     #[Route('', name: 'app_project_settings', methods: ['GET'])]
+    #[IsGranted('tracker.manage', subject: 'project')]
     public function trackers(#[CurrentProject] Project $project, Request $request, TrackerRepository $trackers): Response
     {
         $first = $trackers->findByProject($project, includeArchived: true)[0] ?? null;
@@ -87,6 +91,7 @@ final class SettingsController extends AbstractController
      * tracker is then shown on its own page.
      */
     #[Route('/trackers/new', name: 'app_project_settings_tracker_new', methods: ['GET', 'POST'])]
+    #[IsGranted('tracker.manage', subject: 'project')]
     public function newTracker(#[CurrentProject] Project $project, #[CurrentUser] User $actor, Request $request, FormFactoryInterface $forms): Response
     {
         $data = new TrackerData();
@@ -110,6 +115,7 @@ final class SettingsController extends AbstractController
     }
 
     #[Route('/trackers/{tracker}', name: 'app_project_settings_tracker', requirements: ['tracker' => '\d+'], methods: ['GET', 'POST'])]
+    #[IsGranted('tracker.manage', subject: 'project')]
     public function tracker(#[CurrentProject] Project $project, #[MapEntity(id: 'tracker')] Tracker $tracker, #[CurrentUser] User $actor, Request $request, IssueRepository $issues, AutomationRuleRepository $rules): Response
     {
         if ($tracker->getProject()->getId() !== $project->getId()) {
@@ -149,6 +155,7 @@ final class SettingsController extends AbstractController
      * no issue: the buttons under its settings.
      */
     #[Route('/trackers/{tracker}/{action}', name: 'app_project_settings_tracker_action', requirements: ['tracker' => '\d+', 'action' => 'archive|unarchive|delete'], methods: ['POST'])]
+    #[IsGranted('tracker.manage', subject: 'project')]
     #[IsCsrfTokenValid('submit')]
     public function trackerAction(#[CurrentProject] Project $project, #[MapEntity(id: 'tracker')] Tracker $tracker, string $action, #[CurrentUser] User $actor): Response
     {
@@ -176,6 +183,7 @@ final class SettingsController extends AbstractController
     }
 
     #[Route('/general', name: 'app_project_settings_general', methods: ['GET', 'POST'])]
+    #[IsGranted('project.configure', subject: 'project')]
     public function general(#[CurrentProject] Project $project, #[CurrentUser] User $actor, Request $request): Response
     {
         $data = new ProjectSettingsData();
@@ -200,6 +208,7 @@ final class SettingsController extends AbstractController
      * shown; none of it where a hook of the instance delivers them all.
      */
     #[Route('/repositories', name: 'app_project_settings_repositories', methods: ['GET'])]
+    #[IsGranted('repository.manage', subject: 'project')]
     public function repositories(#[CurrentProject] Project $project, Request $request, CodeRepositoryRepository $repositories, ForgeApiLocator $apis): Response
     {
         return $this->renderRepositories($request, $project, $repositories, $apis, null);
@@ -211,6 +220,7 @@ final class SettingsController extends AbstractController
      * a hook of the instance delivers every repository.
      */
     #[Route('/repositories/new', name: 'app_project_settings_repository_new', methods: ['GET', 'POST'])]
+    #[IsGranted('repository.manage', subject: 'project')]
     public function newRepository(#[CurrentProject] Project $project, #[CurrentUser] User $actor, Request $request, CodeRepositoryRepository $repositories, ForgeApiLocator $apis): Response
     {
         $data = new CodeRepositoryData();
@@ -241,6 +251,7 @@ final class SettingsController extends AbstractController
     }
 
     #[Route('/repositories/{repository}/{action}', name: 'app_project_settings_repository', requirements: ['repository' => '\d+', 'action' => 'install|uninstall|secret|unlink'], methods: ['POST'])]
+    #[IsGranted('repository.manage', subject: 'project')]
     #[IsCsrfTokenValid('submit')]
     public function repository(#[CurrentProject] Project $project, #[MapEntity(id: 'repository')] CodeRepository $repository, string $action, #[CurrentUser] User $actor): Response
     {

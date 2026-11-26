@@ -7,7 +7,7 @@ namespace App\Message\Command\Tracker;
 /**
  * Deletes a tracker that holds no issue, with the automation rules
  * limited to it: a tracker that has issues is archived instead. The actor
- * needs `project.configure`. Handled by DeleteTrackerHandler.
+ * needs `tracker.manage`. Handled by DeleteTrackerHandler.
  */
 final readonly class DeleteTracker
 {

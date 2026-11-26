@@ -10,7 +10,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  * Writes an automation rule on a project: its name, the tracker it is
  * limited to if any, and what it says, in the shape of
  * Automation\RuleDefinition::toArray(). The actor, when there is one,
- * needs `project.configure`. Handled by CreateRuleHandler, which checks
+ * needs `automation.manage`. Handled by CreateRuleHandler, which checks
  * the rule against the project (Automation\RuleChecker) and returns the
  * AutomationRule.
  */

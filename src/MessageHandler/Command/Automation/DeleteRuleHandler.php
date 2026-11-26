@@ -29,7 +29,7 @@ final class DeleteRuleHandler
     public function __invoke(DeleteRule $command): void
     {
         $rule = $this->rules->find($command->ruleId) ?? throw AutomationException::notFound('Rule', $command->ruleId);
-        $this->actor->denyUnlessGranted($command->actorId, Permission::ProjectConfigure, $rule->getProject());
+        $this->actor->denyUnlessGranted($command->actorId, Permission::AutomationManage, $rule->getProject());
         $this->entityManager->remove($rule);
     }
 }
