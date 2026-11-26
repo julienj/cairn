@@ -483,17 +483,22 @@ admin:
         created: 'Template "%name%" created.'
         deleted: 'Template "%name%" deleted.'
         empty: No template yet
-        empty_hint: A template gives a new project its categories and its automations.
+        empty_hint: 'A template gives a new project its categories, its automations and the teams that work on it.'
         name: Name
         description: Description
         description_help: 'For the administrators: what kind of project it is meant for.'
         delete: Delete the template
-        delete_help: Its categories and its rules go with it. The projects made from it keep what they were given.
+        delete_help: Its categories, its rules and the roles it gives to teams go with it. The projects made from it keep what they were given.
         delete_confirm: Delete this template for good?
         tab:
             trackers: Categories
             automations: Automations
+            access: Access
             settings: Settings
+        access:
+            intro: 'The teams that hold a role on each project made from this template, so that a rule that aims at a team finds it there. A team that already holds as much on the workspace of the project is given nothing more.'
+            empty: This template gives no team a role.
+            incomplete: Choose the team and its role.
         tracker:
             empty: No category yet
             empty_hint: Add the categories the projects made from this template will start with.

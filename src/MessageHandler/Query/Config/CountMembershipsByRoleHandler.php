@@ -6,6 +6,7 @@ namespace App\MessageHandler\Query\Config;
 
 use App\Entity\Membership;
 use App\Entity\TeamAccess;
+use App\Entity\TemplateTeamAccess;
 use App\Message\Query\Config\CountMembershipsByRole;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -24,8 +25,8 @@ final class CountMembershipsByRoleHandler
     public function __invoke(CountMembershipsByRole $query): array
     {
         $counts = [];
-        // What people hold, then what teams hold.
-        foreach ([Membership::class, TeamAccess::class] as $class) {
+        // What people hold, what teams hold, then what templates give to teams.
+        foreach ([Membership::class, TeamAccess::class, TemplateTeamAccess::class] as $class) {
             /** @var list<array{role: string, memberships: int|string}> $rows */
             $rows = $this->entityManager->createQueryBuilder()
                 ->select('IDENTITY(m.role) AS role', 'COUNT(m.id) AS memberships')

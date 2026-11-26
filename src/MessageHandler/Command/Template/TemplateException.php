@@ -36,6 +36,16 @@ final class TemplateException extends \DomainException implements TranslatableIn
         return new self(\sprintf('A template is already named "%s".', $name), 'admin.refused.template_name_taken', ['%name%' => $name]);
     }
 
+    public static function unknownRole(string $role): self
+    {
+        return new self(\sprintf('Role "%s" does not exist in the configuration.', $role), 'admin.refused.unknown_role', ['%role%' => $role]);
+    }
+
+    public static function internalOnlyRole(string $roleLabel, string $teamName): self
+    {
+        return new self(\sprintf('Role "%s" cannot be given to the team "%s", which is external.', $roleLabel, $teamName), 'admin.refused.team_internal_only_role', ['%role%' => $roleLabel, '%team%' => $teamName]);
+    }
+
     public static function unknownWorkflow(string $workflowId): self
     {
         return new self(\sprintf('Workflow "%s" does not exist in the configuration.', $workflowId), 'admin.refused.unknown_workflow', ['%workflow%' => $workflowId]);

@@ -10,7 +10,7 @@
 
 {% block content %}
     {% set templateRoute = { template: template.id } %}
-    {% set templateTab = app.current_route starts with 'app_admin_template_automation' ? 'automations' : (app.current_route == 'app_admin_template_settings' ? 'settings' : 'trackers') %}
+    {% set templateTab = app.current_route starts with 'app_admin_template_automation' ? 'automations' : (app.current_route starts with 'app_admin_template_access' ? 'access' : (app.current_route == 'app_admin_template_settings' ? 'settings' : 'trackers')) %}
     <div class="max-w-6xl mx-auto px-4 sm:px-6 py-5 space-y-4">
         <div class="flex flex-wrap items-end gap-4">
             <div>
@@ -23,6 +23,7 @@
         <nav class="flex items-center gap-1 border-b border-line">
             <twig:Ui:Tab href="{{ path('app_admin_template', templateRoute) }}" :active="templateTab == 'trackers'">{{ 'admin.template.tab.trackers'|trans }}</twig:Ui:Tab>
             <twig:Ui:Tab href="{{ path('app_admin_template_automations', templateRoute) }}" :active="templateTab == 'automations'">{{ 'admin.template.tab.automations'|trans }}</twig:Ui:Tab>
+            <twig:Ui:Tab href="{{ path('app_admin_template_access', templateRoute) }}" :active="templateTab == 'access'">{{ 'admin.template.tab.access'|trans }}</twig:Ui:Tab>
             <twig:Ui:Tab href="{{ path('app_admin_template_settings', templateRoute) }}" icon="settings" right :active="templateTab == 'settings'">{{ 'admin.template.tab.settings'|trans }}</twig:Ui:Tab>
         </nav>
         {% block template_content %}{% endblock %}

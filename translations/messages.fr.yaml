@@ -483,17 +483,22 @@ admin:
         created: 'Modèle « %name% » créé.'
         deleted: 'Modèle « %name% » supprimé.'
         empty: Aucun modèle pour l'instant
-        empty_hint: Un modèle donne à un nouveau projet ses catégories et ses automatisations.
+        empty_hint: Un modèle donne à un nouveau projet ses catégories, ses automatisations et les équipes qui y travaillent.
         name: Nom
         description: Description
         description_help: 'Pour les administrateurs : à quel genre de projet il est destiné.'
         delete: Supprimer le modèle
-        delete_help: Ses catégories et ses règles partent avec lui. Les projets qui en viennent gardent ce qu'ils ont reçu.
+        delete_help: Ses catégories, ses règles et les rôles qu'il donne aux équipes partent avec lui. Les projets qui en viennent gardent ce qu'ils ont reçu.
         delete_confirm: Supprimer ce modèle définitivement ?
         tab:
             trackers: Catégories
             automations: Automatisations
+            access: Accès
             settings: Réglages
+        access:
+            intro: 'Les équipes qui tiennent un rôle sur chaque projet créé depuis ce modèle, pour qu''une règle qui vise une équipe l''y trouve. Une équipe qui tient déjà autant sur l''espace du projet ne reçoit rien de plus.'
+            empty: Ce modèle ne donne de rôle à aucune équipe.
+            incomplete: Choisissez l'équipe et son rôle.
         tracker:
             empty: Aucune catégorie pour l'instant
             empty_hint: Ajoutez les catégories avec lesquelles démarreront les projets créés depuis ce modèle.

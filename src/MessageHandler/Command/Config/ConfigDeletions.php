@@ -15,6 +15,7 @@ use App\Repository\IssueLinkRepository;
 use App\Repository\IssueRepository;
 use App\Repository\MembershipRepository;
 use App\Repository\TeamAccessRepository;
+use App\Repository\TemplateTeamAccessRepository;
 use App\Repository\TemplateTrackerRepository;
 use App\Repository\TrackerRepository;
 use App\Repository\TransitionRepository;
@@ -35,6 +36,7 @@ final class ConfigDeletions
         private readonly EntityManagerInterface $entityManager,
         private readonly MembershipRepository $memberships,
         private readonly TeamAccessRepository $teamAccesses,
+        private readonly TemplateTeamAccessRepository $templateAccesses,
         private readonly TransitionRepository $transitions,
         private readonly RuleReferences $rules,
         private readonly WorkflowRepository $workflows,
@@ -46,7 +48,7 @@ final class ConfigDeletions
     }
 
     /**
-     * A role stays while someone or a team holds it, an action of a workflow names
+     * A role stays while someone or a team holds it, or a template gives it, an action of a workflow names
      * it or an automation rule aims at its referent.
      */
     public function role(Role|string $role): ?DeletionRefusal
@@ -55,7 +57,7 @@ final class ConfigDeletions
         if (null === $role) {
             return null;
         }
-        $held = $this->memberships->countHolding($role->getId())['all'] + $this->teamAccesses->countHolding($role->getId())['all'];
+        $held = $this->memberships->countHolding($role->getId())['all'] + $this->teamAccesses->countHolding($role->getId())['all'] + $this->templateAccesses->countHolding($role->getId())['all'];
         if ($held > 0) {
             return DeletionRefusal::roleHeld($role->getLabel(), $held);
         }

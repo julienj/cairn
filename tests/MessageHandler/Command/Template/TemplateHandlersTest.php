@@ -5,18 +5,26 @@ declare(strict_types=1);
 namespace App\Tests\MessageHandler\Command\Template;
 
 use App\Automation\AutomationException;
+use App\Automation\TeamsWithoutAccess;
 use App\Entity\AutomationRule;
 use App\Entity\Project;
 use App\Entity\ProjectTemplate;
+use App\Entity\Team;
 use App\Entity\TemplateRule;
 use App\Entity\TemplateTracker;
 use App\Entity\Tracker;
 use App\Message\Command\Project\CreateProject;
+use App\Message\Command\Team\AddTeamMember;
+use App\Message\Command\Team\CreateTeam;
+use App\Message\Command\Team\DeleteTeam;
+use App\Message\Command\Team\GrantTeamAccess;
 use App\Message\Command\Template\CreateTemplate;
 use App\Message\Command\Template\CreateTemplateRule;
 use App\Message\Command\Template\CreateTemplateTracker;
 use App\Message\Command\Template\DeleteTemplate;
 use App\Message\Command\Template\DeleteTemplateTracker;
+use App\Message\Command\Template\GrantTemplateTeamAccess;
+use App\Message\Command\Template\RevokeTemplateTeamAccess;
 use App\Message\Command\Template\UpdateTemplate;
 use App\Message\Command\Template\UpdateTemplateRule;
 use App\Message\Command\Template\UpdateTemplateTracker;
@@ -24,9 +32,12 @@ use App\Message\CommandBus;
 use App\MessageHandler\Command\Project\ProjectException;
 use App\MessageHandler\Command\Template\TemplateException;
 use App\Repository\AutomationRuleRepository;
+use App\Repository\TeamAccessRepository;
 use App\Repository\TemplateRuleRepository;
+use App\Repository\TemplateTeamAccessRepository;
 use App\Repository\TemplateTrackerRepository;
 use App\Repository\TrackerRepository;
+use App\Security\AccessControl;
 use App\Tests\KernelHelpers;
 use App\Tests\Security\AccessFixtures;
 use Doctrine\ORM\EntityManagerInterface;
@@ -190,12 +201,78 @@ final class TemplateHandlersTest extends KernelTestCase
         self::assertCount(2, self::getContainer()->get(AutomationRuleRepository::class)->findByProject($project));
     }
 
+    public function testATemplateGivesTeamsARoleOnTheProjectsMadeFromItSoThatItsRulesFindThem(): void
+    {
+        $fixtures = new AccessFixtures($this->entityManager);
+        $marc = $fixtures->user('marc@agency.test', internal: true);
+        $hosting = $this->team('Hosting', true);
+        $support = $this->team('Support', true);
+        $accounting = $this->team('Accounting', false);
+        $this->commands->dispatch(new AddTeamMember((int) $hosting->getId(), (int) $marc->getId()));
+        $template = $this->template();
+        $templateId = (int) $template->getId();
+        $this->rule($template, ['trigger' => ['type' => 'issue_created'], 'actions' => [['type' => 'assign', 'params' => ['target' => 'team:'.$hosting->getId()]]]], name: 'New issue to hosting');
+        $accesses = self::getContainer()->get(TemplateTeamAccessRepository::class);
+
+        $this->commands->dispatch(new GrantTemplateTeamAccess($templateId, (int) $hosting->getId(), 'project_manager'));
+        $this->commands->dispatch(new GrantTemplateTeamAccess($templateId, (int) $hosting->getId(), 'developer'));
+        $this->commands->dispatch(new GrantTemplateTeamAccess($templateId, (int) $support->getId(), 'developer'));
+        $this->commands->dispatch(new GrantTemplateTeamAccess($templateId, (int) $accounting->getId(), 'client'));
+        self::assertSame(['Accounting' => 'client', 'Hosting' => 'developer', 'Support' => 'developer'], $this->accessesOf($template), 'a team is named once: its role is changed');
+        try {
+            $this->commands->dispatch(new GrantTemplateTeamAccess($templateId, (int) $accounting->getId(), 'developer'));
+            self::fail('A template gives an internal-only role to an external team.');
+        } catch (TemplateException $e) {
+            self::assertStringContainsString('which is external', $e->getMessage());
+        }
+
+        // The support team holds as much on the workspace already: the project gives it nothing more.
+        $this->commands->dispatch(new GrantTeamAccess((int) $support->getId(), $fixtures->workspace->getId(), null, 'developer'));
+        $project = $this->commands->dispatch(new CreateProject((int) $fixtures->workspace->getId(), 'Application', 'APP', $templateId));
+        self::assertInstanceOf(Project::class, $project);
+
+        $teamAccesses = self::getContainer()->get(TeamAccessRepository::class);
+        self::assertSame('developer', $teamAccesses->findOne($hosting, $project)?->getRole());
+        self::assertSame('client', $teamAccesses->findOne($accounting, $project)?->getRole());
+        self::assertNull($teamAccesses->findOne($support, $project));
+        self::assertSame('developer', self::getContainer()->get(AccessControl::class)->roleOn($marc, $project), 'its members work on the project at once');
+        self::assertSame([], self::getContainer()->get(TeamsWithoutAccess::class)->of($project, self::getContainer()->get(AutomationRuleRepository::class)->findByProject($project)), 'the rule finds its team');
+
+        $this->commands->dispatch(new RevokeTemplateTeamAccess((int) $accesses->findOneBy(['template' => $template, 'team' => $accounting])?->getId()));
+        self::assertSame('client', $teamAccesses->findOne($accounting, $project)?->getRole(), 'the project keeps what it was given');
+        $this->commands->dispatch(new DeleteTeam((int) $support->getId()));
+        self::assertSame(['Hosting' => 'developer'], $this->accessesOf($template), 'a team that goes leaves the templates');
+        $this->commands->dispatch(new DeleteTemplate($templateId));
+        self::assertSame(0, $accesses->count([]));
+    }
+
     public function testAProjectIsNotCreatedWithATemplateThatDoesNotExist(): void
     {
         $workspace = (new AccessFixtures($this->entityManager))->workspace;
 
         $this->expectExceptionObject(ProjectException::notFound('Template', 999_999_999));
         $this->commands->dispatch(new CreateProject((int) $workspace->getId(), 'Application', 'APP', 999_999_999));
+    }
+
+    private function team(string $name, bool $internal): Team
+    {
+        $team = $this->commands->dispatch(new CreateTeam($name, $internal));
+        self::assertInstanceOf(Team::class, $team);
+
+        return $team;
+    }
+
+    /**
+     * @return array<string, string> team name => role
+     */
+    private function accessesOf(ProjectTemplate $template): array
+    {
+        $roles = [];
+        foreach (self::getContainer()->get(TemplateTeamAccessRepository::class)->findByTemplate($template) as $access) {
+            $roles[$access->getTeam()->getName()] = $access->getRole();
+        }
+
+        return $roles;
     }
 
     private function template(string $name = 'Web project'): ProjectTemplate

@@ -113,7 +113,7 @@ translation keys. Never mix them.
 | `AutomationRule` | Rule (Automations) | Règle (Automatisations) | A trigger, conditions, actions, on the issues of a project. |
 | `AutomationRun`  | Execution         | Exécution        | What a rule did on an issue, once.                               |
 | `referent`       | Referent          | Référent         | The member a role answers through on a project.                  |
-| `ProjectTemplate` | Template         | Modèle           | Trackers and rules copied into a new project.                    |
+| `ProjectTemplate` | Template         | Modèle           | Trackers, rules and roles of teams copied into a new project.    |
 | `Budget`         | Budget            | Budget           | An amount of time a client committed to on a project.            |
 | `BudgetLine`     | Line              | Ligne            | What a budget is debited of, written by hand.                    |
 
@@ -471,7 +471,10 @@ src/
   workspace membership, never archiving. Keys never change once created.
 - A project template is a copy and nothing more (`TemplateCopy`): the
   project keeps no trace of it, and a template is never applied to a
-  project that exists.
+  project that exists. It copies trackers, rules and the roles it gives
+  to teams (`TemplateTeamAccess`), so that a rule aiming at a team finds
+  it on the project; a team that holds as much on the workspace already
+  is given nothing more.
 
 ## Frontend
 

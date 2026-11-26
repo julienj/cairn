@@ -5,12 +5,17 @@ declare(strict_types=1);
 namespace App\MessageHandler\Command\Team;
 
 use App\Automation\RuleReferences;
+use App\Entity\IssueTeamSubscription;
+use App\Entity\TeamAccess;
+use App\Entity\TeamMember;
+use App\Entity\TemplateTeamAccess;
 use App\Message\Command\Team\DeleteTeam;
 use App\Repository\IssueRepository;
 use App\Repository\IssueTeamSubscriptionRepository;
 use App\Repository\TeamAccessRepository;
 use App\Repository\TeamMemberRepository;
 use App\Repository\TeamRepository;
+use App\Repository\TemplateTeamAccessRepository;
 use App\Security\AccessControl;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -27,6 +32,7 @@ final class DeleteTeamHandler
         private readonly TeamRepository $teams,
         private readonly TeamMemberRepository $members,
         private readonly IssueRepository $issues,
+        private readonly TemplateTeamAccessRepository $templateAccesses,
         private readonly RuleReferences $rules,
         private readonly IssueTeamSubscriptionRepository $subscriptions,
         private readonly TeamAccessRepository $accesses,
@@ -50,9 +56,18 @@ final class DeleteTeamHandler
         }
 
         $this->accesses->removeTeam($team);
+        $this->templateAccesses->removeTeam($team);
         $this->subscriptions->removeTeam($team);
         $this->members->removeTeam($team);
         $this->access->reset();
+        // The rows went without the unit of work knowing: what it still holds of them must not be written back.
+        foreach ([TeamAccess::class, TemplateTeamAccess::class, TeamMember::class, IssueTeamSubscription::class] as $class) {
+            foreach ($this->entityManager->getUnitOfWork()->getIdentityMap()[$class] ?? [] as $held) {
+                if (($held instanceof TeamAccess || $held instanceof TemplateTeamAccess || $held instanceof TeamMember || $held instanceof IssueTeamSubscription) && $held->getTeam() === $team) {
+                    $this->entityManager->detach($held);
+                }
+            }
+        }
         $this->entityManager->remove($team);
     }
 }
