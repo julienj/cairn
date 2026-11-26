@@ -13,12 +13,8 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
  */
 final readonly class TwoFactorPolicy
 {
-    private TwoFactorRequirement $requirement;
-
-    public function __construct(#[Autowire('%env(CAIRN_TWO_FACTOR)%')] string $requirement)
+    public function __construct(#[Autowire('%env(enum:App\Security\TwoFactorRequirement:CAIRN_TWO_FACTOR)%')] private TwoFactorRequirement $requirement)
     {
-        $this->requirement = TwoFactorRequirement::tryFrom($requirement)
-            ?? throw new \InvalidArgumentException(\sprintf('CAIRN_TWO_FACTOR is "%s": expected one of %s.', $requirement, implode(', ', array_column(TwoFactorRequirement::cases(), 'value'))));
     }
 
     public function isAvailableTo(User $user): bool

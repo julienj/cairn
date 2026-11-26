@@ -193,6 +193,8 @@ Every account that signs in with a password can turn on a second factor from its
 | `internal` | The internal users; external users choose |
 | `all` | Everybody |
 
+Anything else and the image refuses to start.
+
 Someone who must and has not yet is sent to the page that sets it up, in the sign-in, as soon as they type their password, and can do nothing else. Good to know:
 
 - **Accounts that sign in through single sign-on are never asked**: the provider has its own second factor.

@@ -128,8 +128,8 @@ final class TwoFactorEnrolmentTest extends WebTestCase
     {
         $this->boot('everybody');
 
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('CAIRN_TWO_FACTOR is "everybody"');
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('everybody');
         self::getContainer()->get(TwoFactorPolicy::class);
     }
 }
