@@ -242,7 +242,7 @@ The widget lets the people of a project report a problem from the site being rev
 <script src="https://cairn.example.com/widget.js" data-project="MD-SPT" async></script>
 ```
 
-Nobody sees the button, and the script does nothing (it listens to nothing, stores nothing, asks Cairn nothing), until someone opens a page of the site with `?cairn=1` at the end of its address. The site then remembers them in that browser, and the widget follows them from page to page as on a site being reviewed; `?cairn=0` hides it again. The parameter is a courtesy to the visitors, not a secret: whoever adds it gets the button, then the sign-in page of Cairn, and nothing else.
+Nobody sees the button, and the script does nothing (it listens to nothing, stores nothing, asks Cairn nothing), until someone opens a page of the site with `?cairn=1` at the end of its address. The site then remembers them in that browser, and the widget follows them from page to page as on a site being reviewed; `?cairn=0` hides it again. Either way the parameter then leaves the address, so a link copied from there asks nothing of whoever receives it. The parameter is a courtesy to the visitors, not a secret: whoever adds it gets the button, then the sign-in page of Cairn, and nothing else.
 
 Good to know:
 
