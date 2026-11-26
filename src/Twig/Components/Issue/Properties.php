@@ -19,12 +19,12 @@ use App\Message\Command\Issue\UntagIssue;
 use App\Message\Command\Issue\UpdateIssue;
 use App\Message\CommandBus;
 use App\Message\Query\Project\ListProjectMembers;
+use App\Message\Query\Project\ListProjectTeams;
 use App\Message\Query\Project\ListTrackers;
 use App\Message\QueryBus;
 use App\Repository\IssueTagRepository;
 use App\Repository\ReleaseRepository;
 use App\Repository\TagRepository;
-use App\Repository\TeamRepository;
 use App\Security\AccessControl;
 use App\Security\Permission;
 use App\Security\PlaceMove;
@@ -81,7 +81,6 @@ final class Properties
         private readonly ReleaseRepository $releases,
         private readonly TagRepository $tags,
         private readonly IssueTagRepository $issueTags,
-        private readonly TeamRepository $teams,
         private readonly WorkflowProvider $workflows,
         private readonly TranslatorInterface $translator,
     ) {
@@ -284,7 +283,7 @@ final class Properties
      */
     public function getTeams(): array
     {
-        return $this->teams->findOnProject($this->issue->getProject());
+        return $this->queries->ask(new ListProjectTeams($this->issue->getProject()));
     }
 
     /**

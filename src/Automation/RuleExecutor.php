@@ -23,7 +23,7 @@ use App\Event\IssueUpdated;
 use App\MessageHandler\Command\Issue\IssueHandlerSupport;
 use App\Notification\SubscriptionRules;
 use App\Repository\BudgetLineRepository;
-use App\Repository\TeamRepository;
+use App\Repository\TeamAccessRepository;
 use App\Security\AccessControl;
 use Doctrine\DBAL\Exception as DatabaseException;
 use Doctrine\ORM\EntityManagerInterface;
@@ -53,7 +53,7 @@ final class RuleExecutor
         private readonly Targets $targets,
         private readonly SubscriptionRules $subscriptions,
         private readonly AccessControl $access,
-        private readonly TeamRepository $teams,
+        private readonly TeamAccessRepository $teamAccesses,
         private readonly ConfigRegistry $config,
         private readonly BudgetLineRepository $budgetLines,
         private readonly EntityManagerInterface $entityManager,
@@ -176,7 +176,7 @@ final class RuleExecutor
      */
     private function assignToTeam(string $rule, Team $team, Issue $issue): StepResult
     {
-        if (!\in_array($team, $this->teams->findOnProject($issue->getProject()), true)) {
+        if (!$this->teamAccesses->holdsRoleOn($team, $issue->getProject())) {
             return StepResult::skipped(ActionType::Assign, 'not_a_member', $team->getName());
         }
         if ($issue->getAssigneeTeam() === $team) {
@@ -201,10 +201,17 @@ final class RuleExecutor
     {
         $target = $this->targets->resolve($action->text('target'), $issue);
         if (null !== $target->team) {
+            // as for being given the issue: only a team that holds a role on the project
+            if (!$this->teamAccesses->holdsRoleOn($target->team, $issue->getProject())) {
+                return StepResult::skipped(ActionType::Subscribe, 'not_a_member', $target->team->getName());
+            }
             if ($this->subscriptions->followsAsTeam($issue, $target->team)) {
                 return StepResult::unchanged(ActionType::Subscribe, $target->team->getName());
             }
-            $this->subscriptions->subscribeTeam($issue, $target->team);
+            // an external team cannot follow what its members may not see
+            if (!$this->subscriptions->subscribeTeam($issue, $target->team)) {
+                return StepResult::skipped(ActionType::Subscribe, 'cannot_see', $target->team->getName());
+            }
 
             return StepResult::applied(ActionType::Subscribe, $target->team->getName());
         }

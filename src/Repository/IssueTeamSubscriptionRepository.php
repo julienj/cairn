@@ -46,6 +46,23 @@ class IssueTeamSubscriptionRepository extends ServiceEntityRepository
     }
 
     /**
+     * Whether someone follows the issue through a team they are part of.
+     */
+    public function followsThroughTeam(Issue $issue, User $user): bool
+    {
+        return null !== $this->createQueryBuilder('s')
+            ->select('s.id')
+            ->join(TeamMember::class, 'm', 'WITH', 'm.team = s.team')
+            ->where('s.issue = :issue')
+            ->andWhere('m.user = :user')
+            ->setParameter('issue', $issue)
+            ->setParameter('user', $user)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
+    /**
      * The active members of the teams following the issue: who is part of
      * them now. Whether each one may see what happened is the caller's to
      * check.
@@ -64,14 +81,5 @@ class IssueTeamSubscriptionRepository extends ServiceEntityRepository
             ->addOrderBy('u.firstName')
             ->getQuery()
             ->getResult();
-    }
-
-    /**
-     * Stops a team following anything, in one statement: the team is
-     * being deleted.
-     */
-    public function removeTeam(Team $team): void
-    {
-        $this->createQueryBuilder('s')->delete()->where('s.team = :team')->setParameter('team', $team)->getQuery()->execute();
     }
 }

@@ -121,15 +121,22 @@ final class SubscriptionRules
     }
 
     /**
-     * Subscribes the team to the issue, unless it follows it already. A
-     * team is subscribed as one: what each of its members may read is
-     * decided when a mail is built, for whoever is part of it then.
+     * Subscribes the team to the issue, unless it follows it already or,
+     * external, would follow a private issue: as an external person, who
+     * is never subscribed to what they cannot see. A team is subscribed
+     * as one; what each of its members may read is decided again when a
+     * mail is built, for whoever is part of it then.
+     *
+     * @return bool whether a subscription was made
      */
-    public function subscribeTeam(Issue $issue, Team $team): void
+    public function subscribeTeam(Issue $issue, Team $team): bool
     {
-        if (!$this->followsAsTeam($issue, $team)) {
-            $this->entityManager->persist(new IssueTeamSubscription($issue, $team));
+        if ((!$team->isInternal() && $issue->isPrivate()) || $this->followsAsTeam($issue, $team)) {
+            return false;
         }
+        $this->entityManager->persist(new IssueTeamSubscription($issue, $team));
+
+        return true;
     }
 
     public function followsAsTeam(Issue $issue, Team $team): bool
@@ -217,7 +224,8 @@ final class SubscriptionRules
         if ([] !== $teamIds) {
             // Only a team with a role on the project is mentioned, as the editor offers; it then follows the issue as one.
             foreach ($this->queries->ask(new ListProjectTeams($issue->getProject())) as $team) {
-                if (\in_array($team->getId(), $teamIds, true)) {
+                // A private comment is for internal users: mentioning an external team there subscribes nobody.
+                if (\in_array($team->getId(), $teamIds, true) && ($team->isInternal() || true !== $comment?->isPrivate())) {
                     $this->subscribeTeam($issue, $team);
                 }
             }

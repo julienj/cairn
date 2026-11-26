@@ -67,7 +67,7 @@
                         </td>
                         <td class="sm:px-3 sm:py-2.5 order-5 whitespace-nowrap">
                             <span class="inline-flex items-center gap-1">
-                                {% if issue.assigneeTeam %}<twig:Team:Avatar :team="issue.assigneeTeam" size="md" />{% else %}<twig:User:Avatar :user="issue.assignee" size="md" />{% endif %}
+                                <twig:Issue:Assignee :issue="issue" size="md" />
                                 {% if report is null and selectionAssigneeTeam and selectionAssigneeTeam != issue.assigneeTeam %}
                                     <twig:ux:icon name="lucide:chevron-right" class="h-3 w-3 text-faint" />
                                     <twig:Team:Avatar :team="selectionAssigneeTeam" size="md" />

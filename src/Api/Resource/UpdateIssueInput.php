@@ -9,7 +9,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * What PATCH /issues/{key} takes, as a JSON merge patch: a property left
- * out keeps its value, `assignee`, `assigneeTeam` and `release` sent as null empty them,
+ * out keeps its value, `assignee` and `release` sent as null empty them,
  * and a field of `fields` sent as null is emptied. UpdateIssueProcessor
  * reads which properties the request names.
  */
@@ -24,11 +24,11 @@ final class UpdateIssueInput
 
     public ?Criticality $criticality = null;
 
-    /** Id of a member of the project, null to unassign. */
+    /** Id of a member of the project, null to unassign: from a person as from a team. */
     #[Assert\Positive]
     public ?int $assignee = null;
 
-    /** Id of a team with a role on the project: the issue is given to it instead of a person. Null to unassign. */
+    /** Id of a team with a role on the project: the issue is given to it instead of a person. `assignee` sent as null unassigns. */
     #[Assert\Positive]
     public ?int $assigneeTeam = null;
 

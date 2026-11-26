@@ -9,6 +9,7 @@ use App\Entity\Team;
 use App\Entity\TeamAccess;
 use App\Entity\User;
 use App\Entity\Workspace;
+use App\Message\Command\Config\DeleteRole;
 use App\Message\Command\Config\UpdateRole;
 use App\Message\Command\Team\AddTeamMember;
 use App\Message\Command\Team\CreateTeam;
@@ -17,6 +18,7 @@ use App\Message\Command\Team\GrantTeamAccess;
 use App\Message\Command\Team\RemoveTeamMember;
 use App\Message\Command\Team\RevokeTeamAccess;
 use App\Message\CommandBus;
+use App\Message\Query\Config\CountMembershipsByRole;
 use App\Message\Query\Project\ListProjectMembers;
 use App\Message\Query\Project\ListVisibleProjects;
 use App\Message\Query\Project\ProjectSummary;
@@ -24,6 +26,7 @@ use App\MessageHandler\Command\Config\ConfigChangeException;
 use App\MessageHandler\Command\Team\TeamException;
 use App\Repository\IssueSubscriptionRepository;
 use App\Repository\MembershipRepository;
+use App\Repository\RoleUsage;
 use App\Repository\TeamAccessRepository;
 use App\Security\AccessControl;
 use App\Security\Referents;
@@ -112,6 +115,20 @@ final class TeamAccessHandlersTest extends KernelTestCase
         $this->grant($accounting, $this->fixtures->workspace, 'client');
         $this->expectException(ConfigChangeException::class);
         $this->commands->dispatch(new UpdateRole('client', internalOnly: true));
+    }
+
+    public function testARoleATeamHoldsIsCountedAndStays(): void
+    {
+        $accounting = $this->team('Accounting', false);
+        $this->grant($accounting, $this->fixtures->otherProject, 'client');
+        $before = self::queryBus()->ask(new CountMembershipsByRole())['client'] ?? 0;
+        $this->grant($this->team('Hosting', true), $this->fixtures->workspace, 'client');
+
+        self::assertSame($before + 1, self::queryBus()->ask(new CountMembershipsByRole())['client'], 'the accesses of teams count as those of people');
+        self::assertSame(['all' => $before + 1, 'external' => 2], self::getContainer()->get(RoleUsage::class)->of('client'), 'Claire and the accounting team are external');
+
+        $this->expectException(ConfigChangeException::class);
+        $this->commands->dispatch(new DeleteRole('client'));
     }
 
     public function testTheRoleMustExistAndGoOnAWorkspaceOrAProject(): void

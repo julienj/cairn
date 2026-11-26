@@ -10,6 +10,7 @@ use App\Entity\Project;
 use App\Entity\ProjectTemplate;
 use App\Entity\Team;
 use App\Message\Query\Project\ListProjectMembers;
+use App\Message\Query\Project\ListProjectTeams;
 use App\Message\QueryBus;
 use App\Repository\AutomationRuleRepository;
 use App\Repository\TeamRepository;
@@ -63,7 +64,7 @@ final class RuleContexts
         // A rule copied from a template may name a team that holds no role here yet: it stays offered, and said so.
         $idle = $this->teamsWithoutAccess->of($project, $this->rules->findByProject($project), activeOnly: false);
 
-        return new RuleContext($trackers, $workflows, $definition->places, $roles, $people, self::named($this->teams->findOnProject($project)) + $idle, array_keys($idle));
+        return new RuleContext($trackers, $workflows, $definition->places, $roles, $people, self::named($this->queries->ask(new ListProjectTeams($project))) + $idle, array_keys($idle));
     }
 
     public function ofTemplate(ProjectTemplate $template): RuleContext

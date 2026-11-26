@@ -10,19 +10,26 @@ use App\Entity\IssueTeamSubscription;
 use App\Entity\JournalEntry;
 use App\Entity\PendingNotification;
 use App\Entity\Team;
+use App\Entity\TeamAccess;
 use App\Entity\User;
 use App\Message\Command\Issue\AddComment;
 use App\Message\Command\Issue\CreateIssue;
+use App\Message\Command\Issue\DeleteIssue;
 use App\Message\Command\Issue\UnfollowIssueAsTeam;
 use App\Message\Command\Issue\UpdateIssue;
+use App\Message\Command\Project\DeleteProject;
+use App\Message\Command\Project\UpdateProject;
 use App\Message\Command\Team\AddTeamMember;
 use App\Message\Command\Team\CreateTeam;
 use App\Message\Command\Team\DeleteTeam;
 use App\Message\Command\Team\GrantTeamAccess;
 use App\Message\Command\Team\RemoveTeamMember;
+use App\Message\Command\Workspace\DeleteWorkspace;
+use App\Message\Command\Workspace\UpdateWorkspace;
 use App\Message\CommandBus;
 use App\Message\Notification\NotifyIssueChange;
 use App\Message\Query\Issue\IssueGrouping;
+use App\Message\Query\Issue\IssueSort;
 use App\Message\Query\Issue\SearchIssues;
 use App\MessageHandler\Command\Issue\IssueException;
 use App\MessageHandler\Command\Team\TeamException;
@@ -183,6 +190,51 @@ final class TeamAssignmentTest extends KernelTestCase
         $keys = array_map(IssueGrouping::Assignee->keyOf(...), $grouped->items);
         self::assertSame(['none', (string) $this->fixtures->developer->getId(), 'team-'.$this->hosting->getId()], $keys);
         self::assertEquals(array_fill_keys($keys, 1), $grouped->groupTotals, 'the SQL names the groups as the PHP does');
+    }
+
+    public function testTheListSortsByAssigneeNobodyThenPeopleThenTeams(): void
+    {
+        $manager = (int) $this->fixtures->manager->getId();
+        $forTeam = $this->fixtures->createIssue($this->fixtures->client, title: 'For the team');
+        $forNadia = $this->fixtures->createIssue($this->fixtures->client, title: 'For Nadia');
+        $this->fixtures->createIssue($this->fixtures->client, title: 'For nobody');
+        $this->commands->dispatch(new UpdateIssue($manager, $forTeam->getKey(), assigneeTeamId: $this->hosting->getId()));
+        $this->commands->dispatch(new UpdateIssue($manager, $forNadia->getKey(), assigneeId: $this->fixtures->developer->getId()));
+        $titles = fn (\SortDirection $order): array => array_map(static fn (Issue $issue): string => $issue->getTitle(), self::queryBus()->ask(new SearchIssues($this->fixtures->manager, sort: IssueSort::Assignee, order: $order))->items);
+
+        self::assertSame(['For nobody', 'For Nadia', 'For the team'], $titles(\SortDirection::Ascending));
+        self::assertSame(['For the team', 'For Nadia', 'For nobody'], $titles(\SortDirection::Descending));
+    }
+
+    public function testAnIssueAProjectOrAWorkspaceGoesWithWhatItsTeamsHeldThere(): void
+    {
+        $manager = (int) $this->fixtures->manager->getId();
+        $shop = $this->fixtures->access->shop;
+        $this->commands->dispatch(new GrantTeamAccess((int) $this->hosting->getId(), null, $shop->getId(), 'project_manager'));
+        $first = $this->fixtures->createIssue($this->fixtures->client, title: 'First');
+        $second = $this->fixtures->createIssue($this->fixtures->client, title: 'Second');
+        foreach ([$first, $second] as $issue) {
+            $this->commands->dispatch(new UpdateIssue($manager, $issue->getKey(), assigneeTeamId: $this->hosting->getId()));
+        }
+        $subscriptions = $this->entityManager->getRepository(IssueTeamSubscription::class);
+        $accesses = $this->entityManager->getRepository(TeamAccess::class);
+        self::assertSame(2, $subscriptions->count([]));
+
+        $this->commands->dispatch(new DeleteIssue($manager, $first->getKey()));
+        self::assertSame(1, $subscriptions->count([]), 'what the team followed of the issue goes with it');
+        // The rows went in bulk statements: the unit of work forgets what it still held of them, as a new request would.
+        $this->entityManager->clear();
+
+        $this->commands->dispatch(new UpdateProject((int) $shop->getId(), archived: true));
+        $this->commands->dispatch(new DeleteProject((int) $shop->getId()));
+        self::assertSame(0, $subscriptions->count([]));
+        self::assertSame(1, $accesses->count([]), 'the access on the project went, the one on the workspace stays');
+
+        $workspaceId = (int) $this->fixtures->access->workspace->getId();
+        $this->commands->dispatch(new UpdateWorkspace($workspaceId, archived: true));
+        $this->commands->dispatch(new DeleteWorkspace($workspaceId));
+        self::assertSame(0, $accesses->count([]));
+        self::assertNotNull($this->entityManager->getRepository(Team::class)->findOneBy(['name' => 'Hosting']), 'the team outlives what it worked on');
     }
 
     public function testATeamStaysWhileIssuesAreAssignedToIt(): void

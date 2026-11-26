@@ -17,6 +17,7 @@ use App\Message\Query\Issue\IssueGrouping;
 use App\Message\Query\Issue\IssueSort;
 use App\Message\Query\Issue\SearchIssues;
 use App\Message\Query\Project\ListProjectMembers;
+use App\Message\Query\Project\ListProjectTeams;
 use App\Message\Query\Project\ListTrackers;
 use App\Message\Query\Project\ListVisibleProjects;
 use App\Message\Query\Project\ProjectSummary;
@@ -24,7 +25,6 @@ use App\Message\QueryBus;
 use App\Repository\IssueTagRepository;
 use App\Repository\ReleaseRepository;
 use App\Repository\TagRepository;
-use App\Repository\TeamRepository;
 use App\Security\Viewer;
 
 /**
@@ -57,7 +57,6 @@ final class ListChoices
         private readonly TagRepository $tagRepository,
         private readonly IssueTagRepository $issueTags,
         private readonly ConfigRegistry $config,
-        private readonly TeamRepository $teamRepository,
     ) {
         $this->trackers = new \WeakMap();
         $this->releases = new \WeakMap();
@@ -217,7 +216,7 @@ final class ListChoices
      */
     public function teams(ListScope $scope): array
     {
-        return null === $scope->project ? [] : $this->teamRepository->findOnProject($scope->project);
+        return null === $scope->project ? [] : $this->queries->ask(new ListProjectTeams($scope->project));
     }
 
     /**

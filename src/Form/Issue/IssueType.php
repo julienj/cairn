@@ -29,6 +29,9 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  */
 final class IssueType extends AbstractType
 {
+    /** What starts the value of a team among the assignees, before its id: a person's value is their id alone. */
+    private const string TEAM = 'team-';
+
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $workflow = $options['workflow'];
@@ -81,7 +84,7 @@ final class IssueType extends AbstractType
                 'choice_label' => static fn (User|Team $assignee): string => $assignee instanceof Team ? $assignee->getName() : $assignee->getFullName(),
                 'choice_value' => static fn (User|Team|null $assignee): ?string => match (true) {
                     null === $assignee => null,
-                    $assignee instanceof Team => 'team-'.$assignee->getId(),
+                    $assignee instanceof Team => self::TEAM.$assignee->getId(),
                     default => (string) $assignee->getId(),
                 },
                 'group_by' => static fn (User|Team $assignee): ?string => $assignee instanceof Team ? $options['teams_label'] : null,

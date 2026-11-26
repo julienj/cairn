@@ -14,9 +14,10 @@ use function Symfony\Component\Clock\now;
  * receives the mail (NotifyIssueChangeHandler), so nobody is subscribed
  * for the team and its members come and go without a row to keep in
  * step. Made by Notification/SubscriptionRules when the issue is given to
- * the team; current state, like the subscription of a person: a member
- * unsubscribing the team deletes the row, and giving it the issue again
- * subscribes it again.
+ * the team or a text mentions it, or by an automation rule; current
+ * state, like the subscription of a person: a member unsubscribing the
+ * team deletes the row, as the team losing its role on the project does
+ * (LeaverSubscriptions), and the next of those subscribes it again.
  */
 #[ORM\Entity(repositoryClass: IssueTeamSubscriptionRepository::class)]
 #[ORM\UniqueConstraint(name: 'uniq_issue_team_subscription', columns: ['issue_id', 'team_id'])]

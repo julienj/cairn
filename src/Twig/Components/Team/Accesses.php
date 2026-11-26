@@ -8,6 +8,7 @@ use App\Config\ConfigRegistry;
 use App\Entity\Project;
 use App\Entity\Team;
 use App\Entity\TeamAccess;
+use App\Entity\TeamMember;
 use App\Entity\Workspace;
 use App\Message\Command\Team\GrantTeamAccess;
 use App\Message\Command\Team\RevokeTeamAccess;
@@ -21,6 +22,7 @@ use App\Repository\TeamRepository;
 use App\Security\Permission;
 use App\Security\Viewer;
 use App\Twig\Components\DispatchesCommands;
+use App\Twig\Components\ManagesRoleRows;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -50,6 +52,7 @@ final class Accesses
     use ComponentToolsTrait;
     use DefaultActionTrait;
     use DispatchesCommands;
+    use ManagesRoleRows;
 
     #[LiveProp]
     public ?Team $team = null;
@@ -59,10 +62,6 @@ final class Accesses
 
     #[LiveProp]
     public ?Project $project = null;
-
-    /** @var array<int, string> access id => role, bound to the role of each row */
-    #[LiveProp(writable: true)]
-    public array $roles = [];
 
     /** On a workspace or a project: the team that gets the new role. */
     #[LiveProp(writable: true)]
@@ -75,15 +74,17 @@ final class Accesses
     #[LiveProp(writable: true)]
     public string $newRole = '';
 
-    /** The access whose removal waits for a confirmation. */
-    #[LiveProp(writable: true)]
-    public ?int $revoking = null;
-
     /** @var list<TeamAccess>|null read once per render, `align()` forgets it */
     private ?array $loadedAccesses = null;
 
     /** @var list<array{workspace: Workspace, projects: list<Project>}>|null read once per render */
     private ?array $loadedTargets = null;
+
+    /** @var array<int, TeamAccess>|null read once per render, `align()` forgets it */
+    private ?array $loadedInherited = null;
+
+    /** @var array<int, string> team id => the names of its members, read once per team and per render */
+    private array $loadedMembers = [];
 
     public function __construct(
         private readonly TeamAccessRepository $accesses,
@@ -144,12 +145,14 @@ final class Accesses
      */
     public function getInherited(): array
     {
-        $inherited = [];
-        foreach (null !== $this->project ? $this->accesses->findOnWorkspace($this->project->getWorkspace()) : [] as $access) {
-            $inherited[(int) $access->getTeam()->getId()] = $access;
+        if (null === $this->loadedInherited) {
+            $this->loadedInherited = [];
+            foreach (null !== $this->project ? $this->accesses->findOnWorkspace($this->project->getWorkspace()) : [] as $access) {
+                $this->loadedInherited[(int) $access->getTeam()->getId()] = $access;
+            }
         }
 
-        return $inherited;
+        return $this->loadedInherited;
     }
 
     /**
@@ -157,7 +160,7 @@ final class Accesses
      */
     public function membersOf(Team $team): string
     {
-        return implode(', ', array_map(static fn ($member): string => $member->getUser()->getFullName(), $this->members->findOfTeam($team)));
+        return $this->loadedMembers[(int) $team->getId()] ??= implode(', ', array_map(static fn (TeamMember $member): string => $member->getUser()->getFullName(), $this->members->findOfTeam($team)));
     }
 
     /**
@@ -248,16 +251,6 @@ final class Accesses
         return $roles;
     }
 
-    /**
-     * The label of a role, or its id when the configuration dropped it.
-     */
-    public function roleLabel(string $role): string
-    {
-        $definition = $this->config->definition();
-
-        return $definition->hasRole($role) ? $definition->role($role)->label : $role;
-    }
-
     #[LiveAction]
     public function chooseTeam(#[LiveArg] int $team): void
     {
@@ -324,18 +317,6 @@ final class Accesses
     }
 
     #[LiveAction]
-    public function confirmRevoke(#[LiveArg] int $access): void
-    {
-        $this->revoking = $access;
-    }
-
-    #[LiveAction]
-    public function cancelRevoke(): void
-    {
-        $this->revoking = null;
-    }
-
-    #[LiveAction]
     public function revoke(CommandBus $commands): void
     {
         $this->error = null;
@@ -354,18 +335,13 @@ final class Accesses
         return null !== $this->project ? $this->viewer->get()->getId() : null;
     }
 
-    private function done(string $message): void
-    {
-        $this->align();
-        $this->dispatchBrowserEvent('toast:show', ['message' => $this->translator->trans($message)]);
-    }
-
     /**
      * Aligns the role of each row with the database, read again.
      */
     private function align(): void
     {
         $this->loadedAccesses = null;
+        $this->loadedInherited = null;
         $this->roles = [];
         foreach ($this->getAccesses() as $access) {
             $this->roles[(int) $access->getId()] = $access->getRole();

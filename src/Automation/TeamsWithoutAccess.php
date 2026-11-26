@@ -7,6 +7,9 @@ namespace App\Automation;
 use App\Automation\Definition\Target;
 use App\Entity\AutomationRule;
 use App\Entity\Project;
+use App\Entity\Team;
+use App\Message\Query\Project\ListProjectTeams;
+use App\Message\QueryBus;
 use App\Repository\TeamRepository;
 
 /**
@@ -20,6 +23,7 @@ final class TeamsWithoutAccess
 {
     public function __construct(
         private readonly TeamRepository $teams,
+        private readonly QueryBus $queries,
     ) {
     }
 
@@ -31,7 +35,7 @@ final class TeamsWithoutAccess
      */
     public function of(Project $project, array $rules, bool $activeOnly = true): array
     {
-        $onProject = array_map(static fn ($team): ?int => $team->getId(), $this->teams->findOnProject($project));
+        $onProject = array_map(static fn (Team $team): ?int => $team->getId(), $this->queries->ask(new ListProjectTeams($project)));
         $missing = [];
         foreach ($rules as $rule) {
             if ($activeOnly && !$rule->isActive()) {

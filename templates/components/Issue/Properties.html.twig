@@ -193,7 +193,7 @@
             {% endif %}
 
             {% set propertiesAssignee %}
-                {% if issue.assigneeTeam %}<twig:Team:Avatar :team="issue.assigneeTeam" size="md" />{% else %}<twig:User:Avatar :user="issue.assignee" size="md" />{% endif %}
+                <twig:Issue:Assignee :issue="issue" size="md" />
                 <span class="truncate {{ issue.assigneeName ? 'text-body' : 'text-faint' }}">{{ issue.assigneeName ?? 'issue.show.nobody'|trans }}</span>
             {% endset %}
             {% if propertiesCanAssign %}

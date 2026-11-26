@@ -20,6 +20,7 @@ use App\Entity\JournalEntry;
 use App\Entity\ProjectTemplate;
 use App\Entity\Team;
 use App\Message\Command\Automation\CreateRule;
+use App\Message\Command\Issue\AddComment;
 use App\Message\Command\Issue\UpdateIssue;
 use App\Message\Command\Team\AddTeamMember;
 use App\Message\Command\Team\CreateTeam;
@@ -128,6 +129,44 @@ final class TeamRuleTest extends KernelTestCase
         self::assertNull($issue->getAssigneeTeam(), 'following is not being given the issue');
         self::assertSame(1, $this->entityManager->getRepository(IssueTeamSubscription::class)->count(['issue' => $issue, 'team' => $this->hosting]));
         self::assertSame(RunOutcome::Applied, $this->runs($rule)[0]->getOutcome());
+    }
+
+    public function testARuleMakesNoTeamFollowAProjectItHoldsNoRoleOn(): void
+    {
+        $rule = $this->rule('Hosting follows new issues', [[ActionType::Subscribe, ['target' => Target::team((int) $this->hosting->getId())]]]);
+        $access = self::getContainer()->get(TeamAccessRepository::class)->findOne($this->hosting, $this->fixtures->access->workspace);
+        $this->commands->dispatch(new RevokeTeamAccess((int) $access?->getId()));
+
+        $issue = $this->fixtures->createIssue($this->fixtures->client);
+
+        self::assertSame(0, $this->entityManager->getRepository(IssueTeamSubscription::class)->count(['issue' => $issue]), 'nobody is written to, nothing shows among the followers');
+        $runs = $this->runs($rule);
+        self::assertSame(RunOutcome::Skipped, $runs[0]->getOutcome());
+        self::assertSame([['action' => 'subscribe', 'result' => 'skipped', 'value' => 'Hosting', 'reason' => 'not_a_member']], $runs[0]->getSteps());
+    }
+
+    public function testTheConditionOnTheAssigneeReadsATeamByItsKind(): void
+    {
+        $accounting = $this->commands->dispatch(new CreateTeam('Accounting', false));
+        self::assertInstanceOf(Team::class, $accounting);
+        $this->commands->dispatch(new GrantTeamAccess((int) $accounting->getId(), $this->fixtures->access->workspace->getId(), null, 'client'));
+        $step = static fn (string $type, array $params): array => ['type' => $type, 'params' => $params];
+        $rule = $this->commands->dispatch(new CreateRule((int) $this->fixtures->access->shop->getId(), 'Comments on what a client holds are blocking', null, [
+            'trigger' => $step('comment_added', []),
+            'conditions' => [$step('assignee', ['is' => ConditionType::EXTERNAL])],
+            'actions' => [$step('set_criticality', ['criticality' => 'blocking'])],
+        ]));
+        self::assertInstanceOf(AutomationRule::class, $rule);
+        $manager = (int) $this->fixtures->manager->getId();
+        $issue = $this->fixtures->createIssue($this->fixtures->client);
+
+        $this->commands->dispatch(new UpdateIssue($manager, $issue->getKey(), assigneeTeamId: $this->hosting->getId()));
+        $this->commands->dispatch(new AddComment($manager, $issue->getKey(), 'With the hosts.'));
+        self::assertCount(0, $this->runs($rule), 'an internal team is not an external assignee');
+
+        $this->commands->dispatch(new UpdateIssue($manager, $issue->getKey(), assigneeTeamId: $accounting->getId()));
+        $this->commands->dispatch(new AddComment($manager, $issue->getKey(), 'With the client.'));
+        self::assertSame(RunOutcome::Applied, $this->runs($rule)[0]->getOutcome(), 'an external team is');
     }
 
     public function testATeamARuleAimsAtIsNotDeleted(): void

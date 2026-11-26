@@ -14,6 +14,7 @@ use App\Message\CommandBus;
 use App\Repository\TeamRepository;
 use App\Repository\TemplateTeamAccessRepository;
 use App\Twig\Components\DispatchesCommands;
+use App\Twig\Components\ManagesRoleRows;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -40,13 +41,10 @@ final class TeamAccesses
     use ComponentToolsTrait;
     use DefaultActionTrait;
     use DispatchesCommands;
+    use ManagesRoleRows;
 
     #[LiveProp]
     public ProjectTemplate $template;
-
-    /** @var array<int, string> access id => role, bound to the role of each row */
-    #[LiveProp(writable: true)]
-    public array $roles = [];
 
     /** The team that gets the new role. */
     #[LiveProp(writable: true)]
@@ -54,10 +52,6 @@ final class TeamAccesses
 
     #[LiveProp(writable: true)]
     public string $newRole = '';
-
-    /** The access whose removal waits for a confirmation. */
-    #[LiveProp(writable: true)]
-    public ?int $revoking = null;
 
     /** @var list<TemplateTeamAccess>|null read once per render, `align()` forgets it */
     private ?array $loadedAccesses = null;
@@ -130,16 +124,6 @@ final class TeamAccesses
     }
 
     /**
-     * The label of a role, or its id when the configuration dropped it.
-     */
-    public function roleLabel(string $role): string
-    {
-        $definition = $this->config->definition();
-
-        return $definition->hasRole($role) ? $definition->role($role)->label : $role;
-    }
-
-    /**
      * Chooses the team; a role already chosen that it may not hold is forgotten.
      */
     #[LiveAction]
@@ -187,18 +171,6 @@ final class TeamAccesses
     }
 
     #[LiveAction]
-    public function confirmRevoke(#[LiveArg] int $access): void
-    {
-        $this->revoking = $access;
-    }
-
-    #[LiveAction]
-    public function cancelRevoke(): void
-    {
-        $this->revoking = null;
-    }
-
-    #[LiveAction]
     public function revoke(CommandBus $commands): void
     {
         $this->error = null;
@@ -208,12 +180,6 @@ final class TeamAccesses
             $this->done('admin.access.revoked');
         }
         $this->revoking = null;
-    }
-
-    private function done(string $message): void
-    {
-        $this->align();
-        $this->dispatchBrowserEvent('toast:show', ['message' => $this->translator->trans($message)]);
     }
 
     /**

@@ -39,12 +39,14 @@ final class UpdateIssueProcessor implements ProcessorInterface
         $input->fields = $data->fields;
         // What the REST processor reads as named by the caller: a null changes nothing here.
         $named = [];
-        foreach (['assignee' => $data->assignee, 'assigneeTeam' => $data->assigneeTeam, 'release' => $data->release] as $property => $value) {
+        foreach (['assignee' => $data->assignee, 'release' => $data->release] as $property => $value) {
             if (null !== $value) {
                 $input->{$property} = UpdateIssueTool::NONE === $value ? null : (int) $value;
                 $named[$property] = true;
             }
         }
+
+        $input->assigneeTeam = $data->assigneeTeam;
 
         return $this->rest->update($key, $input, $named);
     }

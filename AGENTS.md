@@ -266,7 +266,11 @@ src/
   nobody walks its members. On a project its role must widen the one the
   team holds on the workspace; it is compared with itself only, never
   with what its members hold. Teams are the administration's, and a
-  project manager grants one a role on their project. A referent stays a
+  project manager grants one a role on their project. The teams of a
+  project are asked of `ListProjectTeams`, as its people of
+  `ListProjectMembers`; `TeamAccessRepository::holdsRoleOn()` asks it of
+  one team. `Repository/RoleUsage` is the one place that counts where a
+  role is in use: people, teams, templates. A referent stays a
   person: `Membership` alone carries the mark.
 - **Four permissions are internal-only** (`Permission::internalOnly()`):
   those that show what external users never see. What is only risky goes
@@ -365,7 +369,15 @@ src/
   the team when the change leaves, so whoever joins is told and whoever
   leaves is not. Any member unsubscribes the team, for all of it
   (`UnfollowIssueAsTeam`); nobody opts out alone of what their team
-  follows.
+  follows. An external team follows nothing private, as an external
+  person, and a team follows only where it holds a role.
+- **Whoever leaves a project stops following its issues**
+  (`Notification/LeaverSubscriptions`): a person who no longer holds any
+  role on it, internal or not, and a team that no longer holds one. The
+  role is asked again once the change is written, since it has several
+  sources; someone who keeps one by another way keeps following. The
+  subscriptions are deleted, not hidden: following again is theirs to
+  do.
 - **A mail is queued, then grouped.** `NotifyIssueChange` (ids only) writes
   a `PendingNotification` per recipient; `ProjectMailSender` (Scheduler)
   sends a group once things calmed down. `ChangeFilter` says what one

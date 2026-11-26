@@ -63,8 +63,11 @@ final class TeamApiTest extends ApiTestCase
         $back = $this->api('PATCH', '/api/issues/MD-SPT-2', $secret, ['assignee' => null, 'assigneeTeam' => $this->hosting->getId()]);
         self::assertSame('Hosting', $back['assigneeTeam']['name'], 'named with the person emptied, the team is given the issue');
 
-        $unassigned = $this->api('PATCH', '/api/issues/MD-SPT-2', $secret, ['assigneeTeam' => null]);
-        self::assertArrayNotHasKey('assigneeTeam', $unassigned);
+        $same = $this->api('PATCH', '/api/issues/MD-SPT-2', $secret, ['assigneeTeam' => null]);
+        self::assertSame('Hosting', $same['assigneeTeam']['name'], 'a team sent as null empties nothing: the assignee is what unassigns');
+
+        $unassigned = $this->api('PATCH', '/api/issues/MD-SPT-2', $secret, ['assignee' => null]);
+        self::assertArrayNotHasKey('assigneeTeam', $unassigned, 'nobody is neither a person nor a team');
         self::assertNull($this->issue('MD-SPT-2')->getAssigneeTeam());
 
         $this->api('PATCH', '/api/issues/MD-SPT-2', $secret, ['assignee' => $nadia->getId(), 'assigneeTeam' => $this->hosting->getId()]);

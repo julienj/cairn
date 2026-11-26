@@ -23,6 +23,7 @@ use App\Repository\AttachmentRepository;
 use App\Repository\CommentRepository;
 use App\Repository\IssueFieldValueRepository;
 use App\Repository\IssueRepository;
+use App\Repository\TeamAccessRepository;
 use App\Repository\TeamRepository;
 use App\Repository\UserRepository;
 use App\Security\AccessControl;
@@ -52,6 +53,7 @@ final class IssueHandlerSupport
         private readonly IssueFieldValueRepository $fieldValues,
         private readonly ConfigRegistry $config,
         private readonly TeamRepository $teams,
+        private readonly TeamAccessRepository $teamAccesses,
     ) {
     }
 
@@ -179,7 +181,7 @@ final class IssueHandlerSupport
             return null;
         }
         $team = $this->teams->find($teamId) ?? throw IssueException::notFound('Team', $teamId);
-        if (!\in_array($team, $this->teams->findOnProject($project), true)) {
+        if (!$this->teamAccesses->holdsRoleOn($team, $project)) {
             throw IssueException::teamWithoutAccess($team->getName(), $project->getName());
         }
 

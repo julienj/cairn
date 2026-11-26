@@ -8,8 +8,8 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * A member of a team stops it following an issue, for everyone of the
- * team; the next time the issue is given to the team, it follows it
- * again. Idempotent. Handled by UnfollowIssueAsTeamHandler.
+ * team; the next time the issue is given to the team or a text mentions
+ * it, it follows it again. Idempotent. Handled by UnfollowIssueAsTeamHandler.
  */
 final readonly class UnfollowIssueAsTeam
 {

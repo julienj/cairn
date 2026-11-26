@@ -4,11 +4,7 @@ declare(strict_types=1);
 
 namespace App\Repository;
 
-use App\Entity\Project;
 use App\Entity\Team;
-use App\Entity\TeamAccess;
-use App\Entity\TeamMember;
-use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -30,38 +26,6 @@ class TeamRepository extends ServiceEntityRepository
     public function findAllByName(): array
     {
         return $this->findBy([], ['name' => 'ASC']);
-    }
-
-    /**
-     * The teams that hold a role on a project, directly or through its
-     * workspace, by name: those an issue of the project may be given to.
-     *
-     * @return list<Team>
-     */
-    public function findOnProject(Project $project): array
-    {
-        return $this->createQueryBuilder('t')
-            ->where(\sprintf('EXISTS (SELECT 1 FROM %s a WHERE a.team = t AND (a.project = :project OR a.workspace = :workspace))', TeamAccess::class))
-            ->setParameter('project', $project)
-            ->setParameter('workspace', $project->getWorkspace())
-            ->orderBy('t.name')
-            ->getQuery()
-            ->getResult();
-    }
-
-    /**
-     * The teams someone is part of, by name.
-     *
-     * @return list<Team>
-     */
-    public function findOfMember(User $user): array
-    {
-        return $this->createQueryBuilder('t')
-            ->where(\sprintf('EXISTS (SELECT 1 FROM %s m WHERE m.team = t AND m.user = :user)', TeamMember::class))
-            ->setParameter('user', $user)
-            ->orderBy('t.name')
-            ->getQuery()
-            ->getResult();
     }
 
     /**

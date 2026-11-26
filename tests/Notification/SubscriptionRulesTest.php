@@ -103,6 +103,38 @@ final class SubscriptionRulesTest extends KernelTestCase
         self::assertNull($issue->getAssigneeTeam(), 'mentioning is not assigning');
     }
 
+    public function testAnExternalTeamFollowsNothingPrivateAsAnExternalUser(): void
+    {
+        $accounting = $this->commands->dispatch(new CreateTeam('Accounting', false));
+        $hosting = $this->commands->dispatch(new CreateTeam('Hosting', true));
+        self::assertInstanceOf(Team::class, $accounting);
+        self::assertInstanceOf(Team::class, $hosting);
+        $this->commands->dispatch(new GrantTeamAccess((int) $accounting->getId(), $this->fixtures->access->workspace->getId(), null, 'client'));
+        $this->commands->dispatch(new GrantTeamAccess((int) $hosting->getId(), $this->fixtures->access->workspace->getId(), null, 'developer'));
+        $issue = $this->fixtures->createIssue($this->fixtures->client);
+        $nadia = (int) $this->fixtures->developer->getId();
+        $teams = self::getContainer()->get(IssueTeamSubscriptionRepository::class);
+        $mention = \sprintf('For @[Accounting](team:%d) and @[Hosting](team:%d).', $accounting->getId(), $hosting->getId());
+
+        $this->commands->dispatch(new AddComment($nadia, $issue->getKey(), $mention, private: true));
+        self::assertSame([$hosting], $teams->findTeams($issue), 'a private comment is for internal users: the external team is not subscribed');
+
+        $this->commands->dispatch(new AddComment($nadia, $issue->getKey(), $mention));
+        self::assertSame([$accounting, $hosting], $teams->findTeams($issue), 'a public one subscribes both');
+
+        $hidden = $this->commands->dispatch(new CreateIssue(
+            actorId: (int) $this->fixtures->manager->getId(),
+            projectId: (int) $this->fixtures->access->shop->getId(),
+            trackerId: (int) $this->fixtures->bugs->getId(),
+            title: 'Between us',
+            description: $mention,
+            private: true,
+            fields: ['environment' => 'prod'],
+        ));
+        self::assertInstanceOf(Issue::class, $hidden);
+        self::assertSame([$hosting], $teams->findTeams($hidden), 'nor to a private issue');
+    }
+
     public function testAMentionInAPrivateCommentDoesNotSubscribeAnExternalUser(): void
     {
         $issue = $this->fixtures->createIssue($this->fixtures->manager);

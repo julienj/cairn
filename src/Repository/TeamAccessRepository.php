@@ -101,47 +101,26 @@ class TeamAccessRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    /**
+     * Whether a team holds a role on a project, directly or through its
+     * workspace: what makes it one of its teams (ListProjectTeams).
+     */
+    public function holdsRoleOn(Team $team, Project $project): bool
+    {
+        return null !== $this->createQueryBuilder('a')
+            ->select('a.id')
+            ->where('a.team = :team')
+            ->andWhere('a.project = :project OR a.workspace = :workspace')
+            ->setParameter('team', $team)
+            ->setParameter('project', $project)
+            ->setParameter('workspace', $project->getWorkspace())
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
     public function findOne(Team $team, Project|Workspace $scope): ?TeamAccess
     {
         return $this->findOneBy(['team' => $team, $scope instanceof Project ? 'project' : 'workspace' => $scope]);
-    }
-
-    /**
-     * How many accesses of teams carry a role, and how many of them
-     * belong to external teams: counted with those of people
-     * (MembershipRepository::countHolding()).
-     *
-     * @return array{all: int, external: int}
-     */
-    public function countHolding(string $role): array
-    {
-        /** @var list<array{internal: bool, accesses: int|string}> $rows */
-        $rows = $this->createQueryBuilder('a')
-            ->select('t.internal AS internal', 'COUNT(a.id) AS accesses')
-            ->join('a.team', 't')
-            ->where('a.role = :role')
-            ->setParameter('role', $role)
-            ->groupBy('t.internal')
-            ->getQuery()
-            ->getArrayResult();
-
-        $counts = ['all' => 0, 'external' => 0];
-        foreach ($rows as $row) {
-            $counts['all'] += (int) $row['accesses'];
-            if (!$row['internal']) {
-                $counts['external'] += (int) $row['accesses'];
-            }
-        }
-
-        return $counts;
-    }
-
-    /**
-     * Takes back every access of a team, in one statement: the team is
-     * being deleted.
-     */
-    public function removeTeam(Team $team): void
-    {
-        $this->createQueryBuilder('a')->delete()->where('a.team = :team')->setParameter('team', $team)->getQuery()->execute();
     }
 }

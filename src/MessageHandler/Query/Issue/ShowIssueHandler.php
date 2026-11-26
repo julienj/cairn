@@ -37,13 +37,14 @@ final class ShowIssueHandler
     public function __invoke(ShowIssue $query): ?IssueDetail
     {
         $issue = $this->entityManager->createQueryBuilder()
-            ->select('i', 't', 'p', 'w', 'au', 'a')
+            ->select('i', 't', 'p', 'w', 'au', 'a', 'at')
             ->from(Issue::class, 'i')
             ->join('i.tracker', 't')
             ->join('i.project', 'p')
             ->join('p.workspace', 'w')
             ->join('i.author', 'au')
             ->leftJoin('i.assignee', 'a')
+            ->leftJoin('i.assigneeTeam', 'at')
             ->where('p.id = :project')
             ->andWhere('i.number = :number')
             ->setParameter('project', $query->projectId)

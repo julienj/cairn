@@ -83,13 +83,4 @@ class TeamMemberRepository extends ServiceEntityRepository
 
         return $counts;
     }
-
-    /**
-     * Takes everyone out of a team, in one statement: the team is being
-     * deleted.
-     */
-    public function removeTeam(Team $team): void
-    {
-        $this->createQueryBuilder('m')->delete()->where('m.team = :team')->setParameter('team', $team)->getQuery()->execute();
-    }
 }

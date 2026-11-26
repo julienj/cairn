@@ -26,6 +26,7 @@ use App\Security\Referents;
 use App\Security\RoleReferent;
 use App\Security\Viewer;
 use App\Twig\Components\DispatchesCommands;
+use App\Twig\Components\ManagesRoleRows;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -70,6 +71,7 @@ final class Grants
     use ComponentToolsTrait;
     use DefaultActionTrait;
     use DispatchesCommands;
+    use ManagesRoleRows;
 
     /** What an account may be given on the project: a role (`existing`), or the reason why not. */
     public const string EXISTING = 'existing';
@@ -85,10 +87,6 @@ final class Grants
 
     #[LiveProp]
     public ?Project $project = null;
-
-    /** @var array<int, string> membership id => role, bound to the role of each row */
-    #[LiveProp(writable: true)]
-    public array $roles = [];
 
     /** On a workspace: who gets the new role. */
     #[LiveProp(writable: true)]
@@ -129,10 +127,6 @@ final class Grants
 
     #[LiveProp(writable: true)]
     public string $company = '';
-
-    /** The membership whose removal waits for a confirmation. */
-    #[LiveProp(writable: true)]
-    public ?int $revoking = null;
 
     /** @var list<Membership>|null read once per render, `align()` forgets it */
     private ?array $loadedMemberships = null;
@@ -368,14 +362,6 @@ final class Grants
         }
 
         return $roles;
-    }
-
-    /**
-     * The label of a role, or its id when the configuration dropped it.
-     */
-    public function roleLabel(string $role): string
-    {
-        return $this->config->definition()->role($role)->label;
     }
 
     /**
@@ -735,18 +721,6 @@ final class Grants
     }
 
     #[LiveAction]
-    public function confirmRevoke(#[LiveArg] int $membership): void
-    {
-        $this->revoking = $membership;
-    }
-
-    #[LiveAction]
-    public function cancelRevoke(): void
-    {
-        $this->revoking = null;
-    }
-
-    #[LiveAction]
     public function revoke(CommandBus $commands): void
     {
         $this->error = null;
@@ -777,12 +751,6 @@ final class Grants
         $this->lastName = '';
         $this->company = '';
         $this->loadedSuggestions = null;
-    }
-
-    private function done(string $message): void
-    {
-        $this->align();
-        $this->dispatchBrowserEvent('toast:show', ['message' => $this->translator->trans($message)]);
     }
 
     /**

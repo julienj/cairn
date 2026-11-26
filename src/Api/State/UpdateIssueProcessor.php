@@ -16,7 +16,7 @@ use Symfony\Component\HttpFoundation\Request;
 /**
  * PATCH /issues/{key}. UpdateIssue reads null as "keep", the merge patch
  * reads it as "empty": the properties the request names tell them apart,
- * so `"assignee": null` unassigns, as `"assigneeTeam": null` does, and a property left out changes
+ * so `"assignee": null` unassigns, from a person as from a team, and a property left out changes
  * nothing, nor asks for its right.
  *
  * @implements ProcessorInterface<UpdateIssueInput, IssueResource>
@@ -45,20 +45,14 @@ final class UpdateIssueProcessor implements ProcessorInterface
      */
     public function update(string $key, UpdateIssueInput $data, array $sent): IssueResource
     {
-        // A person or a team: naming one as null unassigns, unless the other is given the issue in the same request.
-        $assignee = \array_key_exists('assignee', $sent) ? $data->assignee ?? UpdateIssue::NOBODY : null;
-        $unassigned = \array_key_exists('assigneeTeam', $sent) && null === $data->assigneeTeam;
-        if (null !== $data->assigneeTeam && UpdateIssue::NOBODY === $assignee) {
-            $assignee = null;
-        }
-
         $this->commands->dispatch(new UpdateIssue(
             actorId: (int) $this->viewer->get()->getId(),
             issueKey: $key,
             title: $data->title,
             description: $data->description,
             fields: $data->fields,
-            assigneeId: $assignee ?? ($unassigned ? UpdateIssue::NOBODY : null),
+            // "assignee": null unassigns, from a person as from a team; sent with a team, the team is given the issue.
+            assigneeId: \array_key_exists('assignee', $sent) && (null !== $data->assignee || null === $data->assigneeTeam) ? $data->assignee ?? UpdateIssue::NOBODY : null,
             criticality: $data->criticality,
             private: $data->private,
             releaseId: \array_key_exists('release', $sent) ? $data->release ?? UpdateIssue::NOBODY : null,

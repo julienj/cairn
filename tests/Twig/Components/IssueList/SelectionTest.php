@@ -123,6 +123,31 @@ final class SelectionTest extends KernelTestCase
         self::assertNull($this->reloaded('MD-SPT-1')->getAssigneeTeam());
     }
 
+    public function testIssuesOfTwoProjectsAreOfferedTheTeamsThatHoldARoleOnBoth(): void
+    {
+        $commands = self::getContainer()->get(CommandBus::class);
+        $hosting = $commands->dispatch(new CreateTeam('Hosting', true));
+        $support = $commands->dispatch(new CreateTeam('Support', true));
+        self::assertInstanceOf(Team::class, $hosting);
+        self::assertInstanceOf(Team::class, $support);
+        // Hosting works on the shop only, Support on the whole workspace.
+        $commands->dispatch(new GrantTeamAccess((int) $hosting->getId(), null, $this->scene->shop->getId(), 'developer'));
+        $commands->dispatch(new GrantTeamAccess((int) $support->getId(), $this->scene->dupont->getId(), null, 'developer'));
+        $elsewhere = $this->scene->intranetBug()->getKey();
+        $offered = static fn (Team $team): string => 'data-live-property-param="assigneeTeam" data-live-value-param="'.$team->getId().'"';
+
+        $render = (string) $this->selectionOf('thomas.girard@cairn.test', false, 'MD-SPT-1', $elsewhere)->render();
+        self::assertStringContainsString($offered($support), $render);
+        self::assertStringNotContainsString($offered($hosting), $render, 'no role on the intranet: it could not be given its issue');
+
+        $component = $this->selectionOf('thomas.girard@cairn.test', false, 'MD-SPT-1', $elsewhere);
+        $component->call('change', ['property' => 'assigneeTeam', 'value' => (string) $hosting->getId()])->call('apply');
+        self::assertNull($this->reloaded('MD-SPT-1')->getAssigneeTeam(), 'whatever the request says');
+
+        $render = (string) $this->selection('thomas.girard@cairn.test', 'MD-SPT-1', 'MD-SPT-2')->render();
+        self::assertStringContainsString($offered($hosting), $render, 'offered again once every issue is of the shop');
+    }
+
     public function testEachIssueReachesTheStepInItsTrackerOrChangesCategory(): void
     {
         $component = $this->selection('thomas.girard@cairn.test', 'MD-SPT-1', 'MD-SPT-4', 'MD-SPT-7');

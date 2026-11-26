@@ -13,9 +13,7 @@ use App\Entity\Transition;
 use App\Entity\Workflow;
 use App\Repository\IssueLinkRepository;
 use App\Repository\IssueRepository;
-use App\Repository\MembershipRepository;
-use App\Repository\TeamAccessRepository;
-use App\Repository\TemplateTeamAccessRepository;
+use App\Repository\RoleUsage;
 use App\Repository\TemplateTrackerRepository;
 use App\Repository\TrackerRepository;
 use App\Repository\TransitionRepository;
@@ -34,9 +32,7 @@ final class ConfigDeletions
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
-        private readonly MembershipRepository $memberships,
-        private readonly TeamAccessRepository $teamAccesses,
-        private readonly TemplateTeamAccessRepository $templateAccesses,
+        private readonly RoleUsage $roleUsage,
         private readonly TransitionRepository $transitions,
         private readonly RuleReferences $rules,
         private readonly WorkflowRepository $workflows,
@@ -57,7 +53,7 @@ final class ConfigDeletions
         if (null === $role) {
             return null;
         }
-        $held = $this->memberships->countHolding($role->getId())['all'] + $this->teamAccesses->countHolding($role->getId())['all'] + $this->templateAccesses->countHolding($role->getId())['all'];
+        $held = $this->roleUsage->of($role->getId())['all'];
         if ($held > 0) {
             return DeletionRefusal::roleHeld($role->getLabel(), $held);
         }

@@ -4,41 +4,23 @@ declare(strict_types=1);
 
 namespace App\MessageHandler\Query\Config;
 
-use App\Entity\Membership;
-use App\Entity\TeamAccess;
-use App\Entity\TemplateTeamAccess;
 use App\Message\Query\Config\CountMembershipsByRole;
-use Doctrine\ORM\EntityManagerInterface;
+use App\Repository\RoleUsage;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 #[AsMessageHandler(bus: 'query.bus')]
 final class CountMembershipsByRoleHandler
 {
     public function __construct(
-        private readonly EntityManagerInterface $entityManager,
+        private readonly RoleUsage $roleUsage,
     ) {
     }
 
     /**
-     * @return array<string, int> role id => accesses, of people and of teams
+     * @return array<string, int> role id => accesses, of people, of teams and of templates
      */
     public function __invoke(CountMembershipsByRole $query): array
     {
-        $counts = [];
-        // What people hold, what teams hold, then what templates give to teams.
-        foreach ([Membership::class, TeamAccess::class, TemplateTeamAccess::class] as $class) {
-            /** @var list<array{role: string, memberships: int|string}> $rows */
-            $rows = $this->entityManager->createQueryBuilder()
-                ->select('IDENTITY(m.role) AS role', 'COUNT(m.id) AS memberships')
-                ->from($class, 'm')
-                ->groupBy('m.role')
-                ->getQuery()
-                ->getArrayResult();
-            foreach ($rows as $row) {
-                $counts[$row['role']] = ($counts[$row['role']] ?? 0) + (int) $row['memberships'];
-            }
-        }
-
-        return $counts;
+        return $this->roleUsage->byRole();
     }
 }

@@ -223,7 +223,7 @@ final class McpServerTest extends McpTestCase
 
         self::assertSame([['id' => $teamId, 'name' => 'Hosting']], array_map(static fn (array $row): array => ['id' => $row['id'], 'name' => $row['name']], $this->read('get_project', ['key' => 'MD-SPT'], $secret)['teams']));
 
-        $given = $this->read('update_issue', ['key' => 'MD-SPT-2', 'assigneeTeam' => (string) $teamId], $secret);
+        $given = $this->read('update_issue', ['key' => 'MD-SPT-2', 'assigneeTeam' => $teamId], $secret);
         self::assertSame('Hosting', $given['assigneeTeam']['name']);
 
         // An assistant fills what it does not use with nulls: nothing is emptied by one.
@@ -233,7 +233,7 @@ final class McpServerTest extends McpTestCase
         $found = $this->read('search_issues', ['project' => 'MD-SPT', 'assigneeTeam' => [$teamId]], $secret);
         self::assertSame(['MD-SPT-2'], array_column($found['issues'], 'key'));
 
-        $unassigned = $this->read('update_issue', ['key' => 'MD-SPT-2', 'assigneeTeam' => 'none'], $secret);
+        $unassigned = $this->read('update_issue', ['key' => 'MD-SPT-2', 'assignee' => 'none'], $secret);
         self::assertArrayNotHasKey('assigneeTeam', $unassigned);
 
         $created = $this->read('create_issue', ['project' => 'MD-SPT', 'tracker' => $this->issue('MD-SPT-1')->getTracker()->getId(), 'title' => 'Renew the certificate', 'assigneeTeam' => $teamId, 'fields' => ['environment' => 'prod']], $secret);

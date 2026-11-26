@@ -82,7 +82,6 @@ final class MarkdownRenderer
         $this->dropRemoteImages($document);
         $this->resolveIssueReferences($document, $reader);
         $this->resolveMentions($document, $project);
-        $this->resolveTeamMentions($document, $project);
         if ($absoluteUrls) {
             $this->absolutizeUrls($document);
         }
@@ -172,47 +171,31 @@ final class MarkdownRenderer
         }
     }
 
+    /**
+     * The people and the teams the editor offers, and nobody else: a
+     * member of the project, a team that holds a role on it. Each shows
+     * its current name; anything else stays the text typed.
+     */
     private function resolveMentions(Document $document, Project $project): void
     {
-        $mentions = $this->nodes($document, Mention::class);
-        if ([] === $mentions) {
-            return;
+        $people = $this->nodes($document, Mention::class);
+        $teams = $this->nodes($document, TeamMention::class);
+
+        $names = ['user' => [], 'team' => []];
+        foreach ([] === $people ? [] : $this->queries->ask(new ListProjectMembers($project)) as $user) {
+            $names['user'][(int) $user->getId()] = $user->getFullName();
+        }
+        foreach ([] === $teams ? [] : $this->queries->ask(new ListProjectTeams($project)) as $team) {
+            $names['team'][(int) $team->getId()] = $team->getName();
         }
 
-        // The people the editor offers, and nobody else.
-        $mentioned = array_column($mentions, 'userId');
-        $names = [];
-        foreach ($this->queries->ask(new ListProjectMembers($project)) as $user) {
-            if (\in_array($user->getId(), $mentioned, true)) {
-                $names[$user->getId()] = $user->getFullName();
-            }
-        }
-
-        foreach ($mentions as $mention) {
-            $name = $names[$mention->userId] ?? null;
-            $mention->replaceWith(null === $name ? new Text('@'.$mention->name) : new Mention($mention->userId, $name));
-        }
-    }
-
-    /**
-     * The teams the editor offers, and no other: those that hold a role
-     * on the project.
-     */
-    private function resolveTeamMentions(Document $document, Project $project): void
-    {
-        $mentions = $this->nodes($document, TeamMention::class);
-        if ([] === $mentions) {
-            return;
-        }
-
-        $names = [];
-        foreach ($this->queries->ask(new ListProjectTeams($project)) as $team) {
-            $names[(int) $team->getId()] = $team->getName();
-        }
-
-        foreach ($mentions as $mention) {
-            $name = $names[$mention->teamId] ?? null;
-            $mention->replaceWith(null === $name ? new Text('@'.$mention->name) : new TeamMention($mention->teamId, $name));
+        foreach ([...$people, ...$teams] as $mention) {
+            $name = $mention instanceof TeamMention ? $names['team'][$mention->teamId] ?? null : $names['user'][$mention->userId] ?? null;
+            $mention->replaceWith(match (true) {
+                null === $name => new Text('@'.$mention->name),
+                $mention instanceof TeamMention => new TeamMention($mention->teamId, $name),
+                default => new Mention($mention->userId, $name),
+            });
         }
     }
 
