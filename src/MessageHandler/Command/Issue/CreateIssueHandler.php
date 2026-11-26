@@ -6,6 +6,7 @@ namespace App\MessageHandler\Command\Issue;
 
 use App\Entity\Enum\Criticality;
 use App\Entity\Issue;
+use App\Entity\IssueReport;
 use App\Entity\IssueTag;
 use App\Entity\JournalEntry;
 use App\Event\IssueCreated;
@@ -16,6 +17,7 @@ use App\Repository\TagRepository;
 use App\Repository\TrackerRepository;
 use App\Security\AccessControl;
 use App\Security\Permission;
+use App\Widget\TechnicalReport;
 use App\Workflow\WorkflowProvider;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
@@ -86,6 +88,9 @@ final class CreateIssueHandler
 
         $this->support->arrive($issue);
         $this->entityManager->persist($issue);
+        if (null !== $report = TechnicalReport::from($command->report)) {
+            $this->entityManager->persist(new IssueReport($issue, $report));
+        }
         $this->support->writeFieldValues($issue, $command->fields);
         foreach ($tags as $tag) {
             $this->entityManager->persist(new IssueTag($issue, $tag));

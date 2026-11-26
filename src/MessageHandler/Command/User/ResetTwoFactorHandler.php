@@ -6,13 +6,16 @@ namespace App\MessageHandler\Command\User;
 
 use App\Message\Command\User\ResetTwoFactor;
 use App\Repository\UserRepository;
+use App\Repository\WidgetTokenRepository;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 #[AsMessageHandler(bus: 'command.bus')]
 final class ResetTwoFactorHandler
 {
-    public function __construct(private readonly UserRepository $users)
-    {
+    public function __construct(
+        private readonly UserRepository $users,
+        private readonly WidgetTokenRepository $widgetTokens,
+    ) {
     }
 
     public function __invoke(ResetTwoFactor $command): void
@@ -23,5 +26,7 @@ final class ResetTwoFactorHandler
         }
 
         $user->disableTotp();
+        // the account is linked on no site any more: what was linked went through the second factor that is gone
+        $this->widgetTokens->removeOfUser($user);
     }
 }

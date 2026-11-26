@@ -5,6 +5,19 @@ framework:
             policy: sliding_window
             limit: 300
             interval: '1 minute'
+        # The files one account may send through the widget, all its linked browsers together
+        # (Security/WidgetRateLimiter): what fills the disk.
+        widget_upload:
+            policy: sliding_window
+            limit: 60
+            interval: '10 minutes'
+        # What one address may ask of the exchange that links an account to a widget, which is
+        # public: a frame that waits asks every five seconds (12 a minute), and the people of one
+        # office, who review a site together, share an address.
+        widget_link:
+            policy: sliding_window
+            limit: 120
+            interval: '1 minute'
         # The password changes one account may try (Controller/AccountController):
         # whoever sits at an open session cannot guess the current password at will.
         password_change:

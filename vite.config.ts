@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+import { defineConfig, type UserConfig } from 'vite';
 import tailwindcss from '@tailwindcss/vite';
 import Symfony from '@symfony/reprise/vite';
 
@@ -6,7 +6,8 @@ import Symfony from '@symfony/reprise/vite';
 // reaches it through the published port.
 const port = Number(process.env.VITE_PORT ?? 5173);
 
-export default defineConfig({
+// The application: modules, each named after its content, which the pages name through Reprise.
+const app: UserConfig = {
     input: {
         app: './assets/app.js',
         styles: './assets/styles/app.css',
@@ -28,4 +29,25 @@ export default defineConfig({
             devServerOrigin: `http://localhost:${port}`,
         }),
     ],
-});
+};
+
+// The script a site being reviewed loads (assets/widget/), built apart with `--mode widget`:
+// one classic script without a hash in its name, since the line that loads it sits on other
+// people's sites and must keep working. A build gives modules or one such script, not both,
+// hence the two. It is left readable: whoever installs it may want to see what it does.
+const widget: UserConfig = {
+    publicDir: false,
+    build: {
+        outDir: 'public',
+        emptyOutDir: false,
+        minify: false,
+        lib: {
+            entry: './assets/widget/widget.js',
+            formats: ['iife'],
+            name: 'CairnWidget',
+            fileName: () => 'widget.js',
+        },
+    },
+};
+
+export default defineConfig(({ mode }) => ('widget' === mode ? widget : app));

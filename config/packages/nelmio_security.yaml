@@ -4,6 +4,9 @@ nelmio_security:
         paths:
             # The component catalogue (dev only) shows each view in a frame of its own.
             '^/storia': SAMEORIGIN
+            # The widget is framed by the sites of its project, which a
+            # Content-Security-Policy names (Widget/FrameHeaders).
+            '^/widget/': ALLOW
             '^/.*': DENY
 
     # disables content type sniffing for script resources

@@ -1,0 +1,8 @@
+{# One file sent with the issue from the widget (`uuid`, `name`): its picture when the frame took or chose it, its name, the way to take it back, and what the form carries of it. The screenshot (`data-capture`, set by the form) shows its picture whole, over the width of the panel, to be checked before the issue is sent, and may be annotated again. The form also draws it once in a <template>, for the files sent while it is filled. #}
+<li class="group flex flex-wrap items-center gap-2 rounded-md border border-line bg-surface px-2 py-1.5 text-sm" data-uuid="{{ uuid }}">
+    <img alt="" class="h-10 w-16 shrink-0 rounded border border-line-subtle object-cover group-data-capture:h-auto group-data-capture:max-h-96 group-data-capture:w-full group-data-capture:object-contain" hidden>
+    <span class="min-w-0 flex-1 truncate text-body">{{ name }}</span>
+    <twig:Ui:IconButton icon="pencil" :label="'widget.capture.annotate'|trans" class="hidden group-data-capture:inline-flex" data-action="widget-report#annotate" />
+    <twig:Ui:IconButton icon="x" :label="'widget.form.remove_file'|trans({ '%name%': name })" data-action="widget-report#discard" />
+    <input type="hidden" name="attachments[{{ uuid }}]" value="{{ name }}">
+</li>

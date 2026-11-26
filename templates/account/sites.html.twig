@@ -1,0 +1,37 @@
+{% extends 'layout/account.html.twig' %}
+
+{% block page_title %}{{ 'connected_site.title'|trans }}{% endblock %}
+
+{% block page_intro %}{{ 'connected_site.intro'|trans }}{% endblock %}
+
+{# The sites the signed-in user linked their account on through the widget (`tokens`, those that still hold): one line per browser, the site as people name it, its project, since when and until when, and the way to take the account back, confirmed in place. #}
+{% block content %}
+    <twig:Ui:Panel :title="'connected_site.title'|trans" :count="tokens|length">
+        <ul class="divide-y divide-line-subtle">
+            {% for token in tokens %}
+                <li class="px-4 py-3" data-test="connected-site">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <twig:ux:icon name="lucide:globe" class="h-4 w-4 shrink-0 text-faint" />
+                        <span class="min-w-0 break-all font-medium text-strong">{{ token.site.origin|replace({ 'https://': '', 'http://': '' }) }}</span>
+                        <span class="ml-auto text-xs text-muted">{{ 'connected_site.expires_on'|trans({ '%date%': token.expiresAt|format_date('short') }) }}</span>
+                    </div>
+                    <p class="mt-1 pl-6 text-xs text-muted">
+                        {{ token.site.project.workspace.name }} · {{ token.site.project.name }}
+                        · {{ 'connected_site.connected_on'|trans({ '%date%': token.createdAt|format_date('short') }) }}
+                    </p>
+                    <twig:Ui:Disclosure :closedLabel="'connected_site.disconnect'|trans" :openLabel="'issue.edit.cancel'|trans" class="mt-1.5 pl-6">
+                        <twig:Ui:Callout tone="danger" size="sm" class="mt-2 flex flex-wrap items-center gap-2" role="alertdialog">
+                            <span class="flex-1">{{ 'connected_site.disconnect_confirm'|trans }}</span>
+                            <form method="post" action="{{ path('app_account_site_disconnect', { token: token.id }) }}">
+                                <input type="hidden" name="_token" value="{{ csrf_token('submit') }}" data-controller="csrf-protection">
+                                <twig:Ui:Button type="submit" size="sm" variant="danger" icon="log-out">{{ 'connected_site.disconnect'|trans }}</twig:Ui:Button>
+                            </form>
+                        </twig:Ui:Callout>
+                    </twig:Ui:Disclosure>
+                </li>
+            {% else %}
+                <li><twig:Ui:EmptyState :title="'connected_site.empty'|trans" icon="globe">{{ 'connected_site.empty_hint'|trans }}</twig:Ui:EmptyState></li>
+            {% endfor %}
+        </ul>
+    </twig:Ui:Panel>
+{% endblock %}

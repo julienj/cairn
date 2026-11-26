@@ -54,6 +54,7 @@ use App\Message\Command\Tag\CreateTag;
 use App\Message\Command\Team\AddTeamMember;
 use App\Message\Command\Team\CreateTeam;
 use App\Message\Command\Team\GrantTeamAccess;
+use App\Message\Command\Widget\AddWidgetSite;
 use App\Message\CommandBus;
 use App\Security\AccessControl;
 use App\Workflow\WorkflowProvider;
@@ -116,6 +117,9 @@ final class AppStory extends Story
                 $trackers = $this->createTrackers($project);
                 $dates = self::creationDates($now, \count($definition['issues']));
                 $tags = $this->createTags($project, $this->users[$definition['people']['manager']], $definition['tags'] ?? []);
+                foreach ($definition['widget'] ?? [] as $site) {
+                    $this->commands->dispatch(new AddWidgetSite((int) $this->users[$definition['people']['manager']]->getId(), (int) $project->getId(), $site));
+                }
                 $issues = [];
                 foreach ($definition['issues'] as $index => $issue) {
                     $issues[] = $this->createIssue($project, $trackers[$issue[0]], $issue, $definition['people'], $dates[$index], $now, $index, $tags[$index] ?? []);
@@ -195,7 +199,7 @@ final class AppStory extends Story
     }
 
     /**
-     * @return iterable<array{project: Project, people: array{manager: string, developers: list<string>, client: ?string}, issues: list<array{0: string, 1: string, 2: string, 3: Criticality, 4?: ?string, 5?: bool}>, tags?: list<array{0: string, 1: TagColour, 2: list<int>}>, releases?: list<array{0: string, 1: int, 2: string, 3: ReleaseStatus, 4: list<int>}>, budgets?: list<array{0: string, 1: int, 2: list<array{0: ?int, 1: ?string, 2: BudgetLineStatus, 3: float|int|null}>}>, archived?: bool}>
+     * @return iterable<array{project: Project, people: array{manager: string, developers: list<string>, client: ?string}, issues: list<array{0: string, 1: string, 2: string, 3: Criticality, 4?: ?string, 5?: bool}>, widget?: list<string>, tags?: list<array{0: string, 1: TagColour, 2: list<int>}>, releases?: list<array{0: string, 1: int, 2: string, 3: ReleaseStatus, 4: list<int>}>, budgets?: list<array{0: string, 1: int, 2: list<array{0: ?int, 1: ?string, 2: BudgetLineStatus, 3: float|int|null}>}>, archived?: bool}>
      */
     private function projects(): iterable
     {
@@ -226,6 +230,9 @@ final class AppStory extends Story
             ['task', 'Upgrade Symfony to 8.1', 'in_progress', Criticality::Normal, 'nadia'],
             ['task', 'Purge the Varnish cache after deployment', 'done', Criticality::Low, 'lea'],
             ['task', 'Review the indexes of the orders table', 'new', Criticality::Normal],
+        ], 'widget' => [
+            // the demonstration site of the development stack (docker/demo-site)
+            'http://staging.localhost:8001',
         ], 'tags' => [
             // [name, colour, indexes of the issues created with it]
             ['Front office', TagColour::Blue, [0, 1, 2, 4, 5, 6, 8]],

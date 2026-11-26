@@ -22,6 +22,7 @@ use App\Message\Query\Project\ListProjectMembers;
 use App\Message\Query\Project\ListProjectTeams;
 use App\Message\Query\Project\ListTrackers;
 use App\Message\QueryBus;
+use App\Repository\IssueReportRepository;
 use App\Repository\IssueTagRepository;
 use App\Repository\ReleaseRepository;
 use App\Repository\TagRepository;
@@ -81,6 +82,7 @@ final class Properties
         private readonly ReleaseRepository $releases,
         private readonly TagRepository $tags,
         private readonly IssueTagRepository $issueTags,
+        private readonly IssueReportRepository $reports,
         private readonly WorkflowProvider $workflows,
         private readonly TranslatorInterface $translator,
     ) {
@@ -196,6 +198,14 @@ final class Properties
     public function canSetRelease(): bool
     {
         return $this->access->isGranted($this->viewer->get(), Permission::IssueSetRelease, $this->issue->getProject());
+    }
+
+    /**
+     * Whether the issue was reported from a site through the widget, with what the site noted.
+     */
+    public function hasReport(): bool
+    {
+        return $this->reports->has($this->issue);
     }
 
     public function hasReleases(): bool

@@ -34,7 +34,7 @@
     </div>
 {% endblock %}
 
-{# The workflow of the issue, drawn over its page when the address asks for it (`/workflow`). The block is rendered alone for the frame: it reads `detail`, not what the page sets. #}
+{# The workflow of the issue, drawn over its page when the address asks for it (`/workflow`), or the report of the site it was reported from (`/report`). The block is rendered alone for the frame: it reads `detail`, not what the page sets. #}
 {% block modal %}
     <turbo-frame id="modal" data-controller="modal-frame" data-action="turbo:submit-end->modal-frame#submitted">
         {% if workflow %}
@@ -44,6 +44,15 @@
                 </twig:block>
                 <twig:block name="content">
                     <twig:Workflow:Diagram :workflow="workflow" :current="detail.issue.place" />
+                </twig:block>
+            </twig:Ui:Dialog>
+        {% elseif report %}
+            <twig:Ui:Dialog :title="'widget.report.title'|trans" :closeHref="path('app_issue_show', { workspaceKey: project.workspace.key, projectKey: project.key, number: detail.issue.number })" size="lg">
+                <twig:block name="description">
+                    <p class="truncate"><span class="font-mono">{{ detail.issue.key }}</span> · {{ detail.issue.title }}</p>
+                </twig:block>
+                <twig:block name="content">
+                    {{ include('widget/_report.html.twig', { report: report }) }}
                 </twig:block>
             </twig:Ui:Dialog>
         {% endif %}

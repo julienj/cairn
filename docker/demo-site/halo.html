@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Halo · Atelier Brume</title>
+    <link rel="stylesheet" href="/site.css">
+    <script src="/cairn.js"></script>
+    <script src="/loader.js" data-display="always"></script>
+</head>
+<body>
+    <div class="banner">Staging · the demonstration site of the Cairn widget (docker/demo-site)</div>
+    <header>
+        <strong>Atelier Brume</strong>
+        <nav>
+            <a href="/">Pendant lamps</a>
+            <a href="/halo.html" aria-current="page">Halo</a>
+            <a href="/csp.html">A strict page</a>
+            <a href="/live.html">In production</a>
+        </nav>
+    </header>
+    <main>
+        <h1>Halo</h1>
+        <p class="lead">A ring of blown glass, 42 cm. Price: <span data-price="halo">…</span></p>
+        <img class="photo" src="/images/halo.jpg" alt="Halo, from below" width="320" height="200">
+        <p><a href="/">Back to the pendant lamps</a></p>
+        <div class="tools">
+            <p>Break something, then report it with the button at the bottom right.</p>
+            <button type="button" data-break="error">Throw a JavaScript error</button>
+            <button type="button" data-break="rejection">Reject a promise</button>
+            <button type="button" data-break="request">Send a request that fails</button>
+            <button type="button" data-break="file">Show an image that is missing</button>
+        </div>
+    </main>
+    <script src="/site.js"></script>
+</body>
+</html>

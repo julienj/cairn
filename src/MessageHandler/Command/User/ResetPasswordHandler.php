@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\MessageHandler\Command\User;
 
 use App\Message\Command\User\ResetPassword;
+use App\Repository\WidgetTokenRepository;
 use App\Security\PasswordLinkException;
 use App\Security\PasswordTokens;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -22,6 +23,7 @@ final class ResetPasswordHandler
     public function __construct(
         private readonly PasswordTokens $tokens,
         private readonly UserPasswordHasherInterface $passwordHasher,
+        private readonly WidgetTokenRepository $widgetTokens,
     ) {
     }
 
@@ -33,5 +35,7 @@ final class ResetPasswordHandler
         }
 
         $user->setPassword($this->passwordHasher->hashPassword($user, $command->plainPassword));
+        // a password forgotten may be a password stolen: the account is linked on no site any more
+        $this->widgetTokens->removeOfUser($user);
     }
 }

@@ -54,6 +54,7 @@ printf 'smoke@cairn.test\nSmoke\nTest\n\nadmin\nsmoke-test-password\nsmoke-test-
 [ "$(status "$url/login")" = 200 ] || fail 'the sign-in page does not answer'
 script="$(curl -s "$url/login" | grep -o '/build/[^"]*\.js' | head -n 1)"
 [ -n "$script" ] && [ "$(status "$url$script")" = 200 ] || fail 'the pages name no built asset'
+[ "$(status "$url/widget.js")" = 200 ] || fail 'the script of the widget was not built into the image'
 
 jar="$(mktemp)"
 curl -s -c "$jar" -o /dev/null "$url/login"

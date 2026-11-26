@@ -1,0 +1,12 @@
+{# Base of the pages of the widget, drawn in a frame of the site being reviewed: the application's styles and scripts, no shell, and no session, so no flash message. Pages fill `page_title` and `content`. #}
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ block('page_title') }} · Cairn{% endblock %}
+
+{% block body %}
+    {% block content %}{% endblock %}
+{% endblock %}
+
+{% block toasts %}
+    <twig:Ui:Toaster />
+{% endblock %}

@@ -327,6 +327,7 @@ nav:
             access: Access
             automations: Automations
             repositories: Repositories
+            widget: Widget
     issues:
         all: All
         assigned: Assigned to me
@@ -450,6 +451,12 @@ attachment:
         b: '%size% B'
         kb: '%size% KB'
         mb: '%size% MB'
+
+measure:
+    rating:
+        good: Good
+        average: To improve
+        poor: Poor
 
 admin:
     title: Administration
@@ -1383,6 +1390,187 @@ tag:
         slate: Slate
         gray: Grey
 
+widget:
+    open_project: Open the project in Cairn
+    title: Report a problem
+    close: Close the panel
+    intro: The widget lets the people of the project report a problem from the site being reviewed, without leaving it. It only shows on the sites declared here, to everybody or to whoever asks for it; everyone signs in with their own Cairn account.
+    alone: This page is shown by the widget, on a site of the project.
+    site:
+        new: New site
+        add: Add the site
+        added: 'Site %origin% added.'
+        removed: 'Site %origin% removed.'
+        remove: Remove
+        remove_confirm: The widget leaves this site, and whoever linked their account there will have to link it again.
+        added_on: 'Added on %date%'
+        remove_title: Remove this site?
+        remove_submit: Remove the site
+        empty: No site yet
+        empty_hint: Declare the staging site of the project to get the line of script to put on it.
+        insecure: No screenshot (not HTTPS)
+        form:
+            address: Address of the site
+            address_help: 'Scheme and domain, without a path: https://staging.example.com'
+    install:
+        title: Installation
+        always:
+            title: Review
+            help: Everybody sees the button on the site.
+        on_demand:
+            title: Production
+            help: Nobody sees the button, and the script does nothing, until someone opens the link below.
+        script:
+            label: 'In the <head> of every page'
+            help: 'As early as possible: what happened before it loaded is not in the report.'
+            copy: Copy the line
+        link:
+            label: Link that shows the button
+            help: The site then remembers them in that browser, on all of its pages.
+            hide: 'To hide it again:'
+            copy: Copy the link
+            copy_hide: Copy the link that hides it
+        copied: Copied
+    refused:
+        not_an_origin: 'This is not the address of a site: scheme and domain, without a path.'
+        site_taken: 'The project already has the site %origin%.'
+        unknown_site: '%origin% is no longer a site of the project.'
+    refused_here:
+        title: You cannot report a problem here
+        text: This account may not create issues on this project.
+        action: Use another account
+    connect:
+        title: Sign in to Cairn
+        text: Sign in to report a problem on this site.
+        action: Sign in
+        kept: You stay signed in for 30 days.
+        waiting: "Finish signing in in the window that just opened."
+    link:
+        title: Link your Cairn account to this site?
+        text: You will be able to report problems from this site without signing in again, for 30 days.
+        confirm: Link my account
+        done: Your account is linked
+        done_hint: You can close this window and go back to the site.
+        expired: This link has expired
+        expired_hint: Close this window and start again from the button of the site.
+    form:
+        tracker: Category
+        title: Title
+        title_placeholder: The problem in a few words
+        description: Description
+        criticality: Criticality
+        tags: Tags
+        private: Private
+        private_help: Hidden from external users.
+        private_tracker: 'Private category: hidden from external users.'
+        attach: Attach a file
+        attachments: Screenshot and files
+        drop_hint: "or drop files anywhere on this panel"
+        drop: Drop your files to attach them
+        remove_file: 'Remove %name%'
+        upload_failed: This file could not be sent.
+        submit: Send the issue
+        discard: Discard
+        discard_confirm: 'Discard this issue?'
+        discard_yes: Discard
+        discard_no: Keep writing
+        visible: Everyone on the project will see this issue.
+    capture:
+        title: Screenshot
+        take: Capture the screen
+        annotate: Annotate the screenshot
+        tools: Tools
+        tool:
+            pen: Draw
+            arrow: Arrow
+            box: Rectangle
+            crop: Crop
+        colours: Colour
+        colour:
+            red: Red
+            orange: Orange
+            green: Green
+            blue: Blue
+            black: Black
+            white: White
+        undo: Undo
+        crop_help: Drag over the part to keep.
+        attach: Attach the screenshot
+        cancel: Cancel
+        failed: The screenshot could not be taken. You can attach a file instead.
+    report:
+        title: Technical report
+        attached: Technical report attached
+        row: Report
+        open: View the report
+        view: View
+        include: Attach this report
+        back: Back to the form
+        intro: Noted by the site during the visit and attached to the issue, to help reproduce the problem.
+        page: Page
+        environment: Environment
+        browser: Browser
+        language: Language
+        viewport: Window
+        screen: Screen
+        context: Said by the site
+        activity: Activity
+        activity_help: 'In order: the pages seen in this tab, what was clicked, changed or sent (never what was typed), the errors of the console and what the page asked of the network and did not get (never what a request carried). Addresses are without their parameters.'
+        filter: Show or hide
+        count:
+            page: '{1}1 page|]1,Inf[ %count% pages'
+            action: '{1}1 action|]1,Inf[ %count% actions'
+            error: '{1}1 error|]1,Inf[ %count% errors'
+            request: '{1}1 failure|]1,Inf[ %count% failures'
+        no_answer: no answer
+        kind:
+            ajax: Ajax
+            image: image
+            script: script
+            stylesheet: style
+            font: font
+            media: media
+            other: file
+        action:
+            click: Click
+            change: Change
+            submit: Send
+            unnamed: element
+        event:
+            page: Page
+            error: Error
+        zoom: Zoom
+        preferences: System
+        preference:
+            light: Light theme
+            dark: Dark theme
+            pointer_fine: Mouse
+            pointer_coarse: Touch screen
+            pointer_none: No pointer
+            reduced_motion: Reduced motion
+            contrast_more: More contrast
+            contrast_less: Less contrast
+            forced_colors: Forced colours
+        none: Nothing noted.
+        summary: Page, browser, screen, pages seen, last actions, errors, network
+    sent:
+        title: 'Issue %key% created'
+        text: The team of the project is told.
+        report_lost: The technical report could not be attached to it.
+        open: Open it in Cairn
+        another: Report another problem
+
+connected_site:
+    title: Connected sites
+    intro: "You signed in on these sites to report problems from them. Disconnecting a site deletes nothing: you will simply be asked to sign in again there next time."
+    connected_on: 'Connected on %date%'
+    expires_on: 'Expires on %date%'
+    disconnect: Disconnect
+    disconnect_confirm: This browser will have to sign in again on this site.
+    disconnected: 'Site %site% disconnected.'
+    empty: No connected site
+    empty_hint: A site shows here once you sign in on it to report a problem.
+
 release:
     title: Releases
     intro: A release gathers the issues of one delivery. Issues are scheduled from their own page, field Release, or several at once from the selection.
@@ -1433,6 +1621,7 @@ account:
         profile: Profile
         notifications: Notifications
         security: Security
+        sites: Connected sites
         two_factor: Two-factor authentication
         integrations: Integrations
         api: API
@@ -1638,6 +1827,10 @@ permission:
         manage:
             label: Manage repositories
             help: Link the code repositories of the project, install and remove their webhooks, and unlink them.
+    widget:
+        manage:
+            label: Manage the widget
+            help: Declare the sites the widget of the project is shown on, and remove them, which signs out whoever connected there.
     release:
         manage:
             label: Manage releases

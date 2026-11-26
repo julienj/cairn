@@ -327,6 +327,7 @@ nav:
             access: Accès
             automations: Automatisations
             repositories: Dépôts
+            widget: Widget
     issues:
         all: Toutes
         assigned: Assignées à moi
@@ -450,6 +451,12 @@ attachment:
         b: '%size% o'
         kb: '%size% Ko'
         mb: '%size% Mo'
+
+measure:
+    rating:
+        good: Bon
+        average: À améliorer
+        poor: Mauvais
 
 admin:
     title: Administration
@@ -1383,6 +1390,187 @@ tag:
         slate: Ardoise
         gray: Gris
 
+widget:
+    open_project: Ouvrir le projet dans Cairn
+    title: Signaler un problème
+    close: Fermer le panneau
+    intro: Le widget permet aux personnes du projet de signaler un problème depuis le site en recette, sans le quitter. Il ne s'affiche que sur les sites déclarés ici, pour tout le monde ou pour qui le demande ; chacun se connecte avec son propre compte Cairn.
+    alone: Cette page est affichée par le widget, sur un site du projet.
+    site:
+        new: Nouveau site
+        add: Ajouter le site
+        added: 'Site %origin% ajouté.'
+        removed: 'Site %origin% retiré.'
+        remove: Retirer
+        remove_confirm: Le widget quitte ce site, et ceux qui y avaient lié leur compte devront le lier à nouveau.
+        added_on: 'Ajouté le %date%'
+        remove_title: Retirer ce site ?
+        remove_submit: Retirer le site
+        empty: Aucun site pour le moment
+        empty_hint: Déclarez le site de recette du projet pour obtenir la ligne de script à y placer.
+        insecure: Pas de capture (pas de HTTPS)
+        form:
+            address: Adresse du site
+            address_help: 'Le protocole et le domaine, sans chemin : https://recette.exemple.fr'
+    install:
+        title: Installation
+        always:
+            title: Recette
+            help: Tout le monde voit le bouton sur le site.
+        on_demand:
+            title: Production
+            help: Personne ne voit le bouton, et le script ne fait rien, tant qu'on n'a pas ouvert le lien ci-dessous.
+        script:
+            label: 'Dans le <head> de chaque page'
+            help: 'Le plus tôt possible : ce qui s''est passé avant son chargement n''est pas dans le rapport.'
+            copy: Copier la ligne
+        link:
+            label: Lien qui affiche le bouton
+            help: Le site s'en souvient ensuite dans ce navigateur, sur toutes ses pages.
+            hide: 'Pour le masquer de nouveau :'
+            copy: Copier le lien
+            copy_hide: Copier le lien qui masque
+        copied: Copié
+    refused:
+        not_an_origin: 'Ce n''est pas l''adresse d''un site : le protocole et le domaine, sans chemin.'
+        site_taken: 'Le projet a déjà le site %origin%.'
+        unknown_site: '%origin% n''est plus un site du projet.'
+    refused_here:
+        title: Vous ne pouvez pas signaler de problème ici
+        text: Ce compte ne peut pas créer de demande sur ce projet.
+        action: Utiliser un autre compte
+    connect:
+        title: Connectez-vous à Cairn
+        text: Connectez-vous pour signaler un problème sur ce site.
+        action: Se connecter
+        kept: Votre connexion est gardée 30 jours.
+        waiting: "Terminez la connexion dans la fenêtre qui vient de s'ouvrir."
+    link:
+        title: Lier votre compte Cairn à ce site ?
+        text: Vous pourrez signaler des problèmes depuis ce site sans vous reconnecter, pendant 30 jours.
+        confirm: Lier mon compte
+        done: Votre compte est lié
+        done_hint: Vous pouvez fermer cette fenêtre et revenir au site.
+        expired: Ce lien a expiré
+        expired_hint: Fermez cette fenêtre et recommencez depuis le bouton du site.
+    form:
+        tracker: Catégorie
+        title: Titre
+        title_placeholder: Le problème en quelques mots
+        description: Description
+        criticality: Criticité
+        tags: Étiquettes
+        private: Privé
+        private_help: Masqué aux utilisateurs externes.
+        private_tracker: 'Catégorie privée : masquée aux utilisateurs externes.'
+        attach: Joindre un fichier
+        attachments: Capture et fichiers
+        drop_hint: "ou déposez des fichiers n'importe où dans ce panneau"
+        drop: Déposez vos fichiers pour les joindre
+        remove_file: 'Retirer %name%'
+        upload_failed: Ce fichier n'a pas pu être envoyé.
+        submit: Envoyer la demande
+        discard: Abandonner
+        discard_confirm: 'Abandonner cette demande ?'
+        discard_yes: Abandonner
+        discard_no: Continuer
+        visible: Toutes les personnes du projet verront cette demande.
+    capture:
+        title: Capture d'écran
+        take: Capturer l'écran
+        annotate: Annoter la capture
+        tools: Outils
+        tool:
+            pen: Dessiner
+            arrow: Flèche
+            box: Rectangle
+            crop: Recadrer
+        colours: Couleur
+        colour:
+            red: Rouge
+            orange: Orange
+            green: Vert
+            blue: Bleu
+            black: Noir
+            white: Blanc
+        undo: Annuler la dernière modification
+        crop_help: Faites glisser sur la partie à garder.
+        attach: Joindre la capture
+        cancel: Annuler
+        failed: La capture n'a pas pu être prise. Vous pouvez joindre un fichier à la place.
+    report:
+        title: Rapport technique
+        attached: Rapport technique joint
+        row: Rapport
+        open: Voir le rapport
+        view: Voir
+        include: Joindre ce rapport
+        back: Retour au formulaire
+        intro: Relevé par le site pendant la visite et joint à la demande, pour aider à reproduire le problème.
+        page: Page
+        environment: Environnement
+        browser: Navigateur
+        language: Langue
+        viewport: Fenêtre
+        screen: Écran
+        context: Transmis par le site
+        activity: Activité
+        activity_help: 'Dans l''ordre : les pages vues dans cet onglet, ce qui a été cliqué, modifié ou envoyé (jamais ce qui a été saisi), les erreurs de la console et ce que la page a demandé au réseau sans l''obtenir (jamais ce qu''une requête transportait). Les adresses sont sans leurs paramètres.'
+        filter: Afficher ou masquer
+        count:
+            page: '{1}1 page|]1,Inf[ %count% pages'
+            action: '{1}1 action|]1,Inf[ %count% actions'
+            error: '{1}1 erreur|]1,Inf[ %count% erreurs'
+            request: '{1}1 échec|]1,Inf[ %count% échecs'
+        no_answer: sans réponse
+        kind:
+            ajax: Ajax
+            image: image
+            script: script
+            stylesheet: style
+            font: police
+            media: média
+            other: fichier
+        action:
+            click: Clic
+            change: Modification
+            submit: Envoi
+            unnamed: élément
+        event:
+            page: Page
+            error: Erreur
+        zoom: Zoom
+        preferences: Système
+        preference:
+            light: Thème clair
+            dark: Thème sombre
+            pointer_fine: Souris
+            pointer_coarse: Écran tactile
+            pointer_none: Sans pointeur
+            reduced_motion: Animations réduites
+            contrast_more: Contraste élevé
+            contrast_less: Contraste réduit
+            forced_colors: Couleurs forcées
+        none: Rien de relevé.
+        summary: Page, navigateur, écran, pages vues, dernières actions, erreurs, réseau
+    sent:
+        title: 'Demande %key% créée'
+        text: L'équipe du projet est prévenue.
+        report_lost: Le rapport technique n'a pas pu y être joint.
+        open: L'ouvrir dans Cairn
+        another: Signaler un autre problème
+
+connected_site:
+    title: Sites connectés
+    intro: "Vous vous êtes connecté sur ces sites pour y signaler des problèmes. Déconnecter un site ne supprime rien : il vous sera simplement demandé de vous reconnecter la prochaine fois."
+    connected_on: 'Connecté le %date%'
+    expires_on: 'Expire le %date%'
+    disconnect: Déconnecter
+    disconnect_confirm: Ce navigateur devra se reconnecter sur ce site.
+    disconnected: 'Site %site% déconnecté.'
+    empty: Aucun site connecté
+    empty_hint: Un site apparaît ici lorsque vous vous y connectez pour signaler un problème.
+
 release:
     title: Versions
     intro: Une version regroupe les demandes d'une même livraison. Le rattachement se fait depuis la fiche demande, propriété Version, ou pour plusieurs depuis la sélection.
@@ -1433,6 +1621,7 @@ account:
         profile: Profil
         notifications: Notifications
         security: Sécurité
+        sites: Sites connectés
         two_factor: Double authentification
         integrations: Intégrations
         api: API
@@ -1638,6 +1827,10 @@ permission:
         manage:
             label: Gérer les dépôts
             help: Lier les dépôts de code du projet, installer et retirer leurs webhooks, et les délier.
+    widget:
+        manage:
+            label: Gérer le widget
+            help: Déclarer les sites sur lesquels le widget du projet s'affiche, et les retirer, ce qui déconnecte ceux qui s'y étaient connectés.
     release:
         manage:
             label: Gérer les versions

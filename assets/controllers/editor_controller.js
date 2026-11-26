@@ -207,6 +207,11 @@ export default class extends Controller {
      */
     uploadAll(files) {
         const all = Array.from(files ?? []);
+        if (all.length > 0 && '' === this.uploadUrlValue) {
+            this.toast(this.uploadFailedValue);
+
+            return true;
+        }
         const images = all.filter((file) => file.type.startsWith('image/'));
         if (all.length > 0 && 0 === images.length) {
             this.toast(this.imagesOnlyValue);
@@ -240,6 +245,9 @@ export default class extends Controller {
     suggestion(char, url, toItem) {
         let request = null;
         const items = async ({ query }) => {
+            if ('' === url) {
+                return [];
+            }
             request?.abort();
             request = new AbortController();
             try {

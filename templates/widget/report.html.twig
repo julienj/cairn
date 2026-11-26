@@ -1,0 +1,137 @@
+{# The form of the widget, in the `widget-report` Turbo frame of its panel: the category (changing it draws the form again for the other one), the title, the description, the fields the category requires, what the reporter may qualify, then the screenshot and the files, and the report of the site, read in a second view of the same form before it is sent. Discarding, confirmed in place, forgets the draft and draws the form again empty. `files` are those sent so far (uuid => name): the form carries them, the issue claims them. `private` says the category is: its issues are, whatever the form says. #}
+{% set reportRoute = { workspaceKey: project.workspace.key, projectKey: project.key } %}
+<turbo-frame id="widget-report">
+    {{ form_start(form, { attr: {
+        class: 'flex flex-1 flex-col',
+        'data-controller': 'widget-report',
+        'data-widget-report-attachment-url-value': path('app_widget_attachment', reportRoute),
+        'data-widget-report-preview-url-value': path('app_widget_report_preview', reportRoute),
+        'data-widget-report-failed-value': 'widget.form.upload_failed'|trans,
+        'data-action': 'keydown->widget-report#shortcut widget:context-changed@window->widget-report#noted widget-capture:taken->widget-report#captured turbo:submit-end->widget-report#settled input->widget-report#written change->widget-report#written pagehide@window->widget-report#flush dragenter@window->widget-report#dragEnter:capture dragover@window->widget-report#dragOver:capture dragleave@window->widget-report#dragLeave:capture drop@window->widget-report#dropped:capture',
+    } }) }}
+        <div class="flex flex-1 flex-col" data-widget-report-target="main">
+            <div class="flex-1 space-y-4 p-4">
+                {{ form_errors(form) }}
+                {{ form_row(form.tracker, { attr: { 'data-action': 'change->widget-report#refresh' } }) }}
+                {{ form_row(form.title) }}
+                {{ form_row(form.description) }}
+                {% for field in form.fields %}
+                    {{ form_row(field) }}
+                {% endfor %}
+                {% if form.criticality is defined %}
+                    {{ form_row(form.criticality) }}
+                {% endif %}
+                {% if form.tags is defined %}
+                    {# Each tag is a checkbox drawn as the tag itself. #}
+                    <fieldset>
+                        <legend class="float-left w-full text-sm font-medium text-body">{{ form.tags.vars.label|trans }} <span class="font-normal text-faint">{{ 'form.optional'|trans }}</span></legend>
+                        <div class="clear-both flex flex-wrap gap-1.5 pt-1.5">
+                            {% for choice in form.tags %}
+                                <label class="cursor-pointer">
+                                    <input type="checkbox" id="{{ choice.vars.id }}" name="{{ choice.vars.full_name }}" value="{{ choice.vars.value }}" class="peer sr-only" {{ choice.vars.checked ? 'checked' }}>
+                                    <twig:Ui:Tag :colour="choice.vars.attr['data-colour']" class="peer-checked:bg-brand-soft peer-checked:ring-2 peer-checked:ring-brand peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-focus">{{ choice.vars.label }}</twig:Ui:Tag>
+                                </label>
+                                {% do choice.setRendered %}
+                            {% endfor %}
+                        </div>
+                        {% do form.tags.setRendered %}
+                    </fieldset>
+                {% endif %}
+                {% if form.private is defined %}
+                    {{ form_row(form.private) }}
+                {% endif %}
+
+                <section class="space-y-2">
+                    <h2 class="text-sm font-medium text-body">{{ 'widget.form.attachments'|trans }} <span class="font-normal text-faint">{{ 'form.optional'|trans }}</span></h2>
+                    {# One zone for what goes with the issue: the screenshot where the browser allows it, the files chosen, and those dropped anywhere on the panel. #}
+                    <div class="rounded-md border border-dashed border-line-strong bg-subtle px-3 py-4" data-controller="widget-capture" data-widget-capture-failed-value="{{ 'widget.capture.failed'|trans }}" data-action="widget:annotate@window->widget-capture#annotate keydown@window->widget-capture#key">
+                        <div class="flex flex-wrap items-center justify-center gap-2">
+                            <twig:Ui:Button icon="camera" data-action="widget-capture#take" data-widget-capture-target="take" hidden>{{ 'widget.capture.take'|trans }}</twig:Ui:Button>
+                            <twig:Ui:Button icon="paperclip" data-action="widget-report#choose">{{ 'widget.form.attach'|trans }}</twig:Ui:Button>
+                            <input type="file" multiple hidden data-widget-report-target="picker" data-action="change->widget-report#chosen">
+                        </div>
+                        <p class="mt-2 text-center text-xs text-faint">{{ 'widget.form.drop_hint'|trans }}</p>
+                        {# The editor of the screenshot, over the whole frame, which the panel makes a dialog over the page meanwhile. #}
+                        <div class="fixed inset-0 z-50 flex flex-col bg-sunken" role="dialog" aria-modal="true" aria-labelledby="widget-editor-title" data-widget-capture-target="editor" data-widget-over hidden>
+                            <header class="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2 border-b border-line bg-surface px-3 py-2">
+                                <h2 id="widget-editor-title" class="font-semibold text-strong">{{ 'widget.capture.title'|trans }}</h2>
+                                <div class="flex items-center gap-0.5" role="group" aria-label="{{ 'widget.capture.tools'|trans }}">
+                                    {% for tool, icon in { pen: 'pencil', arrow: 'move-up-right', box: 'square', crop: 'crop' } %}
+                                        <twig:Ui:IconButton :icon="icon" :label="('widget.capture.tool.' ~ tool)|trans" class="aria-pressed:bg-sunken aria-pressed:text-strong" aria-pressed="false" data-tool="{{ tool }}" data-widget-capture-target="tool" data-widget-capture-tool-param="{{ tool }}" data-action="widget-capture#choose" />
+                                    {% endfor %}
+                                </div>
+                                <div class="flex items-center gap-2.5" role="group" aria-label="{{ 'widget.capture.colours'|trans }}">
+                                    {# The colours of the drawing, which are those of the image and not of the theme. #}
+                                    {% for colour, value in { red: '#e11d48', orange: '#f97316', green: '#16a34a', blue: '#2563eb', black: '#111827', white: '#ffffff' } %}
+                                        <button type="button" title="{{ ('widget.capture.colour.' ~ colour)|trans }}" aria-label="{{ ('widget.capture.colour.' ~ colour)|trans }}" aria-pressed="false" class="h-5 w-5 rounded-full ring-1 ring-line-strong ring-offset-2 ring-offset-surface aria-pressed:ring-2 aria-pressed:ring-brand focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-line" data-colour="{{ value }}" data-widget-capture-target="colour" data-widget-capture-colour-param="{{ value }}" data-action="widget-capture#pick"></button>
+                                    {% endfor %}
+                                </div>
+                                <twig:Ui:IconButton icon="undo-2" :label="'widget.capture.undo'|trans" data-widget-capture-target="undo" data-action="widget-capture#undo" />
+                                <p class="text-xs text-muted" data-widget-capture-target="cropHelp" hidden>{{ 'widget.capture.crop_help'|trans }}</p>
+                                <twig:Ui:IconButton icon="x" :label="'widget.capture.cancel'|trans" class="ml-auto" data-action="widget-capture#cancel" />
+                            </header>
+                            <div class="flex min-h-0 flex-1 items-center justify-center overflow-hidden p-4">
+                                <canvas class="min-h-0 min-w-0 max-h-full max-w-full cursor-crosshair touch-none rounded shadow-lg" data-widget-capture-target="canvas" data-action="pointerdown->widget-capture#press pointermove->widget-capture#drag pointerup->widget-capture#release pointercancel->widget-capture#release"></canvas>
+                            </div>
+                            <div class="flex shrink-0 items-center justify-end gap-2 border-t border-line bg-surface px-3 py-2">
+                                <twig:Ui:Button variant="ghost" data-action="widget-capture#cancel">{{ 'widget.capture.cancel'|trans }}</twig:Ui:Button>
+                                <twig:Ui:Button variant="primary" icon="paperclip" data-action="widget-capture#keep">{{ 'widget.capture.attach'|trans }}</twig:Ui:Button>
+                            </div>
+                        </div>
+                    </div>
+                    <ul class="space-y-1.5" data-widget-report-target="files">
+                        {% for uuid, name in files %}
+                            {{ include('widget/_file.html.twig', { uuid: uuid, name: name }) }}
+                        {% endfor %}
+                    </ul>
+                    <template data-widget-report-target="template">
+                        {{ include('widget/_file.html.twig', { uuid: '__uuid__', name: '__name__' }) }}
+                    </template>
+                </section>
+            </div>
+            <footer class="sticky bottom-0 flex flex-col gap-2 border-t border-line bg-surface px-4 py-3">
+                {# The report of the site goes with the issue: said in a line with what is sent, apart from the files, and read in the second view. #}
+                <p class="flex items-center gap-1.5 text-xs text-muted" title="{{ 'widget.report.summary'|trans }}" data-widget-report-target="box" hidden>
+                    <twig:ux:icon name="lucide:file-text" class="h-3.5 w-3.5 shrink-0 text-faint" />
+                    <span>{{ 'widget.report.attached'|trans }}</span>
+                    <span aria-hidden="true">·</span>
+                    <button type="button" class="cursor-pointer rounded font-medium text-brand hover:underline" data-action="widget-report#view">{{ 'widget.report.view'|trans }}</button>
+                </p>
+                {% set reportVisibility = private ? 'widget.form.private_tracker'|trans : (form.private is defined ? '' : 'widget.form.visible'|trans) %}
+                {% if reportVisibility %}
+                    <p class="text-xs text-muted">{{ reportVisibility }}</p>
+                {% endif %}
+                <div class="flex items-center justify-between gap-3" data-widget-report-target="actions">
+                    <twig:Ui:Button size="lg" data-action="widget-report#ask" data-widget-report-target="discard">{{ 'widget.form.discard'|trans }}</twig:Ui:Button>
+                    <twig:Ui:Button type="submit" variant="primary" size="lg" data-widget-report-target="submit">{{ 'widget.form.submit'|trans }}</twig:Ui:Button>
+                </div>
+                <div class="flex items-center justify-between gap-3" role="alertdialog" aria-labelledby="widget-discard-question" data-widget-report-target="confirm" data-widget-over data-action="keydown.esc@window->widget-report#dismiss" hidden>
+                    <span id="widget-discard-question" class="min-w-0 text-sm text-strong">{{ 'widget.form.discard_confirm'|trans }}</span>
+                    <span class="flex shrink-0 items-center gap-1">
+                        <twig:Ui:Button variant="ghost" size="lg" data-action="widget-report#dismiss">{{ 'widget.form.discard_no'|trans }}</twig:Ui:Button>
+                        <twig:Ui:Button variant="danger" size="lg" href="{{ path('app_widget_report', reportRoute) }}" data-action="widget-report#clear">{{ 'widget.form.discard_yes'|trans }}</twig:Ui:Button>
+                    </span>
+                </div>
+            </footer>
+        </div>
+
+        {# A page under the form: the way back is where it is looked for, an arrow before its title, which stays in view. Escape goes back too. #}
+        <div class="flex flex-1 flex-col" data-widget-report-target="detail" data-widget-over data-action="keydown.esc@window->widget-report#back" hidden>
+            <header class="sticky top-0 z-10 flex items-center gap-1 border-b border-line bg-surface py-2 pl-2 pr-4">
+                <twig:Ui:IconButton icon="arrow-left" :label="'widget.report.back'|trans" data-action="widget-report#back" />
+                <h2 class="font-semibold text-strong">{{ 'widget.report.title'|trans }}</h2>
+            </header>
+            <div class="flex-1 p-4" data-widget-report-target="body"></div>
+            <footer class="sticky bottom-0 border-t border-line bg-surface px-4 py-3">
+                {{ form_widget(form.includeReport) }}
+            </footer>
+        </div>
+        {# Over the whole panel while files are dragged over it: dropped anywhere, they are attached. #}
+        <div class="pointer-events-none fixed inset-2 z-40 flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-brand bg-surface/85 text-brand backdrop-blur-sm" data-widget-report-target="drop" hidden>
+            <span class="grid h-14 w-14 place-items-center rounded-full bg-brand-soft"><twig:ux:icon name="lucide:paperclip" class="h-6 w-6" /></span>
+            <p class="font-medium text-strong">{{ 'widget.form.drop'|trans }}</p>
+        </div>
+        {# What a change of category submits the form with. After the button that sends the issue: the first one of a form is the one Enter presses. #}
+        <button type="submit" formaction="{{ path('app_widget_report_redraw', reportRoute) }}" formnovalidate hidden data-widget-report-target="refresher"></button>
+    {{ form_end(form) }}
+</turbo-frame>

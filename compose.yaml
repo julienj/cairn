@@ -40,6 +40,8 @@ services:
     ports:
       - "${HTTP_PORT:-8000}:80"
       - "9443:9443"
+      # The demonstration site of the widget (below): the development data declare this address.
+      - "8001:8081"
     environment:
       <<: *php-environment
       # One more site for the Caddy of FrankenPHP (docker/Caddyfile): Authelia over HTTPS, which
@@ -50,6 +52,29 @@ services:
         https://authelia.localhost:9443 {
             tls internal
             reverse_proxy authelia:9091
+        }
+        # And a site being reviewed, to try the widget on (docker/demo-site): static pages on a
+        # port of their own, at http://staging.localhost:8001, another site than Cairn for the
+        # browser. One request fails on purpose, one image is missing, one page has a strict Content-Security-Policy.
+        http://:8081 {
+            root * /app/docker/demo-site
+            header /csp.html Content-Security-Policy "default-src 'self'; script-src 'self' http://localhost:${HTTP_PORT:-8000}; frame-src http://localhost:${HTTP_PORT:-8000}; connect-src 'self' http://localhost:${HTTP_PORT:-8000}"
+            handle /api/* {
+                respond 500
+            }
+            # Its images are missing: a file that does not load (the other addresses are its pages).
+            handle /images/* {
+                respond 404
+            }
+            # Where its pages find Cairn (docker/demo-site/loader.js).
+            handle /cairn.js {
+                header Content-Type text/javascript
+                respond "window.cairnPort = ${HTTP_PORT:-8000};"
+            }
+            handle {
+                try_files {path} /index.html
+                file_server
+            }
         }
       # The code is bind-mounted, so the workers of FrankenPHP (docker/Caddyfile) start again when
       # what they loaded changes: the same paths as "castor workers:watch". Templates are in the
@@ -93,6 +118,15 @@ services:
     command: npx vite --host 0.0.0.0 --port ${VITE_PORT:-5173} --strictPort
     ports:
       - "${VITE_PORT:-5173}:${VITE_PORT:-5173}"
+    restart: unless-stopped
+
+  # The script of the widget (assets/widget/), built again into public/widget.js when it changes:
+  # the sites load one classic script, which the dev server of "vite" does not serve.
+  widget:
+    <<: *php
+    healthcheck:
+      disable: true
+    command: npm run widget
     restart: unless-stopped
 
   # Live reload of the component catalogue (/storia).

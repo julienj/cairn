@@ -231,6 +231,51 @@ Linking a repository in Cairn is then all there is to do: nothing is installed i
 
 In return, Cairn holds no access token to GitLab. Prefer a secret per repository when people outside your team may configure projects, or when GitLab hosts repositories whose activity must not leave it.
 
+### Widget (optional)
+
+The widget lets the people of a project report a problem from the site being reviewed, without leaving it: a button, a panel with a short form, a screenshot, and a technical report (page, browser and system preferences, console errors, failed requests, Ajax or files, pages seen, last actions). Everyone signs in with their own Cairn account, password or single sign-on, and creates the issue with their own rights. There is nothing to enable on the instance.
+
+1. In the project, open **Configuration → Widget** and declare the site by its address (`https://staging.example.com`).
+2. Copy the line of script shown there into the `<head>` of every page of the site, as early as possible:
+
+   ```html
+   <script src="https://cairn.example.com/widget.js" data-project="MD-SPT" data-display="always" async></script>
+   ```
+
+   `data-display="always"` shows the button to everybody: it is for a site being reviewed. Without it (see below) the button is shown on demand.
+
+3. Optionally, say what the site knows of itself, in names and texts of your choosing: they go into the technical report of each issue. Push objects into `window.Cairn`, before or after the widget is loaded, as many times as you want; a later name replaces an earlier one, and `undefined` takes it away. Values are shown as text, `null` included: an object inside is laid out under dotted names (`user.id`, `user.email`), a list is written on one line, a function is left out. From the layout of a Symfony site:
+
+   ```twig
+   <script nonce="{{ csp_nonce('script') }}">
+       (window.Cairn ||= []).push({{ {
+           version: app_version,
+           environment: app.environment,
+           user: app.user ? app.user.userIdentifier : null,
+       }|json_encode|raw }});
+   </script>
+   ```
+
+   And from the JavaScript of the page, when something changes: `window.Cairn.push({ cart: '3 items' })`. The `nonce` is only needed under a Content-Security-Policy (`csp_nonce()` comes with NelmioSecurityBundle). What is pushed is shown to whoever sees the issue, external users included: never push a secret.
+
+**In production**, declare the site the same way and leave `data-display` out:
+
+```html
+<script src="https://cairn.example.com/widget.js" data-project="MD-SPT" async></script>
+```
+
+Nobody sees the button, and the script does nothing (it listens to nothing, stores nothing, asks Cairn nothing), until someone opens a page of the site with `?cairn=1` at the end of its address. The site then remembers them in that browser, and the widget follows them from page to page as on a site being reviewed; `?cairn=0` hides it again. Either way the parameter then leaves the address, so a link copied from there asks nothing of whoever receives it. The parameter is a courtesy to the visitors, not a secret: whoever adds it gets the button, then the sign-in page of Cairn, and nothing else.
+
+Good to know:
+
+- **The button can be moved** by dragging it anywhere along the edge of the window, when it hides what is being reviewed: it catches on the corners and on the middle of each edge, and its panel opens beside it. The site remembers the place, per browser.
+- **The button only shows on the sites declared on the project.** On any other site the script shows nothing, whatever its tag says.
+- **The screenshot needs HTTPS** on the site, as browsers require. Without it the widget works and offers to attach a file instead.
+- **A Content-Security-Policy on the site** must allow Cairn in `script-src`, `frame-src` and `connect-src`. A `Permissions-Policy` that names `display-capture` must allow Cairn there too, or the screenshot is refused.
+- **Behind a proxy**, let the answers under `/widget/` keep their own `Content-Security-Policy` (it names the sites allowed to frame the widget) and do not add an `X-Frame-Options` to them; pass the `Authorization` header through.
+- **What the script notes** stays in the browser, in the storage the site has for the tab, until someone reports a problem, and is shown to them before it is sent; it is forgotten with the tab, the pages seen after an hour and the rest after ten minutes on another page: the errors of the page, its requests that failed, Ajax or files (kind, method, address, status: never what they carried, and not those the page cancelled itself), the pages seen in the tab, all addresses without their parameters but with their path, the last things done on them (what was clicked, which field was changed, which form was sent: the name the page shows, never what was typed nor what was chosen in a list or a group of options; a zone marked `data-cairn-private` gives no name either), and the zoom and preferences of the system (theme, pointer, reduced motion, contrast).
+- Someone who linked their account on a site stays linked for 30 days in that browser, and finds the sites they are linked on in their account (**Connected sites**), where each can be disconnected. Removing the site from the project, deactivating the account, changing or resetting its password, or resetting its second factor ends it at once.
+
 ### Real time (optional)
 
 With a [Mercure](https://mercure.rocks) hub, lists and kanbans update when someone else changes an issue, without reloading the page. With the Docker image, it is already on thanks to the hub built into FrankenPHP: there is nothing to do.
@@ -334,12 +379,14 @@ To let another account sign in through Authelia: switch it to single sign-on in 
 | `php` | the application (FrankenPHP), with the Mercure hub | <http://localhost:8000> |
 | `messenger` | the worker: emails, real time, scheduled tasks | |
 | `vite` | the assets, with hot reload | port 5173 |
+| `widget` | the script of the widget, built again when it changes | <http://localhost:8000/widget.js> |
 | `storia` | the component catalogue | <http://localhost:8000/storia> |
 | `database` | PostgreSQL 18 | `castor db:psql` |
 | `mailer` | Mailpit, which catches every email | <http://localhost:8025> |
 | `authelia` | the identity provider | <https://authelia.localhost:9443> |
+| (in `php`) | a site being reviewed, to try the widget on | <http://staging.localhost:8001> |
 
-A port already taken? Change it with `HTTP_PORT`, `VITE_PORT` or `MAILPIT_PORT` before `castor start`. Your other local settings go in `.env.local`.
+A port already taken? Change it with `HTTP_PORT`, `VITE_PORT` or `MAILPIT_PORT` before `castor start`. The port of the widget's site, 8001, is the one the development data declare: it does not change. Your other local settings go in `.env.local`.
 
 ### Everyday commands
 

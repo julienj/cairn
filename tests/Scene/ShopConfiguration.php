@@ -81,6 +81,7 @@ final class ShopConfiguration
             Permission::TagManage->value => ['project_manager'],
             Permission::AutomationManage->value => ['project_manager'],
             Permission::RepositoryManage->value => ['project_manager'],
+            Permission::WidgetManage->value => ['project_manager'],
             Permission::ProjectManageMembers->value => ['project_manager'],
             Permission::ReleaseManage->value => ['project_manager'],
             Permission::BudgetManage->value => ['project_manager'],

@@ -12,6 +12,7 @@ use App\Entity\Comment;
 use App\Entity\Issue;
 use App\Entity\IssueFieldValue;
 use App\Entity\IssueLink;
+use App\Entity\IssueReport;
 use App\Entity\IssueSubscription;
 use App\Entity\IssueTag;
 use App\Entity\IssueTeamSubscription;
@@ -47,6 +48,7 @@ final class IssueEraser
         [IssueSubscription::class, 'issue'],
         [IssueTeamSubscription::class, 'issue'],
         [IssueFieldValue::class, 'issue'],
+        [IssueReport::class, 'issue'],
         [IssueTag::class, 'issue'],
         [CodeReference::class, 'issue'],
         [BudgetLine::class, 'issue'],

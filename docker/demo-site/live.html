@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>In production · Atelier Brume</title>
+    <link rel="stylesheet" href="/site.css">
+    <script src="/cairn.js"></script>
+    <script src="/loader.js"></script>
+</head>
+<body>
+    <div class="banner">Production · this page loads the widget without data-display="always"</div>
+    <header>
+        <strong>Atelier Brume</strong>
+        <nav>
+            <a href="/">Pendant lamps</a>
+            <a href="/halo.html">Halo</a>
+            <a href="/csp.html">A strict page</a>
+            <a href="/live.html" aria-current="page">In production</a>
+        </nav>
+    </header>
+    <main>
+        <h1>In production</h1>
+        <p class="lead">The widget is loaded as a site in production loads it: nobody sees it, and it does nothing, until someone asks for it.</p>
+        <div class="tools">
+            <p>The site remembers who asked, in this browser, until told otherwise.</p>
+            <a href="/live.html?cairn=1">Show the widget (?cairn=1)</a>
+            <a href="/live.html?cairn=0">Hide it again (?cairn=0)</a>
+        </div>
+    </main>
+</body>
+</html>

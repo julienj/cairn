@@ -1,0 +1,18 @@
+{# What the `widget-report` frame shows once the issue was created: its key, a word when the report of the site could not be kept with it (`reportLost`), the way back to an empty form, which is what a review goes on with, and the way to the issue in Cairn (another tab: the site stays where it is). #}
+{% set sentRoute = { workspaceKey: project.workspace.key, projectKey: project.key } %}
+<turbo-frame id="widget-report">
+    <div class="flex flex-1 flex-col items-center justify-center gap-4 px-8 py-10 text-center">
+        <span class="grid h-14 w-14 place-items-center rounded-full bg-emerald-soft text-emerald">
+            <twig:ux:icon name="lucide:check" class="h-6 w-6" />
+        </span>
+        <h2 class="text-lg font-semibold text-strong">{{ 'widget.sent.title'|trans({ '%key%': project.issuePrefix ~ '-' ~ number }) }}</h2>
+        <p class="text-muted">{{ 'widget.sent.text'|trans }}</p>
+        {% if reportLost %}
+            <p class="text-xs text-muted" role="status">{{ 'widget.sent.report_lost'|trans }}</p>
+        {% endif %}
+        <div class="flex flex-col items-stretch gap-2 pt-2">
+            <twig:Ui:Button variant="primary" size="lg" href="{{ path('app_widget_report', sentRoute) }}">{{ 'widget.sent.another'|trans }}</twig:Ui:Button>
+            <twig:Ui:Button size="lg" icon="external-link" href="{{ url('app_issue_show', sentRoute|merge({ number: number })) }}" target="_blank" rel="noopener">{{ 'widget.sent.open'|trans }}</twig:Ui:Button>
+        </div>
+    </div>
+</turbo-frame>

@@ -1,0 +1,50 @@
+{# The frame of the widget, as the site shows it in its panel: the band (what it is, the key of the project, a link to it in another tab, and the way to close the panel where the panel covers its button, which closes it otherwise), then, once the shape of the form shown while waiting has gone, either the invitation to link an account or the `widget-report` Turbo frame, which holds the form once the frame has its token. It is drawn for one `site` of the project, the only one that may show it, and holds no data of the project: nobody is known yet. When the form is refused to the account that is linked (no right to create, no category for it), the frame says so and offers to link another one. #}
+{% extends 'layout/widget.html.twig' %}
+
+{% block page_title %}{{ 'widget.title'|trans }}{% endblock %}
+
+{% block content %}
+    {% set frameRoute = { workspaceKey: project.workspace.key, projectKey: project.key } %}
+    <div class="flex h-screen flex-col bg-surface"
+         data-controller="widget-frame"
+         data-widget-frame-project-value="{{ project.issuePrefix }}"
+         data-widget-frame-site-value="{{ site.origin }}"
+         data-widget-frame-token-url-value="{{ path('app_widget_token', frameRoute) }}"
+         data-widget-frame-unlink-url-value="{{ path('app_widget_unlink', frameRoute) }}"
+         data-widget-frame-report-url-value="{{ path('app_widget_report', frameRoute) }}"
+         data-widget-frame-connect-url-value="{{ path('app_widget_connect', frameRoute) }}"
+         data-action="message@window->widget-frame#received keydown.esc@window->widget-frame#escape:capture turbo:frame-load->widget-frame#loaded turbo:before-fetch-request@document->widget-frame#sign turbo:before-fetch-response@document->widget-frame#answered widget:collapse@window->widget-frame#collapse widget:expand@window->widget-frame#expand widget:widen@window->widget-frame#widen widget:narrow@window->widget-frame#narrow widget:draft@window->widget-frame#drafted widget:context@window->widget-frame#provide dragover@window->widget-frame#refuse drop@window->widget-frame#refuse">
+        <header class="flex h-12 shrink-0 items-center gap-2 border-b border-line pl-4 pr-2">
+            <twig:Ui:Logo size="sm" />
+            <h1 class="font-semibold text-strong">{{ 'widget.title'|trans }}</h1>
+            <a href="{{ path('app_project_issues', frameRoute) }}" target="_blank" rel="noopener" title="{{ 'widget.open_project'|trans }}" class="rounded bg-sunken px-1.5 py-0.5 font-mono text-xs text-body hover:underline">{{ project.issuePrefix }}</a>
+            <twig:Ui:IconButton icon="x" :label="'widget.close'|trans" class="ml-auto" data-action="widget-frame#close" data-widget-frame-target="close" hidden />
+        </header>
+        <div class="min-h-0 flex-1 overflow-y-auto" data-widget-scroller>
+            {# Until the frame knows what to show, and again in the `widget-report` frame while the form is on its way: never an empty panel. #}
+            <section data-widget-frame-target="loading">
+                {{ include('widget/_loading.html.twig') }}
+            </section>
+            <section class="flex min-h-full flex-col items-center justify-center gap-4 px-8 py-10 text-center" data-widget-frame-target="connect" hidden>
+                <span class="grid h-14 w-14 place-items-center rounded-full bg-brand-soft text-brand">
+                    <twig:ux:icon name="lucide:user" class="h-6 w-6" />
+                </span>
+                <h2 class="text-lg font-semibold text-strong">{{ 'widget.connect.title'|trans }}</h2>
+                <p class="text-muted">{{ 'widget.connect.text'|trans }}</p>
+                {# Signing in happens in a window of Cairn: once it is open, the frame says where it goes on. #}
+                <twig:Ui:Button variant="primary" size="lg" data-action="widget-frame#link" data-widget-frame-target="link" disabled>{{ 'widget.connect.action'|trans }}</twig:Ui:Button>
+                <p class="text-xs text-muted" data-widget-frame-target="kept">{{ 'widget.connect.kept'|trans }}</p>
+                <p class="text-xs text-muted" role="status" data-widget-frame-target="waiting" hidden>{{ 'widget.connect.waiting'|trans }}</p>
+            </section>
+            <section class="flex min-h-full flex-col items-center justify-center gap-2 px-8 py-10 text-center text-muted" data-widget-frame-target="alone" hidden>
+                <p>{{ 'widget.alone'|trans }}</p>
+            </section>
+            <section class="flex min-h-full flex-col items-center justify-center gap-4 px-8 py-10 text-center" data-widget-frame-target="refused" hidden>
+                <h2 class="text-lg font-semibold text-strong">{{ 'widget.refused_here.title'|trans }}</h2>
+                <p class="text-muted">{{ 'widget.refused_here.text'|trans }}</p>
+                <twig:Ui:Button data-action="widget-frame#unlink">{{ 'widget.refused_here.action'|trans }}</twig:Ui:Button>
+            </section>
+            <turbo-frame id="widget-report" class="flex min-h-full flex-col" data-widget-frame-target="frame" hidden></turbo-frame>
+        </div>
+    </div>
+{% endblock %}

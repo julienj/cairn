@@ -334,6 +334,18 @@
                     </div>
                 {% endif %}
             {% endif %}
+            {# What the widget noted on the site the issue was reported from, when it was: a dialog of the page, for whoever sees the issue. #}
+            {% if this.hasReport %}
+                <div class="{{ propertiesRowClasses }}">
+                    <div class="{{ propertiesLabelClasses }}">{{ 'widget.report.row'|trans }}</div>
+                    <div class="min-w-0 flex-1">
+                        <a href="{{ path('app_issue_report', { workspaceKey: issue.project.workspace.key, projectKey: issue.project.key, number: issue.number }) }}" data-turbo-frame="modal" class="{{ propertiesValueClasses }} text-brand">
+                            <twig:ux:icon name="lucide:monitor" class="h-3.5 w-3.5 shrink-0" />
+                            <span class="truncate">{{ 'widget.report.open'|trans }}</span>
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
         </div>
     </section>
 </div>
