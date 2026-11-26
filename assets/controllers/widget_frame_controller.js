@@ -75,6 +75,8 @@ export default class extends Controller {
                 this.show();
             }
             window.dispatchEvent(new CustomEvent('widget:context-changed', { detail: { report: this.report } }));
+        } else if ('cairn:focus' === event.data?.type) {
+            this.focus();
         } else if ('cairn:layout' === event.data?.type) {
             // the button of the site closes the panel, unless the panel covers it
             this.closeTarget.hidden = true !== event.data.covered;
@@ -169,6 +171,9 @@ export default class extends Controller {
         this.linkTarget.disabled = true;
         this.pair = await this.post({});
         this.linkTarget.disabled = null === this.pair;
+        if (this.awaited) {
+            this.focus();
+        }
     }
 
     link() {
@@ -267,6 +272,42 @@ export default class extends Controller {
     refuse(event) {
         if (Array.from(event.dataTransfer?.types ?? []).includes('Files')) {
             event.preventDefault();
+        }
+    }
+
+    // --- the keyboard
+
+    /*
+     * Where the writing starts: the title of the form, else what the frame
+     * offers to do (signing in, reporting another problem). Asked while
+     * nothing is there to take it, it is given once the form has come.
+     */
+    focus() {
+        const target = this.connectTarget.hidden
+            ? this.frameTarget.querySelector('input[name$="[title]"]') ?? this.frameTarget.querySelector('a[href], button:not([hidden], [disabled])')
+            : this.linkTarget;
+        this.awaited = null === target || target.disabled;
+        if (!this.awaited) {
+            target.focus({ preventScroll: true });
+        }
+    }
+
+    /* What the frame just drew takes the keyboard when it was awaited, or when what held it was replaced. */
+    loaded() {
+        if (this.awaited || (document.hasFocus() && document.activeElement === document.body)) {
+            this.focus();
+        }
+    }
+
+    /*
+     * Escape closes the panel, unless something of the form is open over
+     * it and takes the key for itself. Asked before the others act on the
+     * key (capture): afterwards what was open no longer is.
+     */
+    escape() {
+        const open = '[data-widget-report-target="detail"]:not([hidden]), [data-widget-report-target="confirm"]:not([hidden]), [data-widget-capture-target="editor"]:not([hidden])';
+        if (null === this.element.querySelector(open)) {
+            this.close();
         }
     }
 

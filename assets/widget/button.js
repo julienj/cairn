@@ -38,7 +38,7 @@ const CLOSE = '<svg class="close" width="18" height="18" viewBox="0 0 24 24" fil
  * the disc: the label opens towards the inside of the window from there,
  * so the disc itself never moves under the pointer.
  */
-export function createButton(label, { onClick, onMove, onAim }) {
+export function createButton(label, { onClick, onMove, onAim, onEscape }) {
     const dock = document.createElement('div');
     dock.className = 'dock';
     const button = document.createElement('button');
@@ -162,6 +162,11 @@ export function createButton(label, { onClick, onMove, onAim }) {
     // aimed at, by the pointer or the keyboard, before it is pressed
     button.addEventListener('pointerenter', onAim);
     button.addEventListener('focus', onAim);
+    button.addEventListener('keydown', (event) => {
+        if ('Escape' === event.key) {
+            onEscape();
+        }
+    });
     button.addEventListener('click', (event) => {
         if (moved) {
             // the click that ends a move opens nothing
@@ -178,6 +183,7 @@ export function createButton(label, { onClick, onMove, onAim }) {
         /* Where the button stands: its edge, and the centre of its disc in the window. */
         position: () => ({ edge: place.edge, ...pointOf(place) }),
         open: (open) => button.setAttribute('aria-expanded', open ? 'true' : 'false'),
+        focus: () => button.focus({ preventScroll: true }),
     };
 }
 
