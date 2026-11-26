@@ -1413,9 +1413,14 @@ widget:
         viewport: Window
         screen: Screen
         context: Said by the site
-        errors: '{0}Console|{1}Console · 1 error|]1,Inf[ Console · %count% errors'
-        network: '{0}Network|{1}Network · 1 failure|]1,Inf[ Network · %count% failures'
-        network_help: 'What the page asked of the network and did not get, in order: its Ajax calls (fetch, XHR, without what they carried) and its files, with the code of the answer when the browser gives it.'
+        activity: Activity
+        activity_help: 'In order: the pages seen in this tab, what was clicked, changed or sent (never what was typed), the errors of the console and what the page asked of the network and did not get (never what a request carried). Addresses are without their parameters.'
+        filter: Show or hide
+        count:
+            page: '{1}1 page|]1,Inf[ %count% pages'
+            action: '{1}1 action|]1,Inf[ %count% actions'
+            error: '{1}1 error|]1,Inf[ %count% errors'
+            request: '{1}1 failure|]1,Inf[ %count% failures'
         no_answer: no answer
         kind:
             ajax: Ajax
@@ -1425,29 +1430,14 @@ widget:
             font: font
             media: media
             other: file
-        performance: Performance
-        performance_help: As the browser measured it while this page loaded, with how Google rates it.
-        measure:
-            ttfb:
-                label: Server answer
-                help: Time to first byte (TTFB)
-            domContentLoaded:
-                label: Page ready
-                help: Its HTML read
-            lcp:
-                label: Main content
-                help: Largest content drawn (LCP)
-            load:
-                label: Page loaded
-                help: With all its files
-            inp:
-                label: Reactivity
-                help: Slowest answer to an interaction (INP)
-            cls:
-                label: Stability
-                help: How much the page moved (CLS)
-        pages: '{0}Pages seen|{1}Pages seen · 1|]1,Inf[ Pages seen · %count%'
-        pages_help: In this tab, without the parameters of the addresses.
+        action:
+            click: Click
+            change: Change
+            submit: Send
+            unnamed: element
+        event:
+            page: Page
+            error: Error
         zoom: Zoom
         preferences: System
         preference:
@@ -1461,7 +1451,7 @@ widget:
             contrast_less: Less contrast
             forced_colors: Forced colours
         none: Nothing noted.
-        summary: Page, browser, screen, errors, network, performance, pages seen
+        summary: Page, browser, screen, pages seen, last actions, errors, network
     sent:
         title: 'Issue %key% created'
         text: The team of the project is told.

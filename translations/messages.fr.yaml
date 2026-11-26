@@ -1413,9 +1413,14 @@ widget:
         viewport: Fenêtre
         screen: Écran
         context: Transmis par le site
-        errors: '{0}Console|{1}Console · 1 erreur|]1,Inf[ Console · %count% erreurs'
-        network: '{0}Réseau|{1}Réseau · 1 échec|]1,Inf[ Réseau · %count% échecs'
-        network_help: 'Ce que la page a demandé au réseau sans l''obtenir, dans l''ordre : ses appels Ajax (fetch, XHR, sans leur contenu) et ses fichiers, avec le code de la réponse quand le navigateur le donne.'
+        activity: Activité
+        activity_help: 'Dans l''ordre : les pages vues dans cet onglet, ce qui a été cliqué, modifié ou envoyé (jamais ce qui a été saisi), les erreurs de la console et ce que la page a demandé au réseau sans l''obtenir (jamais ce qu''une requête transportait). Les adresses sont sans leurs paramètres.'
+        filter: Afficher ou masquer
+        count:
+            page: '{1}1 page|]1,Inf[ %count% pages'
+            action: '{1}1 action|]1,Inf[ %count% actions'
+            error: '{1}1 erreur|]1,Inf[ %count% erreurs'
+            request: '{1}1 échec|]1,Inf[ %count% échecs'
         no_answer: sans réponse
         kind:
             ajax: Ajax
@@ -1425,29 +1430,14 @@ widget:
             font: police
             media: média
             other: fichier
-        performance: Performances
-        performance_help: Telles que le navigateur les a mesurées au chargement de cette page, avec l'appréciation de Google.
-        measure:
-            ttfb:
-                label: Réponse du serveur
-                help: Premier octet reçu (TTFB)
-            domContentLoaded:
-                label: Page prête
-                help: Son HTML lu
-            lcp:
-                label: Contenu principal
-                help: Plus grand élément affiché (LCP)
-            load:
-                label: Page chargée
-                help: Avec tous ses fichiers
-            inp:
-                label: Réactivité
-                help: Réponse la plus lente à une action (INP)
-            cls:
-                label: Stabilité
-                help: Mouvements de la page (CLS)
-        pages: '{0}Pages vues|{1}Pages vues · 1|]1,Inf[ Pages vues · %count%'
-        pages_help: Dans cet onglet, sans les paramètres des adresses.
+        action:
+            click: Clic
+            change: Modification
+            submit: Envoi
+            unnamed: élément
+        event:
+            page: Page
+            error: Erreur
         zoom: Zoom
         preferences: Système
         preference:
@@ -1461,7 +1451,7 @@ widget:
             contrast_less: Contraste réduit
             forced_colors: Couleurs forcées
         none: Rien de relevé.
-        summary: Page, navigateur, écran, erreurs, réseau, performances, pages vues
+        summary: Page, navigateur, écran, pages vues, dernières actions, erreurs, réseau
     sent:
         title: 'Demande %key% créée'
         text: L'équipe du projet est prévenue.

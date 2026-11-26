@@ -1,4 +1,4 @@
-{# What the widget noted on the site a problem is reported from, as the issue keeps it (`report`, a Widget/TechnicalReport, or null): the page, the environment, what the site says of itself, the errors of the console, what failed on the network (Ajax requests and files, in their order), how the page performed, the pages seen. Shown to the reporter before sending, then on the page of the issue. Everything in it is what a site said: text, never markup nor a link. #}
+{# What the widget noted on the site a problem is reported from, as the issue keeps it (`report`, a Widget/TechnicalReport, or null): the page, the environment, what the site says of itself, what happened in its order (the pages seen, what the reporter did, the errors of the console, what failed on the network). Shown to the reporter before sending, then on the page of the issue. Everything in it is what a site said: text, never markup nor a link. #}
 {% if report is null %}
     <p class="text-sm text-muted">{{ 'widget.report.none'|trans }}</p>
 {% else %}
@@ -68,71 +68,52 @@
             </section>
         {% endif %}
 
-        <section class="space-y-1">
-            <h3 class="text-xs font-semibold text-strong">{{ 'widget.report.errors'|trans({ '%count%': report.errors|length }) }}</h3>
-            {% if report.errors is empty %}
+        {# What happened, in its order: the pages seen, what the reporter did, the errors of the console and what failed on the network, read together from the lists of the report (`timeline`); what has no moment comes last. #}
+        {% set reportTimeline = report.timeline %}
+        {# Each kind with its count is a filter: pressed while its lines show, struck through once they are hidden. #}
+        {% set activityKinds = { page: report.pages|length, action: report.actions|length, error: report.errors|length, request: report.network|length } %}
+        <section class="space-y-1" data-controller="timeline">
+            <h3 class="flex flex-wrap items-baseline gap-x-1.5 text-xs font-semibold text-strong">
+                {{ 'widget.report.activity'|trans }}
+                {% for activityKind, activityCount in activityKinds|filter(count => count > 0) %}
+                    <span class="font-normal text-muted" aria-hidden="true">·</span>
+                    <button type="button" class="cursor-pointer rounded-sm font-normal text-muted hover:text-strong aria-[pressed=false]:line-through aria-[pressed=false]:opacity-60" aria-pressed="true" title="{{ 'widget.report.filter'|trans }}" data-kind="{{ activityKind }}" data-action="timeline#toggle">{{ ('widget.report.count.' ~ activityKind)|trans({ '%count%': activityCount }) }}</button>
+                {% endfor %}
+            </h3>
+            <p class="text-xs text-muted">{{ 'widget.report.activity_help'|trans }}</p>
+            {% if reportTimeline is empty %}
                 <p class="text-xs text-muted">{{ 'widget.report.none'|trans }}</p>
             {% else %}
-                <ul class="space-y-1.5 rounded-md border border-red-line bg-red-soft px-2.5 py-2 font-mono text-xs text-red">
-                    {% for error in report.errors %}
-                        <li class="break-words">
-                            {{ error.message }}
-                            {% if error.source or error.at %}<div class="opacity-80">{{ error.source }}{% if error.source and error.at %} · {% endif %}{% if error.at %}{{ error.at|date('H:i:s') }}{% endif %}</div>{% endif %}
+                <ol class="space-y-1.5 text-xs">
+                    {% for event in reportTimeline %}
+                        {% set eventEntry = event.entry %}
+                        <li class="flex items-start gap-2" data-timeline-target="line" data-kind="{{ event.type }}">
+                            <span class="w-14 shrink-0 font-mono text-muted">{{ event.at ? event.at|date('H:i:s') : '' }}</span>
+                            {% if event.type == 'action' %}
+                                <twig:Ui:Badge tone="indigo" size="sm" class="shrink-0">{{ ('widget.report.action.' ~ eventEntry.kind)|trans }}</twig:Ui:Badge>
+                                <span class="min-w-0 break-words">
+                                    <span class="text-strong">{% if eventEntry.name %}{{ eventEntry.name }}{% else %}{{ eventEntry.role ?? 'widget.report.action.unnamed'|trans }}{% endif %}</span>
+                                    {% if eventEntry.name and eventEntry.role %}<span class="text-muted">· {{ eventEntry.role }}</span>{% endif %}
+                                    {% if eventEntry.count > 1 %}<span class="text-muted">· ×{{ eventEntry.count }}</span>{% endif %}
+                                    {% if eventEntry.selector %}<span class="block break-all font-mono text-muted">{{ eventEntry.selector }}</span>{% endif %}
+                                </span>
+                            {% elseif event.type == 'page' %}
+                                <twig:Ui:Badge size="sm" class="shrink-0">{{ 'widget.report.event.page'|trans }}</twig:Ui:Badge>
+                                <span class="min-w-0 break-all font-mono text-body">{{ eventEntry.url }}</span>
+                            {% elseif event.type == 'request' %}
+                                <twig:Ui:Badge size="sm" class="shrink-0">{{ ('widget.report.kind.' ~ eventEntry.kind)|trans }}</twig:Ui:Badge>
+                                {% if eventEntry.status is not null %}<twig:Ui:Badge tone="red" size="sm" class="shrink-0">{{ eventEntry.status ?: 'widget.report.no_answer'|trans }}</twig:Ui:Badge>{% endif %}
+                                <span class="min-w-0 break-all font-mono text-strong">{% if eventEntry.method %}{{ eventEntry.method }} {% endif %}{{ eventEntry.url }}</span>
+                            {% else %}
+                                <twig:Ui:Badge tone="red" size="sm" class="shrink-0">{{ 'widget.report.event.error'|trans }}</twig:Ui:Badge>
+                                <span class="min-w-0 break-words font-mono text-red">
+                                    {{ eventEntry.message }}
+                                    {% if eventEntry.source %}<span class="block break-all opacity-80">{{ eventEntry.source }}</span>{% endif %}
+                                </span>
+                            {% endif %}
                         </li>
                     {% endfor %}
-                </ul>
-            {% endif %}
-        </section>
-
-        {% set reportNetwork = report.network %}
-        <section class="space-y-1">
-            <h3 class="text-xs font-semibold text-strong">{{ 'widget.report.network'|trans({ '%count%': reportNetwork|length }) }}</h3>
-            <p class="text-xs text-muted">{{ 'widget.report.network_help'|trans }}</p>
-            {% if reportNetwork is empty %}
-                <p class="text-xs text-muted">{{ 'widget.report.none'|trans }}</p>
-            {% else %}
-                <ul class="space-y-1 font-mono text-xs">
-                    {% for request in reportNetwork %}
-                        <li class="flex items-start gap-2">
-                            <span class="w-14 shrink-0 text-muted">{{ request.at ? request.at|date('H:i:s') : '' }}</span>
-                            <twig:Ui:Badge size="sm" class="shrink-0">{{ ('widget.report.kind.' ~ request.kind)|trans }}</twig:Ui:Badge>
-                            {% if request.status is not null %}<twig:Ui:Badge tone="red" size="sm" class="shrink-0">{{ request.status ?: 'widget.report.no_answer'|trans }}</twig:Ui:Badge>{% endif %}
-                            <span class="min-w-0 break-all text-strong">{% if request.method %}{{ request.method }} {% endif %}{{ request.url }}</span>
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
-        </section>
-
-        {% set reportMeasures = report.measures %}
-        {% if reportMeasures is not empty %}
-            <section class="space-y-2">
-                <h3 class="text-xs font-semibold text-strong">{{ 'widget.report.performance'|trans }}</h3>
-                <p class="text-xs text-muted">{{ 'widget.report.performance_help'|trans }}</p>
-                <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                    {% for measure in reportMeasures %}
-                        {# a time in milliseconds, in seconds from one; the CLS is a score #}
-                        {% set measureValue = measure.name == 'cls' ? measure.value|format_number({ fraction_digit: 2 }) : (measure.value < 1000 ? measure.value ~ ' ms' : (measure.value / 1000)|format_number({ fraction_digit: 1 }) ~ ' s') %}
-                        <twig:Ui:Measure :label="('widget.report.measure.' ~ measure.name ~ '.label')|trans" :value="measureValue" :rating="measure.rating" :position="measure.position" :caption="('widget.report.measure.' ~ measure.name ~ '.help')|trans" />
-                    {% endfor %}
-                </div>
-            </section>
-        {% endif %}
-
-        <section class="space-y-1">
-            <h3 class="text-xs font-semibold text-strong">{{ 'widget.report.pages'|trans({ '%count%': report.pages|length }) }}</h3>
-            <p class="text-xs text-muted">{{ 'widget.report.pages_help'|trans }}</p>
-            {% if report.pages is empty %}
-                <p class="text-xs text-muted">{{ 'widget.report.none'|trans }}</p>
-            {% else %}
-                <ul class="space-y-1 font-mono text-xs">
-                    {% for page in report.pages %}
-                        <li class="flex items-start gap-2">
-                            <span class="w-12 shrink-0 text-muted">{{ page.at ? page.at|date('H:i') : '' }}</span>
-                            <span class="min-w-0 break-all text-strong">{{ page.url }}</span>
-                        </li>
-                    {% endfor %}
-                </ul>
+                </ol>
             {% endif %}
         </section>
     </div>

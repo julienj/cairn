@@ -34,6 +34,42 @@ export function keep(list, max, entry) {
     }
 }
 
+/*
+ * A list the site keeps in its sessionStorage, so that what was noted on
+ * a page is still there on the next one: it lasts as long as the tab.
+ * What was kept is read once, without what is older than `age`
+ * (milliseconds); `save` writes the list again, a moment later so that a
+ * burst of notes is one writing, and at the latest when the page goes.
+ */
+export function remembered(key, max, age) {
+    let list = [];
+    try {
+        const kept = JSON.parse(window.sessionStorage.getItem(key) || '[]');
+        const since = Date.now() - age;
+        // the storage is the site's: anything else may have written there
+        list = Array.isArray(kept) ? kept.filter((entry) => entry && 'object' === typeof entry && 'string' === typeof entry.at && !(Date.parse(entry.at) < since)).slice(-max) : [];
+    } catch { /* no storage: the notes of this page alone */ }
+
+    let pending = null;
+    const write = () => {
+        pending = null;
+        try {
+            window.sessionStorage.setItem(key, JSON.stringify(list));
+        } catch { /* no storage, or no room left in it */ }
+    };
+    window.addEventListener('pagehide', () => {
+        if (null !== pending) {
+            window.clearTimeout(pending);
+            write();
+        }
+    });
+
+    return { list, save: () => { pending ??= window.setTimeout(write, 200); } };
+}
+
+/* Ten minutes: what a page before noted longer ago says nothing of the problem reported now. */
+export const RECENT = 600000;
+
 const MAX_KEYS = 10;
 
 /*

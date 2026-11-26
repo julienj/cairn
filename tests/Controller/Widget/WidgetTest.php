@@ -345,18 +345,18 @@ final class WidgetTest extends WebTestCase
         self::assertSelectorTextContains('body', 'Firefox 145 · Linux');
         self::assertSelectorTextContains('body', '2026.11.3-rc2');
         self::assertSelectorTextContains('body', 'Price not found');
-        self::assertSelectorTextContains('body', 'Network · 3 failures');
+        self::assertSelectorTextContains('[data-controller="timeline"] h3', 'Activity');
+        self::assertSame(['page' => '2 pages', 'error' => '1 error', 'request' => '3 failures'], array_combine($this->client->getCrawler()->filter('button[data-action="timeline#toggle"]')->extract(['data-kind']), $this->client->getCrawler()->filter('button[data-action="timeline#toggle"]')->each(static fn ($button): string => trim($button->text()))), 'a filter per kind noted, none for what was not');
         $network = $this->client->getCrawler()->filter('li')->each(static fn ($item): string => (string) preg_replace('/\s+/', ' ', trim($item->text())));
         self::assertSame([
             '10:14:05 font 404 '.self::SITE.'/fonts/brume.woff2',
             '10:14:06 Ajax 500 GET '.self::SITE.'/api/prices/halo',
             '10:14:07 image '.self::SITE.'/images/halo.jpg',
-        ], array_values(array_filter($network, static fn (string $line): bool => 1 === preg_match('/^\d\d:\d\d:\d\d /', $line))), 'in the order it failed: its kind, its status, its address');
+            '10:14:07 Error Price not found',
+            'Page '.self::SITE.'/',
+            'Page '.self::SITE.'/lamps',
+        ], $network, 'in the order it happened, what failed on the network with its kind, its status and its address; what has no moment last');
         self::assertSelectorTextContains('body', '150 %');
-        self::assertSelectorTextContains('body', 'Server answer Good 320 ms');
-        self::assertSelectorTextContains('body', 'Main content Poor 4.8 s');
-        self::assertSelectorTextContains('body', 'Stability To improve 0.12');
-        self::assertSelectorTextNotContains('body', 'Reactivity', 'what the browser did not measure is not shown');
         self::assertSelectorTextContains('body', 'Dark theme · Touch screen · Reduced motion');
         self::assertSelectorTextNotContains('body', 'whatever else');
 

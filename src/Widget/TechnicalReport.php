@@ -8,8 +8,9 @@ namespace App\Widget;
  * What the script of the widget noted on the site a problem is reported
  * from: the page, the browser, what the site says of itself (its
  * context: names and texts its pages chose), the errors of the page,
- * what failed on its network (its Ajax requests and its files), how the
- * page performed and the pages seen in the tab. It comes from a page nobody here controls,
+ * what failed on its network (its Ajax requests and its files), the
+ * pages seen in the tab and the last things the
+ * reporter did on them (what was acted on, never what was typed). It comes from a page nobody here controls,
  * through the browser of the reporter: only the shape known here is kept, every text cut and every list bounded, and it is
  * shown as what the site said, never trusted for anything.
  */
@@ -22,13 +23,13 @@ final readonly class TechnicalReport
     private const int MAX_ADDRESS = 400;
     private const int MAX_NAME = 60;
 
+    private const int MAX_SELECTOR = 200;
+
     private const array ERROR_KINDS = ['console', 'error', 'rejection'];
+    /** What the reporter did: clicked something, changed a field, sent a form. */
+    private const array ACTION_KINDS = ['click', 'change', 'submit'];
     /** An Ajax request of the page, or one of its files that did not load. */
     private const array NETWORK_KINDS = ['ajax', 'image', 'script', 'stylesheet', 'font', 'media', 'other'];
-    /** The measures that rate: up to what is good, and from what is poor (web.dev). */
-    private const array THRESHOLDS = ['ttfb' => [800, 1800], 'lcp' => [2500, 4000], 'inp' => [200, 500], 'cls' => [0.1, 0.25]];
-    /** Ten minutes: no time of a page is longer. */
-    private const int MAX_TIME = 600000;
 
     /**
      * @param array{
@@ -37,8 +38,8 @@ final readonly class TechnicalReport
      *     context: array<string, string>,
      *     errors: list<array{kind: string, message: string, source: ?string, at: ?string}>,
      *     network: list<array{kind: string, method: ?string, url: string, status: ?int, at: ?string}>,
-     *     performance: ?array{ttfb: ?int, domContentLoaded: ?int, load: ?int, lcp: ?int, cls: ?float, inp: ?int},
      *     pages: list<array{url: string, title: ?string, at: ?string}>,
+     *     actions: list<array{kind: string, role: ?string, name: ?string, selector: ?string, page: ?string, count: int, at: string}>,
      *     collectedAt: ?string,
      * } $data
      */
@@ -99,6 +100,23 @@ final readonly class TechnicalReport
                 $pages[] = ['url' => $address, 'title' => self::text($entry['title'] ?? null, self::MAX_TEXT), 'at' => self::time($entry['at'] ?? null)];
             }
         }
+        $actions = [];
+        foreach (self::entries($raw['actions'] ?? null) as $entry) {
+            // an action without its moment has no place among the others
+            if (\in_array($entry['kind'] ?? null, self::ACTION_KINDS, true) && null !== $at = self::time($entry['at'] ?? null)) {
+                $role = strtolower((string) self::text($entry['role'] ?? null, 30));
+                $actions[] = [
+                    'kind' => $entry['kind'],
+                    'role' => 1 === preg_match('/^[a-z][a-z0-9-]*$/', $role) ? $role : null,
+                    'name' => self::text($entry['name'] ?? null, self::MAX_NAME),
+                    'selector' => self::text($entry['selector'] ?? null, self::MAX_SELECTOR),
+                    'page' => self::text($entry['page'] ?? null, self::MAX_ADDRESS),
+                    'count' => self::number($entry['count'] ?? null, 1, 999) ?? 1,
+                    'at' => $at,
+                ];
+            }
+        }
+        usort($actions, static fn (array $one, array $other): int => $one['at'] <=> $other['at']);
 
         return new self([
             'page' => ['url' => $url, 'title' => self::text($raw['page']['title'] ?? null, self::MAX_TEXT)],
@@ -114,8 +132,8 @@ final readonly class TechnicalReport
             'context' => self::pairs($raw['context'] ?? null),
             'errors' => $errors,
             'network' => $network,
-            'performance' => self::performanceOf($raw['performance'] ?? null),
             'pages' => $pages,
+            'actions' => $actions,
             'collectedAt' => self::time($raw['collectedAt'] ?? null),
         ]);
     }
@@ -179,50 +197,6 @@ final readonly class TechnicalReport
     }
 
     /**
-     * How the page performed, in milliseconds from the start of its last
-     * load, the CLS apart (a score); null when the site sent none, and each
-     * measure null where the browser does not take it.
-     *
-     * @return ?array{ttfb: ?int, domContentLoaded: ?int, load: ?int, lcp: ?int, cls: ?float, inp: ?int}
-     */
-    public function performance(): ?array
-    {
-        return $this->data['performance'];
-    }
-
-    /**
-     * The measures of the performance as they are shown, in the order they
-     * come while the page loads, those the site sent: each with, when it
-     * rates, its rating (good, average, poor) and where it stands on a
-     * scale of 0 to 100 drawn in three equal parts, one per rating.
-     *
-     * @return list<array{name: string, value: int|float, rating: ?string, position: ?float}>
-     */
-    public function measures(): array
-    {
-        $measures = [];
-        foreach (['ttfb', 'domContentLoaded', 'lcp', 'load', 'inp', 'cls'] as $name) {
-            $value = $this->data['performance'][$name] ?? null;
-            if (null === $value) {
-                continue;
-            }
-            if (!isset(self::THRESHOLDS[$name])) {
-                $measures[] = ['name' => $name, 'value' => $value, 'rating' => null, 'position' => null];
-                continue;
-            }
-            [$good, $poor] = self::THRESHOLDS[$name];
-            [$rating, $position] = match (true) {
-                $value <= $good => ['good', $value / $good],
-                $value <= $poor => ['average', 1 + ($value - $good) / ($poor - $good)],
-                default => ['poor', 2 + min(1, ($value - $poor) / $poor)],
-            };
-            $measures[] = ['name' => $name, 'value' => $value, 'rating' => $rating, 'position' => round(max(2, min(98, $position / 3 * 100)), 1)];
-        }
-
-        return $measures;
-    }
-
-    /**
      * The pages seen, the last one first.
      *
      * @return list<array{url: string, title: ?string, at: ?string}>
@@ -230,6 +204,42 @@ final readonly class TechnicalReport
     public function pages(): array
     {
         return array_reverse($this->data['pages']);
+    }
+
+    /**
+     * The last things the reporter did, oldest first: what was clicked,
+     * which field was changed, which form was sent. Each says what was
+     * acted on (its role, the name the page shows for it, where it stands
+     * as a selector, on which page) and how many times in a row, never
+     * what was typed nor chosen.
+     *
+     * @return list<array{kind: string, role: ?string, name: ?string, selector: ?string, page: ?string, count: int, at: string}>
+     */
+    public function actions(): array
+    {
+        return $this->data['actions'];
+    }
+
+    /**
+     * What happened, in its order: the pages seen, the actions, the errors
+     * and what failed on the network, each as its own list holds it. A
+     * reading of the lists, not another one: nothing is kept twice. What
+     * has no moment comes last.
+     *
+     * @return list<array{type: 'action'|'page'|'error'|'request', at: ?string, entry: array<string, mixed>}>
+     */
+    public function timeline(): array
+    {
+        $events = [];
+        // at the same moment, the page before what was done on it, and an action before what it caused
+        foreach (['page' => $this->data['pages'], 'action' => $this->data['actions'], 'request' => $this->data['network'], 'error' => $this->data['errors']] as $type => $entries) {
+            foreach ($entries as $entry) {
+                $events[] = ['type' => $type, 'at' => $entry['at'], 'entry' => $entry];
+            }
+        }
+        usort($events, static fn (array $one, array $other): int => [null === $one['at'], $one['at']] <=> [null === $other['at'], $other['at']]);
+
+        return $events;
     }
 
     /**
@@ -318,27 +328,6 @@ final readonly class TechnicalReport
     private static function number(mixed $value, int $min, int $max): ?int
     {
         return \is_int($value) && $value >= $min && $value <= $max ? $value : null;
-    }
-
-    /**
-     * @return ?array{ttfb: ?int, domContentLoaded: ?int, load: ?int, lcp: ?int, cls: ?float, inp: ?int}
-     */
-    private static function performanceOf(mixed $value): ?array
-    {
-        if (!\is_array($value)) {
-            return null;
-        }
-        $time = static fn (string $name): ?int => self::number($value[$name] ?? null, 0, self::MAX_TIME);
-        $cls = $value['cls'] ?? null;
-
-        return [
-            'ttfb' => $time('ttfb'),
-            'domContentLoaded' => $time('domContentLoaded'),
-            'load' => $time('load'),
-            'lcp' => $time('lcp'),
-            'cls' => (\is_int($cls) || \is_float($cls)) && $cls >= 0 && $cls <= 100 ? round((float) $cls, 3) : null,
-            'inp' => $time('inp'),
-        ];
     }
 
     /**
