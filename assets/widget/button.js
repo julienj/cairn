@@ -23,7 +23,9 @@ const ANCHORS = [
 /* What the disc is filled with, and what rings its badge: one colour, so the badge reads as cut in the disc. */
 const FILL = '#1c1c21';
 const FILL_OVER = '#26262c';
-const LOGO = '<svg class="logo" width="22" height="22" viewBox="0 0 64 64" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="43" width="44" height="9" rx="4.5"/><rect x="16" y="29" width="40" height="8" rx="4" transform="rotate(-3 36 33)"/><rect x="12" y="15" width="27" height="8" rx="4" transform="rotate(4 25.5 19)"/></svg>';
+/* The mark of Cairn, its three stones in a square of 64: each place that draws it says how. */
+export const STONES = '<rect x="6" y="43" width="44" height="9" rx="4.5"/><rect x="16" y="29" width="40" height="8" rx="4" transform="rotate(-3 36 33)"/><rect x="12" y="15" width="27" height="8" rx="4" transform="rotate(4 25.5 19)"/>';
+const LOGO = `<svg class="logo" width="22" height="22" viewBox="0 0 64 64" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true">${STONES}</svg>`;
 const CLOSE = '<svg class="close" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
 
 /*
@@ -193,6 +195,8 @@ export function createButton(label, { onClick, onMove, onAim, onEscape }) {
         position: () => ({ edge: place.edge, ...pointOf(place) }),
         open: (open) => button.setAttribute('aria-expanded', open ? 'true' : 'false'),
         focus: () => button.focus({ preventScroll: true }),
+        /* Out of sight while something of the panel stands over the whole page. */
+        hide: (hidden) => { dock.style.visibility = hidden ? 'hidden' : ''; },
         /* An issue is begun in the panel: a dot on the disc says so. */
         begun: (begun) => button.toggleAttribute('data-begun', begun),
     };

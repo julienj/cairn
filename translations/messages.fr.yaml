@@ -1452,7 +1452,6 @@ widget:
         private: Privé
         private_help: Masqué aux utilisateurs externes.
         private_tracker: 'Catégorie privée : masquée aux utilisateurs externes.'
-        files: Fichiers
         attach: Joindre un fichier
         attachments: Capture et fichiers
         drop_hint: "ou déposez des fichiers n'importe où dans ce panneau"

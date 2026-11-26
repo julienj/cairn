@@ -130,13 +130,12 @@ export default class extends Controller {
             this.refreshing = false;
             this.take();
         } else if (!this.refreshing) {
-            this.drop();
+            // the issue is sent: nothing of it goes to the next one
+            this.clear();
         }
     }
 
-    // --- the files
-
-    // --- files dropped anywhere on the panel, the editor of the description included
+    // --- the files, chosen or dropped anywhere on the panel, the editor of the description included
 
     /* What is dragged is files, not a text nor a link of the page. */
     carriesFiles(event) {
@@ -181,7 +180,7 @@ export default class extends Controller {
     }
 
     chosen(event) {
-        Array.from(event.target.files).forEach((file) => this.send(file, false));
+        Array.from(event.target.files).forEach((file) => this.send(file));
         event.target.value = '';
     }
 
@@ -224,7 +223,6 @@ export default class extends Controller {
         this.remember();
     }
 
-    /* The form is not sent while a file is on its way: it would leave without it. */
     /* Ctrl or Cmd with Enter sends the issue, from any field. */
     shortcut(event) {
         if ('Enter' !== event.key || !(event.metaKey || event.ctrlKey) || this.mainTarget.hidden) {
@@ -236,6 +234,7 @@ export default class extends Controller {
         }
     }
 
+    /* The form is not sent while a file is on its way: it would leave without it. */
     hold() {
         this.submitTarget.disabled = sending > 0;
     }
@@ -417,7 +416,7 @@ export default class extends Controller {
         this.discardTarget.focus();
     }
 
-    /* The link it is on draws the form again: what this one held is forgotten first. */
+    /* What the form held is forgotten, its pictures and its screenshot with the draft: the issue was sent, or discarded by the link this is on, which draws the form again. */
     clear() {
         this.drop();
         arrived.splice(0);

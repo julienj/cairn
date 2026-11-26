@@ -1452,7 +1452,6 @@ widget:
         private: Private
         private_help: Hidden from external users.
         private_tracker: 'Private category: hidden from external users.'
-        files: Files
         attach: Attach a file
         attachments: Screenshot and files
         drop_hint: "or drop files anywhere on this panel"

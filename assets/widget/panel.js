@@ -1,4 +1,4 @@
-import { buttonStyles, clamp, createButton, MARGIN, SIZE, viewport } from './button.js';
+import { buttonStyles, clamp, createButton, MARGIN, SIZE, STONES, viewport } from './button.js';
 
 const KEY = 'cairn-widget-open';
 const BEGUN = 'cairn-widget-begun';
@@ -9,7 +9,9 @@ const WIDTH = 480;
 const HEIGHT = 760;
 const GAP = 12;
 /* The mark of Cairn as the frame draws it in its band. */
-const MARK = '<svg width="24" height="24" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"><rect x="6" y="43" width="44" height="9" rx="4.5"/><rect x="16" y="29" width="40" height="8" rx="4" transform="rotate(-3 36 33)"/><rect x="12" y="15" width="27" height="8" rx="4" transform="rotate(4 25.5 19)"/></svg>';
+const MARK = `<svg width="24" height="24" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round">${STONES}</svg>`;
+/* The window too narrow for a card beside the button: the panel takes the whole of it, and covers its button. */
+const NARROW = '(max-width: 640px)';
 
 /*
  * What the widget shows on the site: its button, and the panel that
@@ -60,7 +62,7 @@ ${buttonStyles}
 .waiting .field { height: 36px; margin-top: 4px; }
 @keyframes cairn-wait { 50% { opacity: .5; } }
 .backdrop { position: fixed; inset: 0; z-index: 2147483647; background: rgba(17, 24, 39, .55); }
-@media (max-width: 640px) { .panel, .panel.wide { inset: 0; width: auto; height: auto; border-radius: 0; } }
+@media ${NARROW} { .panel, .panel.wide { inset: 0; width: auto; height: auto; border-radius: 0; } }
 @media (prefers-color-scheme: dark) { .panel { --line: #2d343e; --sunken: #262d37; --brand: #a5b4fc; background: #161b22; box-shadow: 0 0 0 1px rgba(255, 255, 255, .12), 0 24px 56px -12px rgba(0, 0, 0, .6); } }
 iframe { display: block; width: 100%; height: 100%; border: 0; }
 [hidden] { display: none !important; }
@@ -118,7 +120,7 @@ iframe { display: block; width: 100%; height: 100%; border: 0; }
     };
     let shown = false;
     // Whether the panel covers its button (a narrow window): the frame then offers its own way to close.
-    const covering = window.matchMedia?.('(max-width: 640px)');
+    const covering = window.matchMedia?.(NARROW);
     const told = () => send({ type: 'cairn:layout', covered: true === covering?.matches });
 
     // The frame, asked for as soon as the button is aimed at: it is on its way when the panel opens.
@@ -126,6 +128,7 @@ iframe { display: block; width: 100%; height: 100%; border: 0; }
         if (null !== frame) {
             return;
         }
+        // laid out before it is asked for: the frame draws itself at the size it will have
         lay();
         frame = document.createElement('iframe');
         // asked in the name of this site: Cairn answers no other, and lets no other frame the answer
@@ -150,21 +153,13 @@ iframe { display: block; width: 100%; height: 100%; border: 0; }
         handed = open && byHand;
         if (open) {
             ask();
-        }
-        if (open) {
             lay();
             // drawn closed once, so that the first opening is seen too
             panel.getBoundingClientRect();
         }
         panel.classList.toggle('open', open);
         button.open(open);
-        try {
-            if (open) {
-                window.sessionStorage.setItem(KEY, '1');
-            } else {
-                window.sessionStorage.removeItem(KEY);
-            }
-        } catch { /* no storage: the panel closes with the page */ }
+        keep(KEY, open);
         if (open) {
             send({ type: 'cairn:context', report: report() });
             told();
@@ -198,13 +193,7 @@ iframe { display: block; width: 100%; height: 100%; border: 0; }
                 // The frame says that an issue is begun, and nothing of it. Kept for the next page of this tab, where
                 // the button shows it before the frame is there.
                 button.begun(true === event.data.begun);
-                try {
-                    if (true === event.data.begun) {
-                        window.sessionStorage.setItem(BEGUN, '1');
-                    } else {
-                        window.sessionStorage.removeItem(BEGUN);
-                    }
-                } catch { /* no storage: the dot comes back with the frame */ }
+                keep(BEGUN, true === event.data.begun);
                 break;
             case 'cairn:collapse':
                 // Out of the picture but still drawn: a frame that is not displayed is slowed down by the
@@ -219,17 +208,16 @@ iframe { display: block; width: 100%; height: 100%; border: 0; }
                 panel.classList.add('wide');
                 backdrop.hidden = false;
                 // the dialog has its own ways out: the button would only show through at its corner
-                dock.style.visibility = 'hidden';
+                button.hide(true);
                 break;
             case 'cairn:narrow':
                 panel.classList.remove('wide');
                 backdrop.hidden = true;
-                dock.style.visibility = '';
+                button.hide(false);
                 break;
         }
     });
 
-    const dock = button.nodes[1];
     root.append(style, ...button.nodes, backdrop, panel);
     // Beside the body, not in it: a site that replaces its body to change page (Turbo, htmx) would take the widget away.
     document.documentElement.appendChild(host);
@@ -241,4 +229,15 @@ iframe { display: block; width: 100%; height: 100%; border: 0; }
     } catch { /* no storage: the panel starts closed */ }
 
     return noted;
+}
+
+/* Whether something holds in this tab, kept by the site in its sessionStorage for its next page; without storage it lasts as long as this one. */
+function keep(key, held) {
+    try {
+        if (held) {
+            window.sessionStorage.setItem(key, '1');
+        } else {
+            window.sessionStorage.removeItem(key);
+        }
+    } catch { /* no storage */ }
 }

@@ -52,7 +52,7 @@
                         </div>
                         <p class="mt-2 text-center text-xs text-faint">{{ 'widget.form.drop_hint'|trans }}</p>
                         {# The editor of the screenshot, over the whole frame, which the panel makes a dialog over the page meanwhile. #}
-                        <div class="fixed inset-0 z-50 flex flex-col bg-sunken" role="dialog" aria-modal="true" aria-labelledby="widget-editor-title" data-widget-capture-target="editor" hidden>
+                        <div class="fixed inset-0 z-50 flex flex-col bg-sunken" role="dialog" aria-modal="true" aria-labelledby="widget-editor-title" data-widget-capture-target="editor" data-widget-over hidden>
                             <header class="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2 border-b border-line bg-surface px-3 py-2">
                                 <h2 id="widget-editor-title" class="font-semibold text-strong">{{ 'widget.capture.title'|trans }}</h2>
                                 <div class="flex items-center gap-0.5" role="group" aria-label="{{ 'widget.capture.tools'|trans }}">
@@ -105,7 +105,7 @@
                     <twig:Ui:Button size="lg" data-action="widget-report#ask" data-widget-report-target="discard">{{ 'widget.form.discard'|trans }}</twig:Ui:Button>
                     <twig:Ui:Button type="submit" variant="primary" size="lg" data-widget-report-target="submit">{{ 'widget.form.submit'|trans }}</twig:Ui:Button>
                 </div>
-                <div class="flex items-center justify-between gap-3" role="alertdialog" aria-labelledby="widget-discard-question" data-widget-report-target="confirm" data-action="keydown.esc@window->widget-report#dismiss" hidden>
+                <div class="flex items-center justify-between gap-3" role="alertdialog" aria-labelledby="widget-discard-question" data-widget-report-target="confirm" data-widget-over data-action="keydown.esc@window->widget-report#dismiss" hidden>
                     <span id="widget-discard-question" class="min-w-0 text-sm text-strong">{{ 'widget.form.discard_confirm'|trans }}</span>
                     <span class="flex shrink-0 items-center gap-1">
                         <twig:Ui:Button variant="ghost" size="lg" data-action="widget-report#dismiss">{{ 'widget.form.discard_no'|trans }}</twig:Ui:Button>
@@ -116,7 +116,7 @@
         </div>
 
         {# A page under the form: the way back is where it is looked for, an arrow before its title, which stays in view. Escape goes back too. #}
-        <div class="flex flex-1 flex-col" data-widget-report-target="detail" data-action="keydown.esc@window->widget-report#back" hidden>
+        <div class="flex flex-1 flex-col" data-widget-report-target="detail" data-widget-over data-action="keydown.esc@window->widget-report#back" hidden>
             <header class="sticky top-0 z-10 flex items-center gap-1 border-b border-line bg-surface py-2 pl-2 pr-4">
                 <twig:Ui:IconButton icon="arrow-left" :label="'widget.report.back'|trans" data-action="widget-report#back" />
                 <h2 class="font-semibold text-strong">{{ 'widget.report.title'|trans }}</h2>

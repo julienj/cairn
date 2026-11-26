@@ -336,7 +336,6 @@ final class WidgetTest extends WebTestCase
                 ['kind' => 'font', 'url' => self::SITE.'/fonts/brume.woff2', 'status' => 404, 'at' => '2026-11-24T10:14:05.000Z'],
                 ['kind' => 'image', 'url' => self::SITE.'/images/halo.jpg', 'at' => '2026-11-24T10:14:07.000Z'],
             ],
-            'performance' => ['ttfb' => 320, 'lcp' => 4800, 'cls' => 0.12],
             'pages' => [['url' => self::SITE.'/'], ['url' => self::SITE.'/lamps']],
             'cookies' => 'whatever else a page may send',
         ];
