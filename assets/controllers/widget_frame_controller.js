@@ -184,7 +184,7 @@ export default class extends Controller {
         const url = new URL(this.connectUrlValue, window.location.origin);
         url.searchParams.set('site', this.siteValue);
         url.searchParams.set('challenge', this.pair.challenge);
-        this.popup = window.open(url, 'cairn-widget-link', 'popup,width=480,height=680');
+        window.open(url, 'cairn-widget-link', 'popup,width=480,height=680');
         this.wait(true);
         this.deadline = Date.now() + POLL_FOR;
         clearTimeout(this.polling);
@@ -248,31 +248,30 @@ export default class extends Controller {
         }
         const timeout = setTimeout(() => { this.collapsed = null; event.detail.done(); }, 1000);
         this.collapsed = () => { clearTimeout(timeout); event.detail.done(); };
-        window.parent.postMessage({ type: 'cairn:collapse' }, this.siteValue);
+        this.tell('cairn:collapse');
     }
 
     expand() {
-        if (this.linked) {
-            window.parent.postMessage({ type: 'cairn:expand' }, this.siteValue);
-        }
+        this.tell('cairn:expand');
     }
 
     widen() {
-        if (this.linked) {
-            window.parent.postMessage({ type: 'cairn:widen' }, this.siteValue);
-        }
+        this.tell('cairn:widen');
     }
 
     narrow() {
-        if (this.linked) {
-            window.parent.postMessage({ type: 'cairn:narrow' }, this.siteValue);
-        }
+        this.tell('cairn:narrow');
     }
 
     /* That an issue is begun, and nothing of it: the button of the site shows it. */
     drafted(event) {
+        this.tell('cairn:draft', { begun: true === event.detail.begun });
+    }
+
+    /* A message to the script of the site, once the site said which it is: to that site and no other. */
+    tell(type, said = {}) {
         if (this.linked) {
-            window.parent.postMessage({ type: 'cairn:draft', begun: true === event.detail.begun }, this.siteValue);
+            window.parent.postMessage({ type, ...said }, this.siteValue);
         }
     }
 
@@ -310,18 +309,16 @@ export default class extends Controller {
     /*
      * Escape closes the panel, unless something of the form is open over
      * it and takes the key for itself. Asked before the others act on the
-     * key (capture): afterwards what was open no longer is.
+     * key (capture): afterwards what was open no longer is. What opens
+     * over the form says so itself (`data-widget-over`).
      */
     escape() {
-        const open = '[data-widget-report-target="detail"]:not([hidden]), [data-widget-report-target="confirm"]:not([hidden]), [data-widget-capture-target="editor"]:not([hidden])';
-        if (null === this.element.querySelector(open)) {
+        if (null === this.element.querySelector('[data-widget-over]:not([hidden])')) {
             this.close();
         }
     }
 
     close() {
-        if (this.linked) {
-            window.parent.postMessage({ type: 'cairn:close' }, this.siteValue);
-        }
+        this.tell('cairn:close');
     }
 }

@@ -48,7 +48,6 @@ final class TechnicalReportTest extends TestCase
                 ['kind' => 'video game', 'url' => 'https://cdn.example.com/hero', 'status' => 'Not Found', 'at' => '2026-11-24T10:14:08.000Z'],
                 ['kind' => 'image'],
             ],
-            'performance' => ['ttfb' => 120, 'domContentLoaded' => 'fast', 'load' => 99999999, 'lcp' => 3200, 'cls' => 0.4, 'inp' => 80.5, 'fps' => 60],
             'pages' => array_map(static fn (int $i): array => ['url' => 'https://staging.example.com/page/'.$i], range(1, 80)),
             'secrets' => ['token' => 'abc'],
         ]);

@@ -1,6 +1,7 @@
 import { bare, keep, now, RECENT, remembered } from './text.js';
 
 const MAX_ACTIONS = 30;
+/* The ellipsis of a name cut short included: Cairn keeps no more (Widget/TechnicalReport). */
 const MAX_NAME = 60;
 const MAX_SELECTOR = 120;
 const KEY = 'cairn-widget-actions';
@@ -117,7 +118,7 @@ function name(element) {
     }
     text = String(text || '').replace(/\s+/g, ' ').trim();
 
-    return '' === text ? null : (text.length > MAX_NAME ? `${text.slice(0, MAX_NAME)}…` : text);
+    return '' === text ? null : (text.length > MAX_NAME ? `${text.slice(0, MAX_NAME - 1)}…` : text);
 }
 
 /* Where the element stands, as a short selector: up to three levels, an id ends it, and what has siblings like it says which it is. */
