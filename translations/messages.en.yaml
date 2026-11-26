@@ -22,6 +22,8 @@ issue:
         unfollow: Unfollow
         follow_help: Get a mail for every change of this issue
         following_help: You follow this issue and get a mail for every change
+        through_team: 'Followed by %teams%'
+        through_team_help: 'Your team follows this issue: you get a mail for every change. A member stops the team following from the followers.'
         followed: You now follow this issue.
         unfollowed: You no longer follow this issue.
     subscribers:

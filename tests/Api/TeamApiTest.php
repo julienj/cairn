@@ -63,8 +63,10 @@ final class TeamApiTest extends ApiTestCase
         $back = $this->api('PATCH', '/api/issues/MD-SPT-2', $secret, ['assignee' => null, 'assigneeTeam' => $this->hosting->getId()]);
         self::assertSame('Hosting', $back['assigneeTeam']['name'], 'named with the person emptied, the team is given the issue');
 
-        $same = $this->api('PATCH', '/api/issues/MD-SPT-2', $secret, ['assigneeTeam' => null]);
-        self::assertSame('Hosting', $same['assigneeTeam']['name'], 'a team sent as null empties nothing: the assignee is what unassigns');
+        $refused = $this->api('PATCH', '/api/issues/MD-SPT-2', $secret, ['assigneeTeam' => null]);
+        self::assertResponseStatusCodeSame(422);
+        self::assertStringContainsString('"assignee": null', $refused['detail'], 'a team sent as null is not understood: the answer says what unassigns');
+        self::assertSame('Hosting', $this->issue('MD-SPT-2')->getAssigneeTeam()?->getName());
 
         $unassigned = $this->api('PATCH', '/api/issues/MD-SPT-2', $secret, ['assignee' => null]);
         self::assertArrayNotHasKey('assigneeTeam', $unassigned, 'nobody is neither a person nor a team');
@@ -90,6 +92,12 @@ final class TeamApiTest extends ApiTestCase
         ]);
         self::assertResponseStatusCodeSame(201);
         self::assertSame('Hosting', $created['assigneeTeam']['name']);
+
+        // Marc is part of the team, which follows what it is given: he is written to without following it himself.
+        $subscription = $this->api('GET', '/api/issues/'.$created['key'].'/subscription', $this->tokenFor(self::OUTSIDER)->secret);
+        self::assertTrue($subscription['following']);
+        self::assertArrayNotHasKey('since', $subscription);
+        self::assertSame(['Hosting'], array_column($subscription['teams'], 'name'));
 
         $ofTeam = $this->api('GET', '/api/issues?project=MD-SPT&assigneeTeam[]='.$this->hosting->getId(), $secret);
         self::assertSame([$created['key']], array_column($ofTeam['member'], 'key'));

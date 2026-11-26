@@ -157,6 +157,20 @@ final class AccessControl implements ResetInterface
     }
 
     /**
+     * Following an issue is for whoever works on its project: someone who
+     * sees it and holds a role there. An internal user reads every project
+     * and an administrator acts on each, but neither is written to about a
+     * project they hold no role on, as neither can be given its issues.
+     * The one place that says so, asked when someone is subscribed and
+     * again when a mail is built: whoever loses their role stops
+     * receiving, and receives again with a role.
+     */
+    public function canFollow(User $user, Issue $issue): bool
+    {
+        return $this->canSee($user, $issue) && null !== $this->roleOn($user, $issue->getProject());
+    }
+
+    /**
      * Private comments are for internal users only. ShowIssueHandler
      * applies the same rule in SQL; keep them in step.
      */

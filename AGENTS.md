@@ -362,7 +362,7 @@ src/
 - **Notifications are subscriptions, and the events are the policy.** The
   `#[AsEventListener]`s of `NotificationDispatcher::collect()` are the
   whole list of what notifies; `Notification/SubscriptionRules` never
-  subscribes someone who cannot see the issue.
+  subscribes someone who may not follow the issue.
 - **A team follows an issue as one** (`IssueTeamSubscription`), from the
   moment it is given the issue and afterwards, as a person does. Nobody
   is subscribed for it: `NotifyIssueChangeHandler` reads who is part of
@@ -371,13 +371,16 @@ src/
   (`UnfollowIssueAsTeam`); nobody opts out alone of what their team
   follows. An external team follows nothing private, as an external
   person, and a team follows only where it holds a role.
-- **Whoever leaves a project stops following its issues**
-  (`Notification/LeaverSubscriptions`): a person who no longer holds any
-  role on it, internal or not, and a team that no longer holds one. The
-  role is asked again once the change is written, since it has several
-  sources; someone who keeps one by another way keeps following. The
-  subscriptions are deleted, not hidden: following again is theirs to
-  do.
+- **Following takes a role on the project**
+  (`AccessControl::canFollow()`): an internal user reads every project
+  and an administrator acts on each, but neither is written to about a
+  project they hold no role on, as neither can be given its issues. It
+  is asked when someone is subscribed and again when a mail is built,
+  as what they may read is: whoever loses their role stops receiving,
+  with nothing to delete, and receives again with a role. A team follows
+  on the same terms, asked each time its subscription is read
+  (`IssueTeamSubscriptionRepository`). Whoever is written to through a
+  team reads which on the page of the issue (`Issue:Follow`).
 - **A mail is queued, then grouped.** `NotifyIssueChange` (ids only) writes
   a `PendingNotification` per recipient; `ProjectMailSender` (Scheduler)
   sends a group once things calmed down. `ChangeFilter` says what one

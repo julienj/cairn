@@ -12,6 +12,7 @@ use App\Api\Resource\UpdateIssueInput;
 use App\Message\Command\Issue\UpdateIssue;
 use App\Security\Viewer;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 /**
  * PATCH /issues/{key}. UpdateIssue reads null as "keep", the merge patch
@@ -45,6 +46,10 @@ final class UpdateIssueProcessor implements ProcessorInterface
      */
     public function update(string $key, UpdateIssueInput $data, array $sent): IssueResource
     {
+        if (\array_key_exists('assigneeTeam', $sent) && null === $data->assigneeTeam) {
+            throw new UnprocessableEntityHttpException('assigneeTeam: the id of a team. Send "assignee": null to unassign the issue.');
+        }
+
         $this->commands->dispatch(new UpdateIssue(
             actorId: (int) $this->viewer->get()->getId(),
             issueKey: $key,

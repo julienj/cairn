@@ -30,7 +30,7 @@ final class ListSubscribersHandler
     {
         return array_values(array_filter(
             $this->subscriptions->findSubscribers($query->issue),
-            fn (User $user): bool => $this->access->canSee($user, $query->issue),
+            fn (User $user): bool => $this->access->canFollow($user, $query->issue),
         ));
     }
 }

@@ -219,6 +219,10 @@ final class RuleExecutor
         if (null === $user) {
             return StepResult::skipped(ActionType::Subscribe, $target->reason ?? 'unknown_user', $target->label);
         }
+        // as for being given the issue: only someone with a role on the project
+        if (null === $this->access->roleOn($user, $issue->getProject())) {
+            return StepResult::skipped(ActionType::Subscribe, 'not_a_member', $user->getFullName());
+        }
         if ($this->subscriptions->isSubscribed($issue, $user)) {
             return StepResult::unchanged(ActionType::Subscribe, $user->getFullName());
         }

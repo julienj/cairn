@@ -16,8 +16,9 @@ use function Symfony\Component\Clock\now;
  * step. Made by Notification/SubscriptionRules when the issue is given to
  * the team or a text mentions it, or by an automation rule; current
  * state, like the subscription of a person: a member unsubscribing the
- * team deletes the row, as the team losing its role on the project does
- * (LeaverSubscriptions), and the next of those subscribes it again.
+ * team deletes the row, and the next of those subscribes it again. The
+ * team follows only while it holds a role on the project of the issue,
+ * asked each time the row is read (IssueTeamSubscriptionRepository).
  */
 #[ORM\Entity(repositoryClass: IssueTeamSubscriptionRepository::class)]
 #[ORM\UniqueConstraint(name: 'uniq_issue_team_subscription', columns: ['issue_id', 'team_id'])]

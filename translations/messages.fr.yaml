@@ -22,6 +22,8 @@ issue:
         unfollow: Ne plus suivre
         follow_help: Recevoir un mail à chaque changement de cette demande
         following_help: Vous suivez cette demande et recevez un mail à chaque changement
+        through_team: 'Suivie par %teams%'
+        through_team_help: 'Votre équipe suit cette demande : vous recevez un mail à chaque changement. Un membre désabonne l''équipe depuis les abonnés.'
         followed: Vous suivez cette demande.
         unfollowed: Vous ne suivez plus cette demande.
     subscribers:

@@ -106,13 +106,13 @@ final class SubscriptionRules
 
     /**
      * Subscribes the user to the issue, unless they already follow it,
-     * are deactivated or may not see it.
+     * are deactivated or may not follow it (AccessControl::canFollow()).
      *
      * @return bool whether a subscription was made
      */
     public function subscribe(Issue $issue, User $user): bool
     {
-        if (!$user->isActive() || !$this->access->canSee($user, $issue) || $this->isSubscribed($issue, $user)) {
+        if (!$user->isActive() || !$this->access->canFollow($user, $issue) || $this->isSubscribed($issue, $user)) {
             return false;
         }
         $this->entityManager->persist(new IssueSubscription($issue, $user));

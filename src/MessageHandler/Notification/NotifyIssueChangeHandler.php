@@ -14,6 +14,7 @@ use App\Repository\IssueRepository;
 use App\Repository\IssueSubscriptionRepository;
 use App\Repository\IssueTeamSubscriptionRepository;
 use App\Repository\UserRepository;
+use App\Security\AccessControl;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
@@ -34,6 +35,7 @@ final class NotifyIssueChangeHandler
         private readonly IssueSubscriptionRepository $subscriptions,
         private readonly IssueTeamSubscriptionRepository $teamSubscriptions,
         private readonly ChangeFilter $filter,
+        private readonly AccessControl $access,
         private readonly EntityManagerInterface $entityManager,
     ) {
     }
@@ -48,7 +50,7 @@ final class NotifyIssueChangeHandler
         [$entries, $comment] = $this->filter->load($message->entryIds, $message->commentId);
 
         foreach ($this->recipients($issue) as $recipient) {
-            if ($recipient->getId() === $actor?->getId() || !$recipient->getMailGrouping()->sendsMails()) {
+            if ($recipient->getId() === $actor?->getId() || !$recipient->getMailGrouping()->sendsMails() || !$this->access->canFollow($recipient, $issue)) {
                 continue;
             }
             $visible = $this->filter->visible($recipient, $issue, $entries, $comment);
