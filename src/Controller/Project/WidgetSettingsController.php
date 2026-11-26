@@ -32,8 +32,9 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * The widget of a project, for its manager: the sites it is shown on and
- * the line of script to put on them, a dialog that declares a site, which
- * has an address of its own and renders the list with it open. The widget
+ * the line of script to put on them, a dialog that declares a site and one
+ * that asks again before a site is removed, each at an address of its
+ * own, which renders the list with it open. The widget
  * exists as soon as a site does.
  */
 #[Route('/{workspaceKey}/{projectKey}/settings/widget', requirements: ['workspaceKey' => Workspace::KEY_FORMAT, 'projectKey' => Project::KEY_FORMAT])]
@@ -78,15 +79,24 @@ final class WidgetSettingsController extends AbstractController
     }
 
     /**
+     * The dialog that asks again before a site is removed.
+     */
+    #[Route('/{site}/remove', name: 'app_project_settings_widget_site_remove', requirements: ['site' => '\d+'], methods: ['GET'])]
+    public function remove(#[CurrentProject] Project $project, #[MapEntity(id: 'site')] WidgetSite $site, Request $request): Response
+    {
+        self::ofProject($site, $project);
+
+        return $this->renderList($request, $project, null, $site);
+    }
+
+    /**
      * Removes the site: whoever linked their account there is signed out of the widget.
      */
     #[Route('/{site}/delete', name: 'app_project_settings_widget_site_delete', requirements: ['site' => '\d+'], methods: ['POST'])]
     #[IsCsrfTokenValid('submit')]
     public function delete(#[CurrentProject] Project $project, #[MapEntity(id: 'site')] WidgetSite $site, #[CurrentUser] User $actor): RedirectResponse
     {
-        if ($site->getProject()->getId() !== $project->getId()) {
-            throw new NotFoundHttpException(\sprintf('Site %d is not a site of %s.', $site->getId(), $project->getIssuePrefix()));
-        }
+        self::ofProject($site, $project);
         $origin = $site->getOrigin();
         $this->commands->dispatch(new RemoveWidgetSite((int) $actor->getId(), (int) $site->getId()));
         $this->addFlash('success', $this->translator->trans('widget.site.removed', ['%origin%' => $origin]));
@@ -95,16 +105,25 @@ final class WidgetSettingsController extends AbstractController
     }
 
     /**
-     * @param FormInterface<WidgetSiteData>|null $form the dialog, when it is open
+     * @param FormInterface<WidgetSiteData>|null $form     the dialog that declares a site, when it is open
+     * @param WidgetSite|null                    $removing the site the dialog asks about, when that one is open
      */
-    private function renderList(Request $request, Project $project, ?FormInterface $form): Response
+    private function renderList(Request $request, Project $project, ?FormInterface $form, ?WidgetSite $removing = null): Response
     {
         return $this->renderWithDialog($request, 'project/settings/widget.html.twig', [
             'project' => $project,
             'form' => $form,
+            'removing' => $removing,
         ], fn (): array => [
             'sites' => $this->sites->findByProject($project),
         ], $form);
+    }
+
+    private static function ofProject(WidgetSite $site, Project $project): void
+    {
+        if ($site->getProject()->getId() !== $project->getId()) {
+            throw new NotFoundHttpException(\sprintf('Site %d is not a site of %s.', $site->getId(), $project->getIssuePrefix()));
+        }
     }
 
     /**

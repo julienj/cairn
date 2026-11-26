@@ -45,7 +45,7 @@ final class WidgetSettingsTest extends WebTestCase
             $this->signInAs($email);
             $this->client->request('GET', '/MD/SPT/issues');
             self::assertSelectorNotExists('a[href="/MD/SPT/settings/widget"]');
-            foreach (['GET /MD/SPT/settings/widget', 'GET /MD/SPT/settings/widget/new', \sprintf('POST /MD/SPT/settings/widget/%d/delete', $site->getId())] as $request) {
+            foreach (['GET /MD/SPT/settings/widget', 'GET /MD/SPT/settings/widget/new', \sprintf('GET /MD/SPT/settings/widget/%d/remove', $site->getId()), \sprintf('POST /MD/SPT/settings/widget/%d/delete', $site->getId())] as $request) {
                 $this->client->request(...explode(' ', $request));
                 self::assertResponseStatusCodeSame(403, $email.' '.$request);
             }
@@ -75,6 +75,12 @@ final class WidgetSettingsTest extends WebTestCase
         self::assertSelectorTextContains('[data-test="widget-snippet-always"]', '<script src="http://localhost/widget.js" data-project="MD-SPT" data-display="always" async></script>');
         self::assertSelectorTextContains('[data-test="widget-snippet-on_demand"]', '<script src="http://localhost/widget.js" data-project="MD-SPT" async></script>', 'without the attribute the button waits for ?cairn=1');
         self::assertSelectorNotExists('main li .ring-amber-line', 'HTTPS: the screenshot is offered');
+        self::assertSelectorTextSame('[data-test="widget-link"]', 'https://staging.maison-dupont.test/?cairn=1', 'the address that asks for the widget in production, ready to send');
+        self::assertSame(
+            ['https://staging.maison-dupont.test/?cairn=1', 'https://staging.maison-dupont.test/?cairn=0'],
+            $this->client->getCrawler()->filter('[data-clipboard-text-value]')->extract(['data-clipboard-text-value']),
+            'and what its buttons copy: the address that shows it, the one that hides it',
+        );
 
         $this->client->clickLink('New site');
         $this->client->submitForm('Add the site', ['widget_site[address]' => 'https://staging.maison-dupont.test']);
@@ -105,8 +111,14 @@ final class WidgetSettingsTest extends WebTestCase
         $entityManager->flush();
 
         $this->signInAs('thomas.girard@cairn.test');
-        $crawler = $this->client->request('GET', '/MD/SPT/settings/widget');
-        $this->client->submit($crawler->filter(\sprintf('form[action="/MD/SPT/settings/widget/%d/delete"]', $site->getId()))->form());
+        $this->client->request('GET', '/MD/SPT/settings/widget');
+        self::assertSelectorNotExists('form[action$="/delete"]', 'nothing on the page removes a site at once');
+        // the bin of the site opens the dialog that asks again, in the frame of the page
+        $this->client->click($this->client->getCrawler()->filter(\sprintf('a[data-turbo-frame="modal"][href="/MD/SPT/settings/widget/%d/remove"]', $site->getId()))->link());
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('[role="dialog"]', 'https://staging.maison-dupont.test');
+        self::assertSelectorTextContains('[role="dialog"]', 'will have to link it again');
+        $this->client->submitForm('Remove the site');
         self::assertResponseRedirects('/MD/SPT/settings/widget');
 
         $entityManager->clear();
