@@ -21,7 +21,6 @@ final class IssueData
     #[Assert\Length(max: 200)]
     public ?string $title = null;
 
-    #[Assert\NotBlank(normalizer: 'trim')]
     public ?string $description = null;
 
     public Criticality $criticality = Criticality::DEFAULT;

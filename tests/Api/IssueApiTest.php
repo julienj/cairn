@@ -159,6 +159,19 @@ final class IssueApiTest extends ApiTestCase
         self::assertSame('The basket forgets its content', $this->issue('MD-SPT-11')->getTitle());
     }
 
+    public function testAnIssueIsCreatedWithoutADescription(): void
+    {
+        $issue = $this->api('POST', '/api/issues', $this->tokenFor(self::DEVELOPER)->secret, [
+            'project' => 'MD-SPT',
+            'tracker' => $this->scene->bugs->getId(),
+            'title' => 'The basket forgets its content',
+            'fields' => ['environment' => 'prod'],
+        ]);
+
+        self::assertResponseStatusCodeSame(201);
+        self::assertSame('', $issue['description']);
+    }
+
     public function testAnIssueThatCannotBeCreatedSaysWhy(): void
     {
         $secret = $this->tokenFor(self::DEVELOPER)->secret;

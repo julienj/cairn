@@ -45,6 +45,7 @@ final class IssueType extends AbstractType
             ])
             ->add('description', MarkdownType::class, [
                 'label' => 'issue.field.description',
+                'required' => false,
                 'attr' => ['placeholder' => 'issue.field.description_placeholder', 'rows' => 8],
                 'project' => $options['project'],
             ]);

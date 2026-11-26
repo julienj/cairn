@@ -55,6 +55,7 @@ final class ReportType extends AbstractType
             ])
             ->add('description', MarkdownType::class, [
                 'label' => 'widget.form.description',
+                'required' => false,
                 'attr' => ['rows' => 4, 'placeholder' => 'issue.field.description_placeholder'],
             ])
             ->add('fields', IssueFieldsType::class, [

@@ -159,6 +159,16 @@ final class CreateFormTest extends KernelTestCase
         self::assertNull(self::getContainer()->get(IssueRepository::class)->findOneByKey('MD-SPT-11'));
     }
 
+    public function testTheDescriptionMayBeLeftEmpty(): void
+    {
+        $component = $this->form('nadia.benali@cairn.test')->set('trackerId', $this->tasks->getId());
+
+        $component->submitForm(['issue' => ['title' => 'Purge the expired sessions', 'description' => '']], 'save');
+
+        self::assertSame(302, $component->response()->getStatusCode(), $component->response()->getContent() ?: '');
+        self::assertSame('', $this->issue('MD-SPT-11')->getDescription());
+    }
+
     public function testAnInternalUserQualifiesAtCreation(): void
     {
         $lea = $this->scene->user('lea.fontaine@cairn.test');

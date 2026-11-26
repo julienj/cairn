@@ -43,6 +43,18 @@ final class DescriptionTest extends KernelTestCase
         self::assertNotNull($component->getEmittedEvent($render, 'issue:changed'));
     }
 
+    public function testTheDescriptionIsEmptiedAndThePageSaysThereIsNone(): void
+    {
+        $component = $this->description('claire.martin@maison-dupont.test');
+
+        $component->call('editDescription')->set('description', '')->call('saveDescription');
+
+        self::assertStringContainsString('No description.', (string) $component->render());
+        $entityManager = self::getContainer()->get(EntityManagerInterface::class);
+        $entityManager->clear();
+        self::assertSame('', $entityManager->find(Issue::class, $this->issue->getId())?->getDescription());
+    }
+
     public function testTheAuthorOrAManagerRewritesTheDescription(): void
     {
         self::assertStringContainsString('data-live-action-param="editDescription"', (string) $this->description('claire.martin@maison-dupont.test')->render());

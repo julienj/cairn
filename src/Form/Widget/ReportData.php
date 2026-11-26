@@ -23,7 +23,6 @@ final class ReportData
     #[Assert\Length(max: 200)]
     public ?string $title = null;
 
-    #[Assert\NotBlank(normalizer: 'trim')]
     public ?string $description = null;
 
     /** Null when the reporter may not set it, or sent none: the default one then. */

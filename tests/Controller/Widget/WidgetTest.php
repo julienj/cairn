@@ -472,8 +472,9 @@ final class WidgetTest extends WebTestCase
         self::assertResponseStatusCodeSame(422, 'a field the form did not offer');
         self::assertSame($before, $this->lastIssue()->getId());
 
-        $this->widget('POST', '/widget/MD/SPT/report', $this->link(self::CLAIRE), ['report' => $form]);
+        $this->widget('POST', '/widget/MD/SPT/report', $this->link(self::CLAIRE), ['report' => ['description' => ''] + $form]);
         self::assertResponseStatusCodeSame(303);
+        self::assertSame('', $this->lastIssue()->getDescription(), 'a title is enough');
         self::assertFalse(self::getContainer()->get(IssueReportRepository::class)->has($this->lastIssue()), 'the box was not ticked');
 
         $this->widget('POST', '/widget/MD/SPT/report', $this->link(self::THOMAS), ['report' => $form + ['private' => '1', 'includeReport' => '1']]);
