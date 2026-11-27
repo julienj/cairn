@@ -22,7 +22,7 @@
             {% if tags is not empty %}
                 <span class="flex shrink-0 items-center gap-1">
                     {% for tag in tags|slice(0, 2) %}<twig:Ui:Tag :colour="tag.colour.value" size="sm">{{ tag.name }}</twig:Ui:Tag>{% endfor %}
-                    {% if tags|length > 2 %}<span class="relative z-[1] inline-flex h-4 cursor-default items-center rounded bg-sunken px-1 text-[10px] font-medium text-muted" title="{{ tags|slice(2)|map(tag => tag.name)|join(', ') }}">+{{ tags|length - 2 }}</span>{% endif %}
+                    {% if tags|length > 2 %}<twig:Ui:Tag:More :count="tags|length - 2" class="relative z-[1]" title="{{ tags|slice(2)|map(tag => tag.name)|join(', ') }}" />{% endif %}
                 </span>
             {% endif %}
         </div>

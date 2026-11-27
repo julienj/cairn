@@ -1,0 +1,4 @@
+{# The tags an issue carries past those shown beside it, counted: "+2", at the height of a `sm` tag. Their names go in its `title`, read in the tooltip; where a link is stretched under it (a row, a card), the caller lifts it above with its classes. #}
+{% props count %}
+{% set tagMoreClasses = html_cva(base: 'inline-flex h-4 shrink-0 cursor-default items-center rounded bg-sunken px-1 text-[10px] font-medium tabular-nums text-muted') %}
+<span class="{{ tagMoreClasses.apply({}, attributes.render('class'))|tailwind_merge }}" {{ attributes }}>+{{ count }}</span>

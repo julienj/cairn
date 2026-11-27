@@ -51,7 +51,7 @@
                         :private="issue.private or issue.tracker.private"
                         :release="issue.release ? issue.release.name : null"
                     >
-                        <twig:block name="tags">{% for tag in boardCardTagList|slice(0, 2) %}<twig:Ui:Tag :colour="tag.colour.value" size="sm">{{ tag.name }}</twig:Ui:Tag>{% endfor %}{% if boardCardTagList|length > 2 %}<span class="relative z-[1] inline-flex h-4 cursor-default items-center rounded bg-sunken px-1 text-[10px] font-medium text-muted" title="{{ boardCardTagList|slice(2)|map(tag => tag.name)|join(', ') }}">+{{ boardCardTagList|length - 2 }}</span>{% endif %}</twig:block>
+                        <twig:block name="tags">{% for tag in boardCardTagList|slice(0, 2) %}<twig:Ui:Tag :colour="tag.colour.value" size="sm">{{ tag.name }}</twig:Ui:Tag>{% endfor %}{% if boardCardTagList|length > 2 %}<twig:Ui:Tag:More :count="boardCardTagList|length - 2" class="relative z-[1]" title="{{ boardCardTagList|slice(2)|map(tag => tag.name)|join(', ') }}" />{% endif %}</twig:block>
                     </twig:Ui:BoardCard>
                 </li>
             {% endfor %}
