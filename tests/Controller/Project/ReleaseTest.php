@@ -44,14 +44,17 @@ final class ReleaseTest extends WebTestCase
 
     public function testAClientReadsTheReleasesWithoutTheInternalIssues(): void
     {
-        $this->scene->release('2.5.0', ['MD-SPT-3', 'MD-SPT-5', 'MD-SPT-6']);
+        $release = $this->scene->release('2.5.0', ['MD-SPT-3', 'MD-SPT-5', 'MD-SPT-6']);
 
         $this->signInAs('claire.martin@maison-dupont.test');
         $this->client->request('GET', '/MD/SPT/releases');
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('main', '2.5.0');
-        self::assertSelectorTextContains('main', '2 issues');
+        self::assertSelectorTextContains('main', 'Done: 1 of 2', 'the bar counts what is finished, out of what the client sees');
         self::assertSelectorTextContains('main', '50 %');
+        self::assertSelectorTextContains('main a[href*="places"]', 'In progress', 'what is left is told by its step');
+        self::assertSelectorExists(\sprintf('main a[href="/MD/SPT/issues?releases%%5B0%%5D=%d&places%%5B0%%5D=in_progress"]', $release->getId()), 'which leads to those issues');
+        self::assertSelectorTextContains('main', '1 to finish before delivery');
         self::assertSelectorNotExists('a[href="/MD/SPT/releases/new"]');
 
         $this->client->request('GET', '/MD/SPT/releases/new');
@@ -111,8 +114,8 @@ final class ReleaseTest extends WebTestCase
         $release = $this->scene->release();
         $this->signInAs('thomas.girard@cairn.test');
 
-        $this->client->request('GET', '/MD/SPT/releases');
-        $this->client->clickLink('Edit');
+        $crawler = $this->client->request('GET', '/MD/SPT/releases');
+        $this->client->click($crawler->filter('main a[aria-label="Edit"]')->link());
         self::assertRouteSame('app_project_release_edit');
         self::assertSelectorTextContains('[role="dialog"]', $release->getName());
         self::assertSelectorExists(\sprintf('turbo-frame#modal form[name="release"][action="/MD/SPT/releases/%d"]', $release->getId()));

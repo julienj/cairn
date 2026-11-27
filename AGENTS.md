@@ -365,7 +365,11 @@ src/
   "three weeks ago". What a forge wrote is a line like the others,
   unfolded for the rest.
 - **Releases are optional, without a setting**: a project without any
-  release shows none of it.
+  release shows none of it. An open release answers two questions apart:
+  how far it went, a bar that only counts what is finished, and where the
+  rest stands, by the names of the steps in the order the instance
+  declares them (a release holds issues of several workflows, which share
+  no path), never by a colour of their status (`ReleaseSummary`).
 - **Tags are optional the same way, and belong to one project**: a closed
   list its managers keep (`tag.manage`), in a colour of a closed
   palette (`TagColour`, a token each). An issue carries several

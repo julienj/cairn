@@ -1595,16 +1595,23 @@ connected_site:
 
 release:
     title: Releases
-    intro: A release gathers the issues of one delivery. Issues are scheduled from their own page, field Release, or several at once from the selection.
+    intro: "A release groups the issues of one delivery; an issue joins it from its page, or several from the selection."
     new: New release
     create: Create the release
     created: 'Release %name% created.'
     edit: Edit
     save: Save
     saved: Release saved.
-    planned_on: 'planned for %date%'
-    delivered_on: 'on %date%'
-    finished: '{0}none finished|{1}1 finished|]1,Inf[ %count% finished'
+    planned: Planned delivery date
+    late: Past its planned delivery date
+    done: 'Done:'
+    out_of: of
+    left: 'Left:'
+    see_step: See these issues
+    to_finish: '{0}Everything is done|[1,Inf[ %count% to finish before delivery'
+    urgent:
+        blocking: '%count% blocking'
+        high: '%count% high'
     see_issues: See the issues
     past: Delivered and abandoned
     empty: No release in preparation

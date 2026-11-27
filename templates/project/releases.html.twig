@@ -2,7 +2,7 @@
 
 {% block page_title %}{{ 'release.title'|trans }}{% endblock %}
 
-{# The releases of the project: the open ones as cards with their progress (the share of finished issues: statuses are never named), the delivered and abandoned ones as a history. Those who manage releases create and change them in a dialog that has its own address (the `modal` block). #}
+{# The releases of the project. An open one is a card that answers two questions apart: how far it went (a bar that only counts what is finished, out of what there is), and where the rest stands, by the names of the steps, in the order the instance declares them, each a way to the list of those issues; what is blocking or high among them is told beside. Its date turns amber once passed. The delivered and abandoned ones are a history, a line each, which leads to its issues. Those who manage releases create and change them in a dialog that has its own address (the `modal` block). #}
 {% block content %}
     {% set releasesRoute = { workspaceKey: project.workspace.key, projectKey: project.key } %}
     {% set releasesOpen = summaries|filter(summary => summary.release.open) %}
@@ -16,31 +16,50 @@
         <twig:block name="description">{{ 'release.intro'|trans }}</twig:block>
     </twig:Ui:PageHeader>
 
-    <div class="px-4 sm:px-6 py-5 max-w-5xl space-y-4">
+    <div class="px-4 sm:px-6 py-5 max-w-5xl space-y-3.5">
         {% for summary in releasesOpen %}
             {% set release = summary.release %}
-            <section class="rounded-lg border border-line bg-surface px-4 py-3">
-                <div class="flex flex-wrap items-center gap-3">
-                    <h2 class="font-mono text-lg font-semibold text-strong">{{ release.name }}</h2>
+            <section class="rounded-[10px] border border-line bg-surface shadow-sm transition-colors hover:border-line-strong">
+                <div class="px-4 py-3.5">
+                <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
+                    <h2 class="font-mono text-lg font-semibold tracking-tight text-strong">{{ release.name }}</h2>
                     {% if release.plannedOn %}
-                        <span class="inline-flex items-center gap-1 text-xs text-muted"><twig:ux:icon name="lucide:clock" class="h-3.5 w-3.5" />{{ 'release.planned_on'|trans({ '%date%': release.plannedOn|format_date('short') }) }}</span>
+                        <span class="inline-flex h-[22px] items-center gap-1.5 rounded-full px-2 text-xs tabular-nums {{ summary.late ? 'bg-amber-soft text-amber ring-1 ring-inset ring-amber-line' : 'bg-sunken text-body' }}" title="{{ (summary.late ? 'release.late' : 'release.planned')|trans }}"><twig:ux:icon name="lucide:clock" class="h-3 w-3 {{ summary.late ? '' : 'text-faint' }}" />{{ release.plannedOn|format_date('medium') }}</span>
                     {% endif %}
                     {% if releasesManage %}
-                        <div class="ml-auto flex items-center gap-2">
-                            {{ include('project/_release_status.html.twig', { status: 'delivered', variant: summary.total > 0 and summary.progress == 100 ? 'success' : 'secondary' }) }}
-                            <twig:Ui:Button size="sm" icon="pencil" href="{{ path('app_project_release_edit', releasesRoute|merge({ release: release.id })) }}" data-turbo-frame="modal">{{ 'release.edit'|trans }}</twig:Ui:Button>
+                        <div class="ml-auto flex items-center gap-1.5">
+                            {{ include('project/_release_status.html.twig', { status: 'delivered', icon: 'check', variant: summary.total > 0 and summary.progress == 100 ? 'success' : 'secondary' }) }}
+                            <twig:Ui:IconButton icon="pencil" :label="'release.edit'|trans" href="{{ path('app_project_release_edit', releasesRoute|merge({ release: release.id })) }}" data-turbo-frame="modal" />
                         </div>
                     {% endif %}
                 </div>
-                {% if release.description %}<p class="mt-1.5 text-sm text-muted whitespace-pre-line">{{ release.description }}</p>{% endif %}
-                <div class="mt-3 flex items-center gap-3">
-                    <twig:Ui:StackedBar :segments="summary.segments" size="sm" class="flex-1" />
-                    <span class="w-10 text-right text-xs tabular-nums text-body">{{ summary.progress }} %</span>
+                {% if release.description %}<p class="mt-1 whitespace-pre-line text-[13.5px] text-muted">{{ release.description }}</p>{% endif %}
+                {% if summary.total > 0 %}
+                    <div class="mt-3.5">
+                        <div class="flex items-baseline gap-2 text-[12.5px] text-muted">
+                            <span>{{ 'release.done'|trans }} <span class="text-[13px] font-semibold tabular-nums text-strong">{{ summary.done }}</span> {{ 'release.out_of'|trans }} <span class="text-[13px] font-semibold tabular-nums text-strong">{{ summary.total }}</span></span>
+                            <span class="ml-auto font-semibold tabular-nums text-body">{{ summary.progress }} %</span>
+                        </div>
+                        <twig:Ui:ProgressBar :value="summary.done" :max="summary.total" tone="emerald" size="sm" :label="'release.done'|trans" class="mt-2" />
+                    </div>
+                    {% if summary.steps is not empty %}
+                        <div class="mt-3 flex flex-wrap items-center gap-1.5">
+                            <span class="mr-0.5 text-xs text-faint">{{ 'release.left'|trans }}</span>
+                            {% for releasesStep in summary.steps %}
+                                <a href="{{ path('app_project_issues', releasesRoute|merge({ releases: [release.id], places: [releasesStep.place.id] })) }}" title="{{ 'release.see_step'|trans }}" class="inline-flex h-6 items-center gap-1.5 rounded-md bg-subtle pl-2 pr-1.5 text-xs text-body ring-1 ring-inset ring-line hover:bg-brand-soft hover:text-brand hover:ring-brand-line">
+                                    <twig:Ui:Status:Dot :status="releasesStep.place.status.value" />{{ releasesStep.place.label }}
+                                    <span class="min-w-4 rounded bg-surface px-1 text-center text-[11px] font-semibold tabular-nums text-strong">{{ releasesStep.issues }}</span>
+                                </a>
+                            {% endfor %}
+                            {% if summary.blocking > 0 %}<span class="inline-flex h-6 items-center gap-1 rounded-md bg-red-soft px-2 text-xs font-medium text-red ring-1 ring-inset ring-red-line"><twig:ux:icon name="lucide:chevrons-up" class="h-3 w-3" />{{ 'release.urgent.blocking'|trans({ '%count%': summary.blocking }) }}</span>{% endif %}
+                            {% if summary.high > 0 %}<span class="inline-flex h-6 items-center gap-1 rounded-md bg-orange-soft px-2 text-xs font-medium text-orange ring-1 ring-inset ring-orange-line"><twig:ux:icon name="lucide:chevron-up" class="h-3 w-3" />{{ 'release.urgent.high'|trans({ '%count%': summary.high }) }}</span>{% endif %}
+                        </div>
+                    {% endif %}
+                {% endif %}
                 </div>
-                <div class="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted">
-                    <span>{{ 'issue.list.count'|trans({ '%count%': summary.total }) }}</span>
-                    <span>{{ 'release.finished'|trans({ '%count%': summary.byStatus.closed }) }}</span>
-                    <a href="{{ path('app_project_issues', releasesRoute|merge({ releases: [release.id], closed: 1 })) }}" class="ml-auto text-brand hover:underline">{{ 'release.see_issues'|trans }}</a>
+                <div class="flex items-center border-t border-line-subtle px-4 py-2.5 text-xs text-muted">
+                    <span>{{ summary.total == 0 ? 'issue.list.count'|trans({ '%count%': 0 }) : 'release.to_finish'|trans({ '%count%': summary.remaining }) }}</span>
+                    {% if summary.total > 0 %}<a href="{{ path('app_project_issues', releasesRoute|merge({ releases: [release.id], closed: 1 })) }}" class="group/see ml-auto inline-flex items-center gap-1 font-medium text-brand hover:underline">{{ 'release.see_issues'|trans }}<twig:ux:icon name="lucide:arrow-right" class="h-3 w-3 transition-transform group-hover/see:translate-x-0.5" /></a>{% endif %}
                 </div>
             </section>
         {% else %}
@@ -49,19 +68,21 @@
 
         {% if releasesPast is not empty %}
             <twig:Ui:Panel :title="'release.past'|trans" :count="releasesPast|length">
-                <ul class="divide-y divide-line-subtle text-sm">
+                <ul class="divide-y divide-line-subtle text-[13px]">
                     {% for summary in releasesPast %}
                         {% set release = summary.release %}
-                        <li class="flex flex-wrap items-center gap-3 px-4 py-2.5">
-                            <span class="w-24 shrink-0 font-mono font-medium text-body">{{ release.name }}</span>
-                            <twig:Ui:Badge :tone="release.status.value == 'delivered' ? 'emerald' : 'gray'" size="sm">{{ ('release.status.' ~ release.status.value)|trans }}</twig:Ui:Badge>
-                            <span class="flex-1 min-w-0 truncate text-muted">{{ release.description }}</span>
-                            <span class="text-xs tabular-nums text-muted">{{ 'issue.list.count'|trans({ '%count%': summary.total }) }}</span>
-                            {% if release.deliveredAt %}<span class="text-xs text-muted">{{ 'release.delivered_on'|trans({ '%date%': release.deliveredAt|format_date('short') }) }}</span>{% endif %}
-                            <a href="{{ path('app_project_issues', releasesRoute|merge({ releases: [release.id], closed: 1 })) }}" class="text-faint hover:text-brand" title="{{ 'release.see_issues'|trans }}"><twig:ux:icon name="lucide:list" class="h-4 w-4" /></a>
+                        {# The line leads to the issues of the release, by the link of its name, stretched over it; what manages it stands above, and shows when the line is pointed at. #}
+                        <li class="group relative flex min-h-11 flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2 transition-colors last:rounded-b-lg hover:bg-subtle">
+                            <a href="{{ path('app_project_issues', releasesRoute|merge({ releases: [release.id], closed: 1 })) }}" title="{{ 'release.see_issues'|trans }}" class="w-20 shrink-0 font-mono font-semibold text-body after:absolute after:inset-0">{{ release.name }}</a>
+                            <span class="w-24 shrink-0"><twig:Ui:Badge :tone="release.status.value == 'delivered' ? 'emerald' : 'gray'" size="sm" :icon="release.status.value == 'delivered' ? 'check' : null">{{ ('release.status.' ~ release.status.value)|trans }}</twig:Ui:Badge></span>
+                            <span class="min-w-0 flex-1 basis-40 truncate text-muted">{{ release.description }}</span>
+                            <span class="w-28 shrink-0 text-right text-xs tabular-nums text-muted">{{ 'issue.list.count'|trans({ '%count%': summary.total }) }}</span>
+                            <span class="w-24 shrink-0 text-right text-xs tabular-nums text-muted">{% if release.deliveredAt %}{{ release.deliveredAt|format_date('medium') }}{% endif %}</span>
                             {% if releasesManage %}
-                                {{ include('project/_release_status.html.twig', { status: 'open', variant: 'ghost' }) }}
-                                <twig:Ui:IconButton icon="pencil" :label="'release.edit'|trans" href="{{ path('app_project_release_edit', releasesRoute|merge({ release: release.id })) }}" data-turbo-frame="modal" />
+                                <span class="hover-actions relative z-[1] flex shrink-0 items-center gap-0.5">
+                                    {{ include('project/_release_status.html.twig', { status: 'open', variant: 'ghost' }) }}
+                                    <twig:Ui:IconButton icon="pencil" :label="'release.edit'|trans" href="{{ path('app_project_release_edit', releasesRoute|merge({ release: release.id })) }}" data-turbo-frame="modal" />
+                                </span>
                             {% endif %}
                         </li>
                     {% endfor %}

@@ -1595,16 +1595,23 @@ connected_site:
 
 release:
     title: Versions
-    intro: Une version regroupe les demandes d'une même livraison. Le rattachement se fait depuis la fiche demande, propriété Version, ou pour plusieurs depuis la sélection.
+    intro: "Une version regroupe les demandes d'une même livraison ; on y rattache une demande depuis sa fiche, ou plusieurs depuis la sélection."
     new: Nouvelle version
     create: Créer la version
     created: 'Version %name% créée.'
     edit: Modifier
     save: Enregistrer
     saved: Version enregistrée.
-    planned_on: 'prévue le %date%'
-    delivered_on: 'le %date%'
-    finished: '{0}aucune terminée|{1}1 terminée|]1,Inf[ %count% terminées'
+    planned: Date de livraison prévue
+    late: Date de livraison dépassée
+    done: 'Terminées :'
+    out_of: sur
+    left: 'Reste :'
+    see_step: Voir ces demandes
+    to_finish: '{0}Tout est terminé|[1,Inf[ %count% à terminer avant la livraison'
+    urgent:
+        blocking: '{1}1 bloquante|]1,Inf[ %count% bloquantes'
+        high: '{1}1 haute|]1,Inf[ %count% hautes'
     see_issues: Voir les demandes
     past: Livrées et abandonnées
     empty: Aucune version en préparation
