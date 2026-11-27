@@ -3,11 +3,11 @@
 {% set filesCanEdit = this.canEdit %}
 <div {{ attributes }}>
 {% if filesList is not empty or filesCanEdit %}
-<div class="mt-3 border-t border-line-subtle px-2 pt-3">
+<div class="mt-3 border-t border-line-subtle px-2 pb-1 pt-3">
     <div class="flex items-center gap-2 text-xs font-medium text-muted">
         {{ ux_icon('lucide:paperclip', { class: 'h-3.5 w-3.5' }) }}
         {{ 'attachment.title'|trans }}
-        <span class="text-faint">{{ filesList|length }}</span>
+        <span class="text-[11px] tabular-nums text-faint">{{ filesList|length }}</span>
     </div>
     {% if error %}
         <twig:Ui:Callout tone="danger" size="sm" role="alert" class="mt-2">{{ error }}</twig:Ui:Callout>
@@ -24,7 +24,7 @@
             </twig:Ui:Attachment>
         {% endfor %}
         {% if filesCanEdit %}
-            <label class="inline-flex cursor-pointer items-center gap-1 rounded-md border border-dashed border-line-strong px-2.5 py-1.5 text-xs text-muted hover:border-faint hover:text-body">
+            <label class="inline-flex min-h-[46px] cursor-pointer items-center gap-1.5 rounded-lg border border-dashed border-line-strong px-3.5 text-xs text-muted hover:border-brand-line hover:bg-brand-soft hover:text-brand has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-focus" title="{{ 'attachment.add_help'|trans }}">
                 {{ ux_icon('lucide:plus', { class: 'h-3.5 w-3.5' }) }}
                 {{ 'attachment.add'|trans }}
                 <input type="file" name="files[]" multiple class="sr-only" data-controller="file-picker"

@@ -11,6 +11,8 @@
 /* The project navigation folded away on a wide screen (`data-sidebar` on <html>, written by the server
    from the `cairn_sidebar` cookie and by the `sidebar` controller). */
 @custom-variant sidebar-collapsed (&:where([data-sidebar="collapsed"], [data-sidebar="collapsed"] *));
+/* Read on a Mac (`platform` controller): the key of a shortcut is ⌘ there, Ctrl elsewhere (Ui:ModKey). */
+@custom-variant mac (&:where([data-mac], [data-mac] *));
 
 /* Inter and JetBrains Mono (SIL Open Font License), served from here: no third party learns who reads what. */
 @font-face {
@@ -236,6 +238,42 @@ a.issue-reference:hover {
     --tw-prose-pre-bg: var(--color-slate-800);
     --tw-prose-th-borders: var(--color-line-strong);
     --tw-prose-td-borders: var(--color-line);
+}
+
+/* Nothing snaps: what answers the pointer eases in, and a card folds with a movement (a
+   menu opens with one too, written on `Ui:Dropdown`). In the base layer, so that a utility on the element still wins; the
+   movements stop for who asked the system for less of them. */
+@layer base {
+    :root {
+        interpolate-size: allow-keywords;
+        --ease-snap: cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    ::selection {
+        background-color: color-mix(in oklab, var(--color-brand-solid) 32%, transparent);
+    }
+    a, button, summary, label, [role="menuitemcheckbox"] {
+        transition: background-color 120ms ease, color 120ms ease, border-color 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
+    }
+    time {
+        font-variant-numeric: tabular-nums;
+    }
+    /* Clipped while it moves and while it is closed only: a menu opened inside must be free to go past the card. */
+    details::details-content {
+        block-size: 0;
+        overflow: clip;
+        transition: block-size 220ms var(--ease-snap), content-visibility 220ms allow-discrete, overflow 220ms step-start allow-discrete;
+    }
+    details[open]::details-content {
+        block-size: auto;
+        overflow: visible;
+        transition: block-size 220ms var(--ease-snap), content-visibility 220ms allow-discrete, overflow 220ms step-end allow-discrete;
+    }
+    @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after, details::details-content {
+            animation-duration: 0.01ms !important;
+            transition-duration: 0.01ms !important;
+        }
+    }
 }
 
 /* Discreet actions (edit, delete) of a `group`: shown on hover or focus, always on touch screens. */

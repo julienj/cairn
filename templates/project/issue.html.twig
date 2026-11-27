@@ -3,17 +3,19 @@
 {% set issue = detail.issue %}
 
 {% block page_title %}{{ issue.key }}{% endblock %}
+{% block page_heading %}issue{% endblock %}
+{% block nav_tracker %}{{ issue.tracker.id }}{% endblock %}
 
 {% block content %}
     {# Siblings, not nested: a live component's redraw must not touch another one.
-       Header, side panel, then the body: on a phone they stack in that order, so that the properties are read with the title; on a wide screen the panel takes the right column beside both, sticks under the header and scrolls on its own when taller than the screen. #}
-    <div class="px-4 sm:px-6 py-5 max-w-screen-2xl lg:grid lg:grid-cols-[minmax(0,1fr)_18rem] lg:gap-x-8">
+       Header, side panel, then the body: on a phone they stack in that order, so that the properties are read with the title; on a wide screen the panel takes the right column beside both, sticks under the header and the breadcrumb, which stays too, and scrolls on its own when taller than the screen. #}
+    <div class="px-4 sm:px-6 py-5 max-w-screen-2xl lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-x-10">
         <div class="flex items-start gap-3 lg:col-start-1">
             <twig:Issue:Header :issue="issue" class="min-w-0 flex-1" />
             <twig:Issue:Follow :issue="issue" class="shrink-0" />
         </div>
 
-        <aside class="mt-6 lg:mt-0 lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:self-start lg:sticky lg:top-[calc(var(--spacing-header)+1rem)] lg:max-h-[calc(100vh-var(--spacing-header)-2rem)] lg:overflow-y-auto lg:overscroll-contain scrollbar-thin">
+        <aside class="mt-6 lg:mt-0 lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:self-start lg:sticky lg:top-[calc(var(--spacing-header)+3.5rem)] lg:max-h-[calc(100vh-var(--spacing-header)-4.5rem)] lg:overflow-y-auto lg:overscroll-contain scrollbar-thin">
             <div class="space-y-3 lg:px-0.5 lg:pb-1">
                 <twig:Issue:Properties :issue="issue" />
                 <twig:Issue:Budget :issue="issue" />
@@ -25,9 +27,13 @@
         </aside>
 
         <div class="min-w-0 lg:col-start-1">
-            <section class="mt-5 rounded-lg border border-line bg-surface p-3 text-body leading-relaxed">
+            {# A file dragged over the text says where it will land, and goes through the file input of the Files block (`dropzone`). #}
+            <section class="relative mt-5 rounded-lg border border-line bg-surface p-3 text-body leading-relaxed shadow-sm" data-controller="dropzone" data-action="dragenter->dropzone#enter dragover->dropzone#over dragleave->dropzone#leave drop->dropzone#drop">
                 <twig:Issue:Description :issue="issue" />
                 <twig:Issue:Files :issue="issue" />
+                <div class="pointer-events-none absolute inset-1 z-10 flex items-center justify-center gap-2.5 rounded-md border-[1.5px] border-dashed border-focus bg-brand-soft/95 text-[13px] font-medium text-brand opacity-0 transition-opacity duration-150 data-dropping:opacity-100" data-dropzone-target="overlay" aria-hidden="true">
+                    <twig:ux:icon name="lucide:upload" class="h-5 w-5" />{{ 'attachment.drop'|trans }}
+                </div>
             </section>
             <twig:Issue:Activity :issue="issue" />
         </div>

@@ -1,10 +1,10 @@
-{# Trigger + menu driven by the `dropdown` controller. Put the trigger in block `trigger` (it must carry aria-expanded). #}
+{# Trigger + menu driven by the `dropdown` controller. Put the trigger in block `trigger` (it must carry aria-expanded). The menu opens and closes with a short movement, from the corner it hangs by: the controller only adds and removes `hidden`. #}
 {% props align = 'left', width = 'md' %}
 {% set dropdownClasses = html_cva(base: 'relative inline-block') %}
 {% set dropdownMenuClasses = html_cva(
-    base: 'hidden absolute top-full mt-1 z-50 rounded-lg border border-line bg-overlay text-body shadow-xl py-1',
+    base: 'hidden absolute top-full mt-1 z-50 rounded-lg border border-line bg-overlay text-body shadow-xl py-1 transition-[opacity,transform,display] transition-discrete duration-150 starting:-translate-y-1 starting:scale-[0.97] starting:opacity-0 [&.hidden]:-translate-y-1 [&.hidden]:scale-[0.97] [&.hidden]:opacity-0',
     variants: {
-        align: { left: 'left-0', right: 'right-0' },
+        align: { left: 'left-0 origin-top-left', right: 'right-0 origin-top-right' },
         width: { sm: 'w-60', md: 'w-64', lg: 'w-80', full: 'w-full min-w-60' },
     },
 ) %}

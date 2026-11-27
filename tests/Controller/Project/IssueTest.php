@@ -8,6 +8,8 @@ use App\Entity\Comment;
 use App\Entity\Enum\MergeRequestState;
 use App\Message\Command\Forge\RecordCommits;
 use App\Message\Command\Forge\RecordMergeRequest;
+use App\Message\Command\Issue\AddLink;
+use App\Message\Command\Issue\UpdateIssue;
 use App\Tests\KernelHelpers;
 use App\Tests\MessageHandler\Command\Forge\ForgeTestSupport;
 use App\Tests\Scene\ShopScene;
@@ -111,7 +113,7 @@ final class IssueTest extends WebTestCase
         $this->signInAs('nadia.benali@cairn.test');
         $this->client->request('GET', $url);
         self::assertSelectorTextContains('main', $comment->getBody());
-        self::assertSelectorTextContains('main', 'Private · hidden from external users');
+        self::assertSelectorExists('main #comment-'.$comment->getId().' [title="Hidden from external users"]', 'the badge says Private, and why on hover');
 
         $this->signInAs('claire.martin@maison-dupont.test');
         $this->client->request('GET', $url);
@@ -170,7 +172,8 @@ final class IssueTest extends WebTestCase
         $this->signInAs('thomas.girard@cairn.test');
         $this->client->request('GET', $url);
         self::assertResponseIsSuccessful();
-        self::assertSelectorTextContains('main', '2 commits on main');
+        self::assertSelectorTextContains('main ol details summary', '2 commits');
+        self::assertSelectorTextContains('main ol details', 'Open in GitLab');
         self::assertSelectorTextContains('main', 'Merge request !431');
         self::assertSelectorTextContains('main', 'Merged');
         self::assertSelectorTextContains('main aside', '!431', 'the card of the panel, folded, sums the code up');
@@ -183,6 +186,27 @@ final class IssueTest extends WebTestCase
         self::assertSelectorTextNotContains('main', 'maison-dupont/shop');
         self::assertSelectorTextNotContains('main', '!431');
         self::assertSelectorTextNotContains('body', 'a1b2c3d4');
+    }
+
+    public function testTheThreadTellsTheDayOnceAndLinksAnIssueOnlyForWhoMaySeeIt(): void
+    {
+        $nadia = (int) $this->scene->user('nadia.benali@cairn.test')->getId();
+        self::commandBus()->dispatch(new AddLink($nadia, 'MD-SPT-4', 'related', 'MD-SPT-1'));
+
+        $this->signInAs('claire.martin@maison-dupont.test');
+        $crawler = $this->client->request('GET', '/MD/SPT/issues/4');
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('main ol a[href="/MD/SPT/issues/1"]', 'the key of the linked issue leads to it');
+        $days = $crawler->filter('main ol > li > time[datetime]')->each(static fn ($time): string => (string) $time->attr('datetime'));
+        self::assertNotEmpty($days);
+        self::assertSame(array_values(array_unique($days)), $days, 'a day is told once, above its moments');
+        self::assertSelectorTextContains('main', 'To release', 'each action says the step it leads to');
+        self::assertSelectorExists('aside nav a[aria-current="page"][href="/MD/SPT/issues/tracker/'.$this->scene->issue('MD-SPT-4')->getTracker()->getId().'"]', 'the navigation marks the category of the issue');
+
+        self::commandBus()->dispatch(new UpdateIssue($nadia, 'MD-SPT-1', private: true));
+        $this->client->request('GET', '/MD/SPT/issues/4');
+        self::assertSelectorTextContains('main ol.relative', 'MD-SPT-1', 'the journal keeps the key it wrote');
+        self::assertSelectorNotExists('main ol.relative a[href="/MD/SPT/issues/1"]', 'but leads nowhere the reader may not go');
     }
 
     private function signInAs(string $email): void

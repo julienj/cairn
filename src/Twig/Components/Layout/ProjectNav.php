@@ -25,6 +25,9 @@ final class ProjectNav
 {
     public Project $project;
 
+    /** The id of the tracker the page is about, when it is about one (the page of an issue). */
+    public ?string $currentTracker = null;
+
     public function __construct(
         private readonly QueryBus $queries,
         private readonly ReleaseRepository $releases,

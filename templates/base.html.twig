@@ -15,8 +15,11 @@
             {{ reprise_entry_script_tags('app', attributes={'data-turbo-track': 'reload'}) }}
         {% endblock %}
     </head>
-    <body class="min-h-screen bg-canvas text-body text-sm antialiased">
+    <body class="min-h-screen bg-canvas text-body text-sm antialiased" data-controller="platform">
         {% block body %}{% endblock %}
+        {# Drawn once for every page: the tooltip, and the figure a picture opens in. #}
+        <twig:Ui:Tooltip />
+        <twig:Ui:Lightbox />
         {# The flash messages of the session, as toasts; a layout without a session (the widget) draws the toaster alone. #}
         {% block toasts %}
             <twig:Ui:Toaster>

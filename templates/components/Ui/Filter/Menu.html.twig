@@ -3,8 +3,8 @@
 {% props label, count = 0, active = false, align = 'left' %}
 {% set filterMenuClasses = html_cva(base: 'group/filter relative') %}
 {% set filterMenuPanelClasses = html_cva(
-    base: 'hidden absolute top-8 z-30 w-60 rounded-lg border border-line bg-overlay shadow-xl',
-    variants: { align: { left: 'left-0', right: 'right-0' } },
+    base: 'hidden absolute top-8 z-30 w-60 rounded-lg border border-line bg-overlay shadow-xl transition-[opacity,transform,display] transition-discrete duration-150 starting:-translate-y-1 starting:scale-[0.97] starting:opacity-0 [&.hidden]:-translate-y-1 [&.hidden]:scale-[0.97] [&.hidden]:opacity-0',
+    variants: { align: { left: 'left-0 origin-top-left', right: 'right-0 origin-top-right' } },
 ) %}
 {% set filterMenuTriggerClasses = html_cva(base: 'inline-flex h-7 items-center gap-1 rounded-md border border-line bg-surface px-2 text-xs text-body hover:bg-subtle group-data-[active]/filter:border-brand-line group-data-[active]/filter:bg-brand-soft') %}
 <div class="{{ filterMenuClasses.apply({}, attributes.render('class'))|tailwind_merge }}" data-controller="dropdown" data-filter-menu {{ active or count > 0 ? 'data-active' }} {{ attributes }}>

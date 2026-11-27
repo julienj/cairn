@@ -6,7 +6,7 @@
         <twig:block name="summary">
             {% for subscribersRow in subscribersTeams|slice(0, 2) %}<twig:Team:Avatar :team="subscribersRow.team" size="sm" class="ml-1" />{% endfor %}
             {% if subscribersList is not empty %}
-                <twig:Ui:AvatarStack :overflow="max(0, subscribersList|length - 4)" class="ml-1 -space-x-1 [&>*]:h-5 [&>*]:w-5 [&>*]:text-[9px]">
+                <twig:Ui:AvatarStack :overflow="max(0, subscribersList|length - 4)" size="sm" class="ml-1">
                     {% for subscriber in subscribersList|slice(0, 4) %}
                         <twig:User:Avatar :user="subscriber" size="sm" />
                     {% endfor %}
@@ -32,10 +32,10 @@
             {% if subscribersList is empty %}
                 {% if subscribersTeams is empty %}<p class="text-xs text-faint">{{ 'issue.subscribers.none'|trans }}</p>{% endif %}
             {% else %}
-                <ul class="space-y-1 text-[13px] text-body">
+                <ul class="space-y-1.5 text-[13px] text-body">
                     {% for subscriber in subscribersList %}
-                        <li class="flex items-center gap-2">
-                            <twig:User:Avatar :user="subscriber" size="sm" />
+                        <li class="flex items-center gap-2.5">
+                            <twig:User:Avatar :user="subscriber" size="md" />
                             <span class="truncate">{{ subscriber.fullName }}</span>
                         </li>
                     {% endfor %}

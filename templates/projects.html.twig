@@ -30,7 +30,7 @@
                                 {% if project.archived %}<twig:Ui:Badge size="sm">{{ 'project.summary.read_only'|trans }}</twig:Ui:Badge>{% endif %}
                                 <span class="ml-auto hidden sm:inline-flex items-center gap-2 text-xs text-muted">
                                     {% if summary.waiting %}<span class="inline-flex items-center gap-1" title="{{ 'project.summary.waiting'|trans }}"><twig:Ui:Status:Dot status="waiting" />{{ summary.waiting }}</span>{% endif %}
-                                    {% if summary.blocking %}<span class="inline-flex items-center gap-1 text-red" title="{{ 'project.summary.blocking'|trans }}">▲ {{ summary.blocking }}</span>{% endif %}
+                                    {% if summary.blocking %}<span class="inline-flex items-center gap-1 text-red" title="{{ 'project.summary.blocking'|trans }}"><twig:ux:icon name="lucide:chevrons-up" class="h-3 w-3 [&_*]:stroke-3" />{{ summary.blocking }}</span>{% endif %}
                                 </span>
                                 <span class="w-24 text-right text-xs tabular-nums {{ summary.open ? 'text-body' : 'text-ghost' }}">{{ 'project.summary.open'|trans({ '%count%': summary.open }) }}</span>
                             </a>

@@ -1,0 +1,3 @@
+component: Ui:ModKey
+variants:
+    default: {}

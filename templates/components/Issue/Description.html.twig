@@ -14,7 +14,7 @@
             <div class="mt-2 flex items-center gap-2">
                 <twig:Ui:Button variant="primary" size="sm" type="submit" data-loading="addAttribute(disabled)">{{ 'issue.edit.save'|trans }}</twig:Ui:Button>
                 <twig:Ui:Button variant="ghost" size="sm" data-action="live#action" data-live-action-param="cancelDescription">{{ 'issue.edit.cancel'|trans }}</twig:Ui:Button>
-                <span class="ml-auto text-xs text-faint">{{ 'issue.edit.description_hint'|trans }}</span>
+                <span class="ml-auto text-xs text-faint"><twig:Ui:ModKey /> {{ 'issue.edit.description_hint'|trans }}</span>
             </div>
         </form>
     {% elseif this.canEdit %}

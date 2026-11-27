@@ -96,6 +96,12 @@ issue:
         change_property: 'Change %property%'
         workflow: View the workflow
         search_member: Search a member…
+        edit_fields: Edit the fields
+        copy_url: Copy the address
+        url_copied: Copied
+        search_tag: Search a tag…
+        no_tag_match: No tag matches.
+        manage_tags: Manage tags
         team: Team
         no_member: No member matches.
         system: Cairn
@@ -141,9 +147,11 @@ issue:
     code:
         title: Code
         commits_count: '{1} 1 commit|]1,Inf[ %count% commits'
-        by: 'by %author%'
+        branch: Branch
+        repository: Repository
+        author: Author
+        open: 'Open in %forge%'
         heading:
-            commits: '{1} 1 commit on %branch%|]1,Inf[ %count% commits on %branch%'
             merge_request: 'Merge request !%number%'
         state:
             opened: Open
@@ -160,11 +168,13 @@ issue:
         delete_confirm: Delete this comment? Its text stays in the history.
         delete_yes: Delete
         deleted: Comment deleted.
-        edit_hint: Cmd+Enter saves · Esc cancels
+        edit_hint: Enter to save · Esc to cancel
         updated: Comment updated.
         submit: Comment
         submit_private: Comment privately
         private: Private
+        private_help: Hidden from external users
+        send_hint: Enter to send
         private_badge: Private · hidden from external users
         empty: The comment is empty.
         added: Comment added.
@@ -172,9 +182,8 @@ issue:
         edit_title: Edit the title
         edit_description: Edit the description
         title_hint: Enter to save · Esc to cancel
-        description_hint: ⌘ Enter to save · Esc to cancel
+        description_hint: Enter to save · Esc to cancel
         title_invalid: The title is required and is at most 200 characters long.
-        edit: Edit
         save: Save
         cancel: Cancel
     action:
@@ -182,6 +191,8 @@ issue:
         refused: The action could not be applied.
     transition:
         comment_required: This action needs a comment.
+        confirm_hint: Enter to confirm
+        leads_to: The issue will move to this step
         applied: '%key%: "%transition%" applied.'
     respond:
         question: What would you like to do?
@@ -454,6 +465,9 @@ attachment:
     choose: Drop files here or browse
     limit: Screenshots, exports, logs · 10 MB max per file
     refused: This file could not be sent.
+    add_help: Or drop a file on the description
+    drop: Drop to attach to the issue
+    lightbox_hint: Esc to close
     unit:
         b: '%size% B'
         kb: '%size% KB'

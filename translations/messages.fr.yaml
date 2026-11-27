@@ -96,6 +96,12 @@ issue:
         change_property: 'Modifier « %property% »'
         workflow: Voir le workflow
         search_member: Rechercher un membre…
+        edit_fields: Modifier les champs
+        copy_url: Copier l'adresse
+        url_copied: Copié
+        search_tag: Rechercher une étiquette…
+        no_tag_match: Aucune étiquette ne correspond.
+        manage_tags: Gérer les étiquettes
         team: Équipe
         no_member: Aucun membre ne correspond.
         system: Cairn
@@ -141,9 +147,11 @@ issue:
     code:
         title: Code
         commits_count: '{1} 1 commit|]1,Inf[ %count% commits'
-        by: 'par %author%'
+        branch: Branche
+        repository: Dépôt
+        author: Auteur
+        open: 'Ouvrir dans %forge%'
         heading:
-            commits: '{1} 1 commit sur %branch%|]1,Inf[ %count% commits sur %branch%'
             merge_request: 'Merge request !%number%'
         state:
             opened: Ouverte
@@ -160,11 +168,13 @@ issue:
         delete_confirm: Supprimer ce commentaire ? Son texte restera dans l'historique.
         delete_yes: Supprimer
         deleted: Commentaire supprimé.
-        edit_hint: ⌘ Entrée pour enregistrer · Échap pour annuler
+        edit_hint: Entrée pour enregistrer · Échap pour annuler
         updated: Commentaire modifié.
         submit: Commenter
         submit_private: Commenter en privé
         private: Privé
+        private_help: Invisible pour les externes
+        send_hint: Entrée pour envoyer
         private_badge: Privé · invisible pour les externes
         empty: Le commentaire est vide.
         added: Commentaire ajouté.
@@ -172,9 +182,8 @@ issue:
         edit_title: Modifier le titre
         edit_description: Modifier la description
         title_hint: Entrée pour enregistrer · Échap pour annuler
-        description_hint: ⌘ Entrée pour enregistrer · Échap pour annuler
+        description_hint: Entrée pour enregistrer · Échap pour annuler
         title_invalid: Le titre est obligatoire et ne dépasse pas 200 caractères.
-        edit: Modifier
         save: Enregistrer
         cancel: Annuler
     action:
@@ -182,6 +191,8 @@ issue:
         refused: L'action n'a pas pu être appliquée.
     transition:
         comment_required: Cette action demande un commentaire.
+        confirm_hint: Entrée pour confirmer
+        leads_to: La demande passera à cette étape
         applied: '%key% : « %transition% » appliquée.'
     respond:
         question: Que souhaitez-vous faire ?
@@ -454,6 +465,9 @@ attachment:
     choose: Glissez des fichiers ici ou parcourez
     limit: Captures, exports, logs · 10 Mo max par fichier
     refused: Ce fichier n'a pas pu être envoyé.
+    add_help: Ou déposez un fichier sur la description
+    drop: Déposer pour joindre à la demande
+    lightbox_hint: Échap pour fermer
     unit:
         b: '%size% o'
         kb: '%size% Ko'

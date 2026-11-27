@@ -3,3 +3,5 @@ variants:
     unchecked: { args: { count: 2 }, blocks: { content: Git } }
     checked: { args: { count: 5, checked: true }, blocks: { content: Historique } }
     without_count: { args: { checked: true }, blocks: { content: History } }
+    chip_on: { args: { variant: chip, icon: history, count: 8, checked: true }, blocks: { content: Historique } }
+    chip_off: { args: { variant: chip, icon: git-branch, count: 3 }, blocks: { content: Git } }
