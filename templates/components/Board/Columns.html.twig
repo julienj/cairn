@@ -1,6 +1,6 @@
-{# The kanban of a tracker: one column per place of its workflow, each loaded when it shows (loading="lazy"), or at once in the answer of the frame (`eager`) so that a change of filter shows no placeholder, and by batches, the closed places folded, then the component that moves cards. Columns and the mover are siblings: none redraws another. Each column receives the filters of the address as the list reads them. #}
+{# The kanban of a tracker: one column per place of its workflow, each loaded when it shows (loading="lazy"), or at once in the answer of the frame (`eager`) so that a change of filter shows no placeholder, and by batches, the closed places folded, then the component that moves cards. When there are more columns than the screen shows, the one at the right edge fades out, and the scroll comes to rest on the edge of a column. Columns and the mover are siblings: none redraws another. Each column receives the filters of the address as the list reads them. #}
 <div {{ attributes }}>
-    <div data-keep-scroll-target="area" class="flex items-stretch gap-3 overflow-x-auto px-4 sm:px-6 py-4" style="height: calc(100vh - 14.5rem)">
+    <div data-keep-scroll-target="area" class="flex snap-x snap-proximity scroll-px-4 items-stretch gap-3 overflow-x-auto px-4 py-4 sm:scroll-px-6 sm:px-6 [mask-image:linear-gradient(to_right,black_calc(100%-1rem),transparent)]" style="height: calc(100vh - 14.5rem)">
         {% for columnsPlace in this.places %}
             <twig:Board:Column
                 :loading="eager ? false : 'lazy'"

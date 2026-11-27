@@ -38,6 +38,7 @@ issue:
         views: Views of the category
         more: 'Show more (%count%)'
         fold: Fold
+        empty: No issue
         unfold: 'Unfold %place%'
         not_allowed: This issue cannot go to that step.
         choose: Which action?

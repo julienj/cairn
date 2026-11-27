@@ -38,6 +38,7 @@ issue:
         views: Vues de la catégorie
         more: 'Afficher plus (%count%)'
         fold: Replier
+        empty: Aucune demande
         unfold: 'Déplier %place%'
         not_allowed: Cette demande ne peut pas aller à cette étape.
         choose: Quelle action ?

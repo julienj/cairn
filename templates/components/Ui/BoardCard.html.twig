@@ -1,28 +1,26 @@
-{# A card of the kanban: the key and title linking to the issue, a left edge in the colour of the criticality, the release, its tags (block `tags`), a lock when private, the assignee. The drag and drop data goes on the list item around it. #}
+{# A card of the kanban: the title first, which opens the issue from anywhere on the card (its link is stretched over it; a drag stays a drag), then its tags (block `tags`), then one line for the rest: the key, a lock when private, the criticality when it matters, the release, and the assignee at the end. A left edge in the colour of the criticality marks what is high or blocking, and nothing else. The drag and drop data goes on the list item around it. #}
 {% props key, title, href = '#', criticality = 'normal', assignee = null, assigneeKind = 'internal', assigneeAvatar = null, assigneeShape = 'round', private = false, release = null %}
 {% set boardCardClasses = html_cva(
-    base: 'block rounded-md border border-line border-l-4 bg-surface p-2.5 shadow-sm hover:border-line-strong',
+    base: 'group/card relative block rounded-md border border-line bg-surface p-2.5 shadow-sm transition hover:-translate-y-px hover:border-line-strong hover:shadow-md',
     variants: {
         criticality: {
-            blocking: 'border-l-red-solid',
-            high: 'border-l-orange-solid',
-            normal: 'border-l-line',
-            low: 'border-l-line-subtle',
+            blocking: 'border-l-4 border-l-red-solid hover:border-l-red-solid',
+            high: 'border-l-4 border-l-orange-solid hover:border-l-orange-solid',
+            normal: '',
+            low: '',
         },
         private: { true: 'bg-amber-soft/40' },
     },
 ) %}
 <article class="{{ boardCardClasses.apply({ criticality: criticality, private: private }, attributes.render('class'))|tailwind_merge }}" {{ attributes }}>
-    <div class="flex items-center gap-1.5">
-        <twig:Ui:IssueKey :key="key" size="sm" :href="href" />
-        {% if private %}<twig:ux:icon name="lucide:lock" class="h-3 w-3 text-amber" />{% endif %}
-        {% if criticality in ['blocking', 'high'] %}<twig:Ui:Criticality:Badge :criticality="criticality" iconOnly />{% endif %}
-        {% if assignee %}<twig:Ui:Avatar :name="assignee" :kind="assigneeKind" :src="assigneeAvatar" :shape="assigneeShape" size="md" class="ml-auto -my-1" />{% endif %}
-    </div>
-    <a href="{{ href }}" class="mt-1 block text-sm leading-snug text-strong hover:text-brand">{{ title }}</a>
+    <a href="{{ href }}" class="block text-sm leading-snug text-strong after:absolute after:inset-0 after:rounded-md focus:outline-none focus-visible:after:ring-2 focus-visible:after:ring-focus group-hover/card:text-brand">{{ title }}</a>
     {% set boardCardTags %}{% block tags %}{% endblock %}{% endset %}
-    {% if boardCardTags|trim is not empty %}<div class="mt-1.5 flex flex-wrap gap-1">{{ boardCardTags }}</div>{% endif %}
-    {% if release %}
-        <span class="mt-1.5 inline-flex rounded bg-sunken px-1.5 py-0.5 font-mono text-[11px] text-muted">{{ release }}</span>
-    {% endif %}
+    {% if boardCardTags|trim is not empty %}<div class="mt-1.5 flex flex-wrap items-center gap-1">{{ boardCardTags }}</div>{% endif %}
+    <div class="mt-2 flex min-h-6 items-center gap-1.5">
+        <twig:Ui:IssueKey :key="key" size="sm" />
+        {% if private %}<span class="relative z-[1] inline-flex text-amber" title="{{ 'issue.private'|trans }} · {{ 'issue.comment.private_help'|trans }}"><twig:ux:icon name="lucide:lock" class="h-3 w-3" /></span>{% endif %}
+        {% if criticality in ['blocking', 'high'] %}<twig:Ui:Criticality:Badge :criticality="criticality" iconOnly class="relative z-[1]" />{% endif %}
+        {% if release %}<span class="inline-flex rounded bg-sunken px-1.5 py-0.5 font-mono text-[11px] text-muted">{{ release }}</span>{% endif %}
+        {% if assignee %}<span class="relative z-[1] ml-auto inline-flex"><twig:Ui:Avatar :name="assignee" :kind="assigneeKind" :src="assigneeAvatar" :shape="assigneeShape" size="md" /></span>{% endif %}
+    </div>
 </article>
