@@ -3,5 +3,5 @@ variants:
     blocking: { args: { criticality: blocking } }
     high: { args: { criticality: high } }
     normal: { args: { criticality: normal } }
-    low: { args: { criticality: low } }
+    quiet: { args: { criticality: low, quiet: true } }
     icon_only: { args: { criticality: blocking, iconOnly: true } }

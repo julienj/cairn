@@ -213,11 +213,34 @@ final class IssueListTest extends WebTestCase
     {
         $this->signInAs('nadia.benali@cairn.test');
         $issue = $this->scene->issue('MD-SPT-1');
-        $formatter = new \IntlDateFormatter('en', \IntlDateFormatter::SHORT, \IntlDateFormatter::SHORT, $issue->getUpdatedAt()->getTimezone());
+        $date = new \IntlDateFormatter('en', \IntlDateFormatter::MEDIUM, \IntlDateFormatter::NONE, $issue->getUpdatedAt()->getTimezone());
+        $time = new \IntlDateFormatter('en', \IntlDateFormatter::NONE, \IntlDateFormatter::SHORT, $issue->getUpdatedAt()->getTimezone());
 
         $this->client->request('GET', '/MD/SPT/issues?q=spinner');
 
-        self::assertSelectorTextContains('tbody tr', (string) $formatter->format($issue->getUpdatedAt()));
+        self::assertSelectorTextContains('tbody tr time', $date->format($issue->getUpdatedAt()).' '.$time->format($issue->getUpdatedAt()), 'the day with its year, then the hour');
+    }
+
+    public function testARowIsOneLineThatOpensItsIssue(): void
+    {
+        $this->scene->tag('Back office', keys: ['MD-SPT-1']);
+        $this->scene->tag('Front office', keys: ['MD-SPT-1']);
+        $this->scene->tag('Mobile', keys: ['MD-SPT-1']);
+        $this->signInAs('nadia.benali@cairn.test');
+
+        $crawler = $this->client->request('GET', '/MD/SPT/issues?q=spinner');
+
+        self::assertResponseIsSuccessful();
+        $row = $crawler->filter('tbody tr');
+        self::assertCount(1, $row->filter('a[href="/MD/SPT/issues/1"]'), 'one link, stretched over the row by its classes');
+        self::assertStringContainsString('after:absolute', (string) $row->filter('a[href="/MD/SPT/issues/1"]')->attr('class'));
+        self::assertSame('Endless spinner on the cart page', $row->filter('a[href="/MD/SPT/issues/1"]')->attr('title'), 'a title that is cut is read whole in its tooltip');
+        self::assertSelectorTextContains('tbody tr', 'Back office');
+        self::assertSelectorTextContains('tbody tr', 'Front office');
+        self::assertSelectorTextNotContains('tbody tr', 'Mobile');
+        self::assertSame('Mobile', $row->filter('span[title="Mobile"]')->attr('title'), 'the tags past the second are counted, and named on hover');
+        self::assertSelectorTextContains('tbody tr span[title="Mobile"]', '+1');
+        self::assertSelectorTextContains('turbo-frame#issues p', '1 issue');
     }
 
     public function testAChangeOfTheListAsksForTheFrameOfItsResultsOnly(): void

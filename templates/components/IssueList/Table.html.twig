@@ -7,18 +7,22 @@
 {% set tableColumns = this.columns %}
 {% set tableShowProject = scope.showProject %}
 {% set tableTags = this.tags %}
+{# A checkbox of the table shows when its row is pointed at, as soon as one is checked, when the keyboard is on it, and always where nothing hovers (a touch screen, a row drawn as a card). #}
+{% set tableBoxClasses = 'h-3.5 w-3.5 rounded border-line-strong text-brand transition-opacity pointer-fine:sm:opacity-0 pointer-fine:sm:checked:opacity-100 pointer-fine:sm:indeterminate:opacity-100 pointer-fine:sm:focus-visible:opacity-100 pointer-fine:sm:group-hover:opacity-100 pointer-fine:sm:group-has-[:checked]/table:opacity-100' %}
+{% set tableCount = 'issue.list.count'|trans({ '%count%': tableIssues.total })|split(' ', 2) %}
 <div {{ attributes.defaults({ class: 'px-4 sm:px-6 py-4 space-y-3' }) }} data-controller="selection"
     data-selection-one-value="{{ 'issue.bulk.selected.one'|trans }}"
     data-selection-other-value="{{ 'issue.bulk.selected.other'|trans }}">
-    <p class="text-xs text-faint">{{ 'issue.list.count'|trans({ '%count%': tableIssues.total }) }}</p>
+    {# How many the list holds: the number first, read at a glance as the filters change it. #}
+    <p class="text-xs text-muted">{% if tableCount|length == 2 and tableCount[0] matches '/^\\d+$/' %}<span class="font-semibold tabular-nums text-strong">{{ tableCount[0] }}</span> {{ tableCount[1] }}{% else %}{{ tableCount|join(' ') }}{% endif %}</p>
     {% if tableIssues.items is empty %}
         <twig:Ui:EmptyState :title="'issue.list.empty'|trans" bordered>{{ 'issue.list.empty_hint'|trans }}</twig:Ui:EmptyState>
     {% else %}
-        <twig:Ui:Table stickyHead data-controller="fold" data-fold-key-value="{{ scope.path }}#{{ tableGrouping ? tableGrouping.value }}">
+        <twig:Ui:Table stickyHead class="group/table" data-controller="fold" data-fold-key-value="{{ scope.path }}#{{ tableGrouping ? tableGrouping.value }}">
             <twig:block name="head">
-                <th class="px-3 py-2 w-8">
+                <th class="group px-3 py-2 w-8">
                     <label class="-m-2 inline-flex p-2 align-middle">
-                        <input type="checkbox" aria-label="{{ 'issue.bulk.select_page'|trans }}" data-selection-target="all" data-action="selection#togglePage" class="h-3.5 w-3.5 rounded border-line-strong text-brand">
+                        <input type="checkbox" aria-label="{{ 'issue.bulk.select_page'|trans }}" data-selection-target="all" data-action="selection#togglePage" class="{{ tableBoxClasses }}">
                     </label>
                 </th>
                 {% for tableColumn in tableColumns %}
@@ -26,7 +30,7 @@
                         :href="tableComponent.sortUrl(tableColumn)" data-turbo-frame="issues"
                         :direction="tableComponent.sortDirection(tableColumn)"
                         :align="tableColumn == 'updated' ? 'right' : 'left'"
-                        class="{{ { key: 'w-32', project: 'w-44', title: '', tracker: 'w-32', place: 'w-44', criticality: 'w-28', assignee: 'w-12', updated: 'w-28' }[tableColumn] }}"
+                        class="{{ { key: 'w-32', project: 'w-44', title: '', tracker: 'w-32', place: 'w-44', criticality: 'w-28', assignee: 'w-12', updated: 'w-40' }[tableColumn] }}"
                     >{{ ('issue.list.column.' ~ tableColumn)|trans }}</twig:Ui:Table:SortHeader>
                 {% endfor %}
             </twig:block>
@@ -50,10 +54,10 @@
                             <span>{{ tableGroupIssue.project.name }} <span class="font-normal text-faint">· {{ tableGroupIssue.project.workspace.name }}</span></span>
                         {% endif %}
                     </twig:Ui:Table:GroupRow>
-                    {% for issue in tableGroup.issues %}{{ include('components/IssueList/_row.html.twig', { group: tableGroup.key, showProject: tableShowProject, tags: tableTags[issue.id] ?? [] }) }}{% endfor %}
+                    {% for issue in tableGroup.issues %}{{ include('components/IssueList/_row.html.twig', { rowBoxClasses: tableBoxClasses, group: tableGroup.key, showProject: tableShowProject, tags: tableTags[issue.id] ?? [] }) }}{% endfor %}
                 {% endfor %}
             {% else %}
-                {% for issue in tableIssues.items %}{{ include('components/IssueList/_row.html.twig', { group: null, showProject: tableShowProject, tags: tableTags[issue.id] ?? [] }) }}{% endfor %}
+                {% for issue in tableIssues.items %}{{ include('components/IssueList/_row.html.twig', { rowBoxClasses: tableBoxClasses, group: null, showProject: tableShowProject, tags: tableTags[issue.id] ?? [] }) }}{% endfor %}
             {% endif %}
         </twig:Ui:Table>
     {% endif %}
