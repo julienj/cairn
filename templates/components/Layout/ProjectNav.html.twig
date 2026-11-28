@@ -1,4 +1,4 @@
-{# Project level: the issue lists and the releases, the trackers the viewer may see (archived ones at their place, under the archive icon), each list with its count of open issues, then the configuration of the project, one item per subject, each under a permission of its own: the section shows once the viewer holds one of them, with the items that are theirs. On a wide screen it folds away (`sidebar-collapsed`), from the button of the breadcrumb (`layout/project.html.twig`). #}
+{# Project level: the issue lists and the releases, the trackers the viewer may see (archived ones at their place, under the archive icon), each list with its count of open issues, the category of the issue being read marked as the list is (`currentTracker`), then the configuration of the project, one item per subject, each under a permission of its own: the section shows once the viewer holds one of them, with the items that are theirs. On a wide screen it folds away (`sidebar-collapsed`), from the button of the breadcrumb (`layout/project.html.twig`). #}
 {% set route = { workspaceKey: project.workspace.key, projectKey: project.key } %}
 {% set navTrackers = this.trackers %}
 {% set navCounts = this.counts %}
@@ -20,7 +20,7 @@
     {% if navTrackers is not empty %}
         <twig:Ui:Layout:Sidebar:Section :label="'nav.project.trackers'|trans">
             {% for tracker in navTrackers %}
-                <twig:Ui:Layout:Sidebar:Item href="{{ path('app_project_issues_tracker', route|merge({ tracker: tracker.id })) }}" :icon="tracker.archived ? 'archive' : 'kanban'" :count="navCounts.of(tracker)" :locked="tracker.private" :active="app.current_route == 'app_project_issues_tracker' and app.current_route_parameters.tracker == tracker.id">{{ tracker.name }}</twig:Ui:Layout:Sidebar:Item>
+                <twig:Ui:Layout:Sidebar:Item href="{{ path('app_project_issues_tracker', route|merge({ tracker: tracker.id })) }}" :icon="tracker.archived ? 'archive' : 'kanban'" :count="navCounts.of(tracker)" :locked="tracker.private" :active="(app.current_route == 'app_project_issues_tracker' and app.current_route_parameters.tracker == tracker.id) or (currentTracker is not null and currentTracker == tracker.id)">{{ tracker.name }}</twig:Ui:Layout:Sidebar:Item>
             {% endfor %}
         </twig:Ui:Layout:Sidebar:Section>
     {% endif %}

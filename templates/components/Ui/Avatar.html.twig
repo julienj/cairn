@@ -1,5 +1,5 @@
 {# Initials on a colour that tells internal (indigo) from external (emerald) and system (orange). No name: "?" for unassigned. A person is a disc; `shape="square"` draws a team.
-   `src` is the picture the person chose (`avatar_url(user)`): it replaces the initials, and the colour of the kind stays as a ring around it. #}
+   `src` is the picture the person chose (`avatar_url(user)`): it replaces the initials, and the colour of the kind stays as a ring around it, a gap apart so that it does not eat the face; under 24px there is no room for the gap, and the ring touches the picture. #}
 {% props name = null, kind = 'internal', size = 'md', src = null, shape = 'round' %}
 {% set avatarClasses = html_cva(
     base: 'inline-flex shrink-0 items-center justify-center rounded-full font-semibold',
@@ -28,10 +28,21 @@
 {% endif %}
 {% if name and src %}
     {% set avatarImageClasses = html_cva(
-        base: 'object-cover ring-1',
-        variants: { kind: { internal: 'ring-brand-solid', external: 'ring-emerald-solid', system: 'ring-orange-solid' } },
+        base: 'object-cover',
+        variants: {
+            kind: { internal: '', external: '', system: '' },
+            gap: { true: 'border-[1.5px] p-[1.5px]', false: 'ring-1' },
+        },
+        compoundVariants: [
+            { kind: ['internal'], gap: [true], class: 'border-brand-solid' },
+            { kind: ['external'], gap: [true], class: 'border-emerald-solid' },
+            { kind: ['system'], gap: [true], class: 'border-orange-solid' },
+            { kind: ['internal'], gap: [false], class: 'ring-brand-solid' },
+            { kind: ['external'], gap: [false], class: 'ring-emerald-solid' },
+            { kind: ['system'], gap: [false], class: 'ring-orange-solid' },
+        ],
     ) %}
-    <img src="{{ src }}" alt="{{ name }}" title="{{ name }}" loading="lazy" class="{{ (avatarClasses.apply({ size: size, shape: shape }) ~ ' ' ~ avatarImageClasses.apply({ kind: kind }, attributes.render('class')))|tailwind_merge }}" {{ attributes }}>
+    <img src="{{ src }}" alt="{{ name }}" title="{{ name }}" loading="lazy" class="{{ (avatarClasses.apply({ size: size, shape: shape }) ~ ' ' ~ avatarImageClasses.apply({ kind: kind, gap: size not in ['xs', 'sm'] }, attributes.render('class')))|tailwind_merge }}" {{ attributes }}>
 {% else %}
     <span class="{{ avatarClasses.apply({ kind: name ? kind : 'unassigned', size: size, shape: shape }, attributes.render('class'))|tailwind_merge }}" title="{{ name ?? 'issue.unassigned'|trans }}" {{ attributes }}>{{ name ? avatarInitials : '?' }}</span>
 {% endif %}

@@ -1,9 +1,13 @@
-{# Overlapping avatars given as content; `overflow` adds a "+N" bubble. #}
-{% props overflow = 0 %}
-{% set avatarStackClasses = html_cva(base: 'flex -space-x-1.5 [&>*]:ring-2 [&>*]:ring-surface') %}
+{# Avatars given as content, side by side: one over another cuts the initials and hides the faces. `overflow` adds a "+N" bubble, of the `size` of the avatars beside it. #}
+{% props overflow = 0, size = 'lg' %}
+{% set avatarStackClasses = html_cva(base: 'flex items-center gap-1') %}
+{% set avatarStackOverflowClasses = html_cva(
+    base: 'inline-flex shrink-0 items-center justify-center rounded-full bg-sunken font-medium text-muted',
+    variants: { size: { sm: 'h-5 w-5 text-[9px]', md: 'h-6 w-6 text-[10px]', lg: 'h-7 w-7 text-[10px]' } },
+) %}
 <span class="{{ avatarStackClasses.apply({}, attributes.render('class'))|tailwind_merge }}" {{ attributes }}>
     {% block content %}{% endblock %}
     {% if overflow > 0 %}
-        <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-sunken text-[10px] font-medium text-muted">+{{ overflow }}</span>
+        <span class="{{ avatarStackOverflowClasses.apply({ size: size }) }}">+{{ overflow }}</span>
     {% endif %}
 </span>

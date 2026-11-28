@@ -1,6 +1,6 @@
 {# Base of every page of a project (`/MD/SPT/…`): the shell with the header and the project navigation, a breadcrumb ending with the page title, then a banner when the project is read-only (archived, or its workspace).
    A button at the head of the breadcrumb folds the project navigation away on a wide screen, and the next pages keep it so (`sidebar_collapsed()`).
-   Pages extend it with `project` in their context and fill `page_title` and `content`; `page_section` names, in the breadcrumb, the part of the project a page belongs to (Configuration). `modal` is the `modal` Turbo frame every page has, empty unless the page fills it with its dialog (`project/_form_dialog.html.twig`): a request made for the frame is answered with this block alone (`Controller/OpensDialog`), so it reads nothing the rest of the page sets. The blocks are captured before the shell component, whose own blocks would otherwise hide them. #}
+   Pages extend it with `project` in their context and fill `page_title` and `content`; a long page that names one thing (an issue) fills `page_heading` with a word: the breadcrumb then stays under the header and takes the text of the page's `h1` once that one has left the screen (`sticky-title`). `nav_tracker` gives the id of the category the page is about, which the navigation marks. `page_section` names, in the breadcrumb, the part of the project a page belongs to (Configuration). `modal` is the `modal` Turbo frame every page has, empty unless the page fills it with its dialog (`project/_form_dialog.html.twig`): a request made for the frame is answered with this block alone (`Controller/OpensDialog`), so it reads nothing the rest of the page sets. The blocks are captured before the shell component, whose own blocks would otherwise hide them. #}
 {% extends 'base.html.twig' %}
 
 {% block title %}{{ block('page_title') }} · {{ project.name }} · Cairn{% endblock %}
@@ -9,13 +9,16 @@
     {% set layoutRoute = { workspaceKey: project.workspace.key, projectKey: project.key } %}
     {% set layoutPageTitle %}{% block page_title %}{% endblock %}{% endset %}
     {% set layoutPageSection %}{% block page_section %}{% endblock %}{% endset %}
+    {% set layoutPageHeading %}{% block page_heading %}{% endblock %}{% endset %}
+    {% set layoutSticky = layoutPageHeading|trim is not empty %}
+    {% set layoutNavTracker %}{% block nav_tracker %}{% endblock %}{% endset %}
     {% set layoutPageContent %}{% block content %}{% endblock %}{% endset %}
     {% set layoutModal %}{% block modal %}{{ include('project/_form_dialog.html.twig', { form: null }) }}{% endblock %}{% endset %}
     <twig:Ui:Layout:Shell>
         <twig:block name="header"><twig:Layout:Header :project="project" /></twig:block>
-        <twig:block name="sidebar"><twig:Layout:ProjectNav :project="project" /></twig:block>
+        <twig:block name="sidebar"><twig:Layout:ProjectNav :project="project" :currentTracker="layoutNavTracker|trim ?: null" /></twig:block>
         <twig:block name="breadcrumb">
-            <nav class="flex items-center gap-1.5 px-4 sm:px-6 h-10 text-xs text-muted border-b border-line bg-surface/60" aria-label="{{ 'nav.breadcrumb'|trans }}">
+            <nav class="group/crumb flex items-center gap-1.5 px-4 sm:px-6 h-10 text-xs text-muted border-b border-line {{ layoutSticky ? 'sticky top-header z-30 bg-surface/80 backdrop-blur-md transition-shadow data-stuck:shadow-[0_6px_16px_-12px_rgb(0_0_0/0.35)]' : 'bg-surface/60' }}" aria-label="{{ 'nav.breadcrumb'|trans }}"{% if layoutSticky %} data-controller="sticky-title"{% endif %}>
                 {% set layoutSidebarCollapsed = sidebar_collapsed() %}
                 {% set layoutSidebarLabel = (layoutSidebarCollapsed ? 'nav.expand' : 'nav.collapse')|trans %}
                 <button type="button" class="hidden md:inline-flex h-6 w-6 -ml-1.5 mr-1 shrink-0 items-center justify-center rounded-md text-faint hover:bg-sunken hover:text-body focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-line"
@@ -32,7 +35,8 @@
                     <span>{{ layoutPageSection }}</span>
                     <twig:ux:icon name="lucide:chevron-right" class="h-3 w-3 text-ghost shrink-0" />
                 {% endif %}
-                <span class="text-strong font-medium truncate">{{ layoutPageTitle }}</span>
+                <span class="text-strong font-medium {{ layoutSticky ? 'shrink-0' : 'truncate' }}">{{ layoutPageTitle }}</span>
+                {% if layoutSticky %}<span class="ml-1.5 min-w-0 flex-1 translate-y-1 truncate text-[13px] font-medium text-strong opacity-0 transition duration-200 group-data-stuck/crumb:translate-y-0 group-data-stuck/crumb:opacity-100" aria-hidden="true" data-sticky-title-target="title"></span>{% endif %}
             </nav>
         </twig:block>
         {% if project.readOnly %}

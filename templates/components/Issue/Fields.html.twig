@@ -7,7 +7,7 @@
         <twig:Ui:Section :title="'issue.show.fields'|trans({ '%tracker%': issue.tracker.name })" icon="sliders-horizontal" :foldable="not editing">
             <twig:block name="actions">
                 {% if fieldsCanEdit and not editing %}
-                    <button type="button" data-action="live#action" data-live-action-param="edit" class="shrink-0 text-xs text-brand hover:underline">{{ 'issue.edit.edit'|trans }}</button>
+                    <twig:Ui:IconButton icon="pencil" size="sm" :label="'issue.show.edit_fields'|trans" class="-my-1 opacity-0 focus-visible:opacity-100 group-hover/section:opacity-100 [@media(hover:none)]:opacity-100" data-action="live#action" data-live-action-param="edit" />
                 {% endif %}
             </twig:block>
             <twig:block name="content">
@@ -29,7 +29,11 @@
                                 <dt class="w-22 shrink-0 pt-0.5 text-xs text-muted">{{ fieldValue.field.label }}</dt>
                                 <dd class="min-w-0 flex-1 break-words text-body">
                                     {% if fieldValue.field.type.value == 'url' and fieldValue.value matches '#^https?://#i' %}
-                                        <a href="{{ fieldValue.value }}" class="break-all text-brand hover:underline" rel="noopener noreferrer" target="_blank">{{ fieldValue.value|replace({ 'https://': '', 'http://': '' }) }}</a>
+                                        {# An address stays on one line, cut at its end and read whole in its tooltip; it is copied from the button that shows on hover. #}
+                                        <span class="group -my-0.5 flex min-w-0 items-center gap-0.5" data-controller="clipboard" data-clipboard-text-value="{{ fieldValue.value }}">
+                                            <a href="{{ fieldValue.value }}" class="inline-flex min-w-0 items-center gap-1.5 text-brand hover:underline" title="{{ fieldValue.value }}" rel="noopener noreferrer" target="_blank"><span class="truncate">{{ fieldValue.value|replace({ 'https://': '', 'http://': '' }) }}</span><twig:ux:icon name="lucide:external-link" class="h-3 w-3 shrink-0 opacity-60" /></a>
+                                            <twig:Ui:CopyButton size="sm" :label="'issue.show.copy_url'|trans" :copiedLabel="'issue.show.url_copied'|trans" class="hover-actions shrink-0" />
+                                        </span>
                                     {% elseif fieldValue.field.type.value == 'date' %}
                                         {{ fieldValue.value|format_date('short') }}
                                     {% elseif fieldValue.field.type.value == 'bool' %}

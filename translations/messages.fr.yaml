@@ -38,6 +38,7 @@ issue:
         views: Vues de la catégorie
         more: 'Afficher plus (%count%)'
         fold: Replier
+        empty: Aucune demande
         unfold: 'Déplier %place%'
         not_allowed: Cette demande ne peut pas aller à cette étape.
         choose: Quelle action ?
@@ -96,6 +97,12 @@ issue:
         change_property: 'Modifier « %property% »'
         workflow: Voir le workflow
         search_member: Rechercher un membre…
+        edit_fields: Modifier les champs
+        copy_url: Copier l'adresse
+        url_copied: Copié
+        search_tag: Rechercher une étiquette…
+        no_tag_match: Aucune étiquette ne correspond.
+        manage_tags: Gérer les étiquettes
         team: Équipe
         no_member: Aucun membre ne correspond.
         system: Cairn
@@ -141,9 +148,11 @@ issue:
     code:
         title: Code
         commits_count: '{1} 1 commit|]1,Inf[ %count% commits'
-        by: 'par %author%'
+        branch: Branche
+        repository: Dépôt
+        author: Auteur
+        open: 'Ouvrir dans %forge%'
         heading:
-            commits: '{1} 1 commit sur %branch%|]1,Inf[ %count% commits sur %branch%'
             merge_request: 'Merge request !%number%'
         state:
             opened: Ouverte
@@ -160,11 +169,13 @@ issue:
         delete_confirm: Supprimer ce commentaire ? Son texte restera dans l'historique.
         delete_yes: Supprimer
         deleted: Commentaire supprimé.
-        edit_hint: ⌘ Entrée pour enregistrer · Échap pour annuler
+        edit_hint: Entrée pour enregistrer · Échap pour annuler
         updated: Commentaire modifié.
         submit: Commenter
         submit_private: Commenter en privé
         private: Privé
+        private_help: Invisible pour les externes
+        send_hint: Entrée pour envoyer
         private_badge: Privé · invisible pour les externes
         empty: Le commentaire est vide.
         added: Commentaire ajouté.
@@ -172,9 +183,8 @@ issue:
         edit_title: Modifier le titre
         edit_description: Modifier la description
         title_hint: Entrée pour enregistrer · Échap pour annuler
-        description_hint: ⌘ Entrée pour enregistrer · Échap pour annuler
+        description_hint: Entrée pour enregistrer · Échap pour annuler
         title_invalid: Le titre est obligatoire et ne dépasse pas 200 caractères.
-        edit: Modifier
         save: Enregistrer
         cancel: Annuler
     action:
@@ -182,6 +192,8 @@ issue:
         refused: L'action n'a pas pu être appliquée.
     transition:
         comment_required: Cette action demande un commentaire.
+        confirm_hint: Entrée pour confirmer
+        leads_to: La demande passera à cette étape
         applied: '%key% : « %transition% » appliquée.'
     respond:
         question: Que souhaitez-vous faire ?
@@ -201,10 +213,9 @@ issue:
         choose_hint: Chaque catégorie a son propre circuit de traitement.
         internal: Interne
         describe: Décrivez la demande
-        qualification: Qualification
-        qualification_hint: 'Facultatif : tout peut se faire après la création.'
         submit: Créer la demande
         submit_continue: Créer et continuer
+        submit_hint: Entrée pour créer
         cancel: Annuler
         created: '%key% créée.'
         refused: La demande n'a pas pu être créée.
@@ -304,7 +315,6 @@ filter:
     clear: Tout effacer
 
 nav:
-    account: Mon compte
     home: Accueil
     my_issues: Mes demandes
     projects: Projets
@@ -454,6 +464,9 @@ attachment:
     choose: Glissez des fichiers ici ou parcourez
     limit: Captures, exports, logs · 10 Mo max par fichier
     refused: Ce fichier n'a pas pu être envoyé.
+    add_help: Ou déposez un fichier sur la description
+    drop: Déposer pour joindre à la demande
+    lightbox_hint: Échap pour fermer
     unit:
         b: '%size% o'
         kb: '%size% Ko'
@@ -1580,16 +1593,23 @@ connected_site:
 
 release:
     title: Versions
-    intro: Une version regroupe les demandes d'une même livraison. Le rattachement se fait depuis la fiche demande, propriété Version, ou pour plusieurs depuis la sélection.
+    intro: "Une version regroupe les demandes d'une même livraison ; on y rattache une demande depuis sa fiche, ou plusieurs depuis la sélection."
     new: Nouvelle version
     create: Créer la version
     created: 'Version %name% créée.'
     edit: Modifier
     save: Enregistrer
     saved: Version enregistrée.
-    planned_on: 'prévue le %date%'
-    delivered_on: 'le %date%'
-    finished: '{0}aucune terminée|{1}1 terminée|]1,Inf[ %count% terminées'
+    planned: Date de livraison prévue
+    late: Date de livraison dépassée
+    done: 'Terminées :'
+    out_of: sur
+    left: 'Reste :'
+    see_step: Voir ces demandes
+    to_finish: '{0}Tout est terminé|[1,Inf[ %count% à terminer avant la livraison'
+    urgent:
+        blocking: '{1}1 bloquante|]1,Inf[ %count% bloquantes'
+        high: '{1}1 haute|]1,Inf[ %count% hautes'
     see_issues: Voir les demandes
     past: Livrées et abandonnées
     empty: Aucune version en préparation
@@ -1865,10 +1885,15 @@ budget:
     delete_help: Un budget clos se supprime avec toutes ses lignes, définitivement.
     delete_confirm: Supprimer définitivement ce budget et toutes ses lignes ?
     deleted: 'Budget %name% supprimé.'
-    volume: Volume
     consumed: Consommé
     remaining: Reste
     pending: À valider
+    out_of: sur
+    remaining_after: Reste si tout est validé
+    used_up: Épuisé
+    overspent: 'Dépassé de %quantity%'
+    see_lines: 'Voir les %count% lignes'
+    all_lines: Toutes
     bar: '%consumed% consommés sur %volume%'
     lines: '{0}aucune ligne|{1}1 ligne|]1,Inf[ %count% lignes'
     total:
@@ -1877,6 +1902,7 @@ budget:
         consumed_caption: lignes validées
         remaining: Restant
         remaining_caption: sur les budgets ouverts
+        remaining_after_caption: '%quantity% si tout est validé'
         pending_caption: en attente de validation
     statement_intro: Toutes les lignes de ce budget. Seules les lignes validées sont consommées.
     statement_intro_closed: "Ce budget est clos : il garde ses lignes et n'en prend plus."

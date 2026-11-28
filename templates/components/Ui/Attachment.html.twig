@@ -1,25 +1,29 @@
-{# A file as a pill: icon (a square thumbnail for an image with an `href`), name (a link when `href` is given), size and the initials of who sent it. `size` is in bytes. The `actions` block takes a remove button. #}
+{# A file as a card: a square thumbnail for an image with an `href`, an icon otherwise, then its name (a link when `href` is given) over its size and who sent it. `size` is in bytes. An image opens over the page (`lightbox`) instead of leaving it; its link stays one, for a new tab. The `actions` block takes a remove button, which shows on hover. #}
 {% props name, size = null, href = null, image = false, uploader = null %}
-{% set attachmentClasses = html_cva(base: 'inline-flex max-w-full items-center gap-2 rounded-md border border-line bg-subtle px-2.5 py-1.5 text-sm') %}
+{% set attachmentClasses = html_cva(base: 'group/file inline-flex max-w-full items-center gap-2.5 rounded-lg border border-line bg-subtle py-1 pl-1 pr-2 text-sm hover:border-line-strong hover:shadow-sm') %}
 {% set attachmentUnit = size is null ? null : (size < 1024 ? 'b' : (size < 1048576 ? 'kb' : 'mb')) %}
 {% set attachmentSize = size is null ? null : (attachmentUnit == 'b' ? size : (attachmentUnit == 'kb' ? (size / 1024)|round : (size / 1048576)|round(1))) %}
-<span class="{{ attachmentClasses.apply({}, attributes.render('class'))|tailwind_merge }}" {{ attributes }}>
-    {% if image and href %}
-        <img src="{{ href }}" alt="" loading="lazy" class="-my-1 -ml-1 h-7 w-7 shrink-0 rounded border border-line bg-sunken object-cover">
+{% set attachmentActions %}{% block actions %}{% endblock %}{% endset %}
+{% set attachmentOpens = image and href %}
+<span class="{{ attachmentClasses.apply({}, attributes.render('class'))|tailwind_merge }}"{% if attachmentOpens %} data-controller="lightbox" data-lightbox-src-value="{{ href }}" data-lightbox-caption-value="{{ name }}"{% endif %} {{ attributes }}>
+    {% if attachmentOpens %}
+        <img src="{{ href }}" alt="" loading="lazy" class="h-9 w-9 shrink-0 cursor-zoom-in rounded-md border border-line bg-sunken object-cover" data-action="click->lightbox#open">
     {% else %}
-        {{ ux_icon('lucide:' ~ (image ? 'image' : 'file'), { class: 'h-4 w-4 shrink-0 text-faint' }) }}
+        <span class="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-sunken text-faint ring-1 ring-inset ring-line">{{ ux_icon('lucide:' ~ (image ? 'image' : 'file-text'), { class: 'h-4 w-4' }) }}</span>
     {% endif %}
-    {% if href %}
-        <a href="{{ href }}" class="truncate text-body hover:text-brand hover:underline" {{ image ? 'target="_blank"' }} data-turbo="false">{{ name }}</a>
-    {% else %}
-        <span class="truncate text-body">{{ name }}</span>
-    {% endif %}
-    {% if attachmentSize is not null or uploader %}
-        <span class="shrink-0 text-xs text-faint">
-            {%- if attachmentSize is not null %}{{ ('attachment.unit.' ~ attachmentUnit)|trans({ '%size%': attachmentSize }) }}{% endif -%}
-            {%- if attachmentSize is not null and uploader %} · {% endif -%}
-            {%- if uploader %}<span title="{{ uploader }}">{% set attachmentUploaderParts = uploader|trim|split(' ') %}{{ (attachmentUploaderParts[0]|first ~ (attachmentUploaderParts[1] is defined ? attachmentUploaderParts[1]|first : ''))|upper }}</span>{% endif -%}
-        </span>
-    {% endif %}
-    {% block actions %}{% endblock %}
+    <span class="min-w-0 leading-tight">
+        {% if href %}
+            <a href="{{ href }}" class="block truncate text-[13px] font-medium text-body hover:text-brand" {{ image ? 'target="_blank"' }} data-turbo="false"{% if attachmentOpens %} data-action="click->lightbox#open"{% endif %}>{{ name }}</a>
+        {% else %}
+            <span class="block truncate text-[13px] font-medium text-body">{{ name }}</span>
+        {% endif %}
+        {% if attachmentSize is not null or uploader %}
+            <span class="block truncate text-[11px] text-faint">
+                {%- if attachmentSize is not null %}{{ ('attachment.unit.' ~ attachmentUnit)|trans({ '%size%': attachmentSize }) }}{% endif -%}
+                {%- if attachmentSize is not null and uploader %} · {% endif -%}
+                {%- if uploader %}{{ uploader }}{% endif -%}
+            </span>
+        {% endif %}
+    </span>
+    {% if attachmentActions|trim is not empty %}<span class="flex shrink-0 items-center opacity-0 transition-opacity group-hover/file:opacity-100 group-focus-within/file:opacity-100 [@media(hover:none)]:opacity-100">{{ attachmentActions }}</span>{% endif %}
 </span>

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Twig\Components\Issue;
 
+use App\Config\Definition\PlaceDefinition;
 use App\Config\Definition\TransitionDefinition;
 use App\Entity\Attachment;
 use App\Entity\Comment;
@@ -225,6 +226,12 @@ final class Activity
     public function getTransitions(): array
     {
         return $this->access->transitionsFor($this->viewer->get(), $this->issue);
+    }
+
+    /** The step an action leads to, told beside it; none when the configuration lost it. */
+    public function targetOf(TransitionDefinition $transition): ?PlaceDefinition
+    {
+        return $this->workflows->findPlace($transition->to);
     }
 
     /**

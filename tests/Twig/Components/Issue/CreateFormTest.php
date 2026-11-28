@@ -225,9 +225,13 @@ final class CreateFormTest extends KernelTestCase
         $commands->dispatch(new GrantTeamAccess((int) $hosting->getId(), $this->scene->dupont->getId(), null, 'developer'));
         $component = $this->form('nadia.benali@cairn.test')->set('trackerId', $this->tasks->getId());
 
-        $rendered = (string) $component->render();
-        self::assertStringContainsString('<optgroup label="Teams">', $rendered, 'after the people, under their own heading');
-        self::assertStringContainsString('<option value="team-'.$hosting->getId().'">Hosting</option>', $rendered);
+        $crawler = $component->render()->crawler();
+        $choices = $crawler->filter('[data-controller~="picker"] [data-picker-value-param]');
+        self::assertStringContainsString('Teams', $crawler->filter('[data-controller~="picker"]')->text(), 'after the people, under their own heading');
+        self::assertSame('team-'.$hosting->getId(), $choices->last()->attr('data-picker-value-param'), 'a list narrowed by a search, the team after the people');
+        self::assertSame('Hosting', $choices->last()->attr('data-picker-label-param'));
+        self::assertCount($choices->count(), $choices->filter('[data-picker-line]'), 'each choice is drawn as who it is, nobody included');
+        self::assertStringContainsString('Nobody', $crawler->filter('[data-controller~="picker"] [data-picker-target="chosen"][data-picker-line]')->text(), 'and so is the button, before any choice');
 
         $component->submitForm(['issue' => [
             'title' => 'Renew the certificate',

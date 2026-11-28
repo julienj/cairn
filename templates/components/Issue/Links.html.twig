@@ -76,7 +76,7 @@
                             </div>
                         </div>
                     {% else %}
-                        <button type="button" class="{{ linksGroups is not empty ? 'mt-1.5' : '' }} inline-flex items-center gap-1 text-xs text-muted hover:text-brand" data-action="live#action" data-live-action-param="open">
+                        <button type="button" class="{{ linksGroups is not empty ? 'mt-1.5' : '' }} -mx-1.5 -mb-1 flex w-[calc(100%+0.75rem)] items-center gap-1.5 rounded-md px-1.5 py-1.5 text-xs text-muted hover:bg-subtle hover:text-brand" data-action="live#action" data-live-action-param="open">
                             <twig:ux:icon name="lucide:plus" class="h-3.5 w-3.5" />{{ 'issue.links.new'|trans }}
                         </button>
                     {% endif %}

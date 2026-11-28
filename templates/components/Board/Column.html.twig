@@ -1,4 +1,4 @@
-{# A column of the kanban: the place and its count, then its cards, by batches. The list carries the `board` controller: SortableJS drags a card to another column, which the card's `data-board-places` allows, or within its own when the viewer may rank (`data-board-rank-value`), and the controller calls Board:Move, then keeps the counts and the cards right itself. While a card is dragged, the columns it may go to light up.
+{# A column of the kanban: the place and its count, which stay while its cards scroll under them, then its cards, by batches, or a word when it has none. The list carries the `board` controller: SortableJS drags a card to another column, which the card's `data-board-places` allows, or within its own when the viewer may rank (`data-board-rank-value`), and the controller calls Board:Move, then keeps the counts and the cards right itself. While a card is dragged, the columns it may go to light up.
    A folded column (the closed places, as the page sets it) is a narrow rail: the colour of the place, its count, its label written upwards; a click unfolds it. A card can still be dropped on it: its list fills the rail and hides the card SortableJS would show there, too wide for it, and the rail lights up while a card is over it (data-board-over).
    The list is replaced whole on each redraw (data-skip-morph): Live would otherwise keep a card SortableJS dropped there as it was, with the places it could reach from its former column. #}
 {% set boardColumnPlace = this.place %}
@@ -7,12 +7,12 @@
 {% set boardColumnRanks = this.canRank %}
 {% set boardColumnTags = open ? this.tags : {} %}
 {% set boardColumnClasses = html_cva(
-    base: 'group/column relative flex shrink-0 flex-col rounded-lg border border-line bg-sunken/80 transition-all',
+    base: 'group/column relative flex shrink-0 snap-start flex-col rounded-lg border border-line bg-sunken/80 transition-all',
     variants: { open: { true: 'w-72', false: 'w-10 has-[[data-board-state=allowed]]:border-brand-line has-[[data-board-state=denied]]:opacity-40 has-[[data-board-over]]:border-focus has-[[data-board-over]]:bg-brand-soft-hover' } },
 ) %}
 {% set boardColumnListClasses = html_cva(
     base: 'rounded-md transition data-[board-state=allowed]:bg-brand-soft data-[board-state=allowed]:ring-2 data-[board-state=allowed]:ring-brand-line data-[board-state=denied]:opacity-40',
-    variants: { open: { true: 'flex min-h-24 flex-1 flex-col gap-2 overflow-y-auto px-2 pb-2 data-[board-over]:ring-focus', false: 'absolute inset-0 overflow-hidden [&>li]:hidden data-[board-state=allowed]:bg-transparent' } },
+    variants: { open: { true: 'peer flex min-h-24 flex-1 flex-col gap-2 overflow-y-auto px-2 pb-2 data-[board-over]:ring-focus', false: 'absolute inset-0 overflow-hidden [&>li]:hidden data-[board-state=allowed]:bg-transparent' } },
 ) %}
 <section {{ attributes.defaults({ class: boardColumnClasses.apply({ open: open }) }) }} data-board-column="{{ placeId }}" data-loading="addClass(opacity-70)">
     {% if open %}
@@ -36,7 +36,9 @@
         {% if open %}
             {% for issue in boardColumnIssues.items %}
                 {% set boardCardDrops = this.dropsFor(issue) %}
-                <li id="board-card-{{ issue.id }}" data-board-key="{{ issue.key }}" data-board-places="{{ boardCardDrops|join(' ') }}" class="{{ boardCardDrops is empty and not boardColumnRanks ? 'board-locked' : 'cursor-grab' }}">
+                {% set boardCardTagList = boardColumnTags[issue.id] ?? [] %}
+                {# While it is dragged, the card leaves a dotted place where it would land (`board-ghost`, the class SortableJS gives it). #}
+                <li id="board-card-{{ issue.id }}" data-board-key="{{ issue.key }}" data-board-places="{{ boardCardDrops|join(' ') }}" class="{{ boardCardDrops is empty and not boardColumnRanks ? 'board-locked' : 'cursor-grab' }} [&.board-ghost]:rounded-md [&.board-ghost]:bg-brand-soft/50 [&.board-ghost]:outline [&.board-ghost]:outline-1 [&.board-ghost]:outline-dashed [&.board-ghost]:outline-brand-line [&.board-ghost>*]:invisible">
                     <twig:Ui:BoardCard
                         :key="issue.key"
                         :title="issue.title"
@@ -49,12 +51,14 @@
                         :private="issue.private or issue.tracker.private"
                         :release="issue.release ? issue.release.name : null"
                     >
-                        <twig:block name="tags">{% for tag in boardColumnTags[issue.id] ?? [] %}<twig:Ui:Tag :colour="tag.colour.value" size="sm">{{ tag.name }}</twig:Ui:Tag>{% endfor %}</twig:block>
+                        <twig:block name="tags">{% for tag in boardCardTagList|slice(0, 2) %}<twig:Ui:Tag :colour="tag.colour.value" size="sm">{{ tag.name }}</twig:Ui:Tag>{% endfor %}{% if boardCardTagList|length > 2 %}<twig:Ui:Tag:More :count="boardCardTagList|length - 2" class="relative z-[1]" title="{{ boardCardTagList|slice(2)|map(tag => tag.name)|join(', ') }}" />{% endif %}</twig:block>
                     </twig:Ui:BoardCard>
                 </li>
             {% endfor %}
         {% endif %}
     </ul>
+    {# An empty column says so, where a card would be dropped; it steps aside as soon as the list holds one, the one being dragged over it included. #}
+    {% if open %}<p class="pointer-events-none absolute inset-x-2 top-11 flex h-24 items-center justify-center rounded-md border border-dashed border-line-strong/70 text-xs text-faint peer-has-[[data-board-key]]:hidden" aria-hidden="true">{{ 'issue.board.empty'|trans }}</p>{% endif %}
     {% if boardColumnRemaining > 0 %}
         <div class="px-2 pb-2">
             <button type="button" class="w-full rounded-md py-1.5 text-xs text-muted hover:bg-line/70"
@@ -65,7 +69,7 @@
 
 {% macro placeholder(props) %}
     {% if props.open ?? true %}
-        <div class="flex w-72 shrink-0 flex-col gap-2 rounded-lg border border-line bg-sunken/80 p-3" aria-busy="true">
+        <div class="flex w-72 shrink-0 snap-start flex-col gap-2 rounded-lg border border-line bg-sunken/80 p-3" aria-busy="true">
             <div class="h-4 w-32 animate-pulse rounded bg-line"></div>
             {% for i in 1..3 %}<div class="h-16 animate-pulse rounded-md bg-surface/80"></div>{% endfor %}
         </div>

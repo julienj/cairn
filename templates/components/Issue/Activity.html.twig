@@ -1,4 +1,4 @@
-{# Thread of the issue page, then what the viewer may do: the actions of the workflow, one line each, and the comment box. The comment being written is the `body` prop, kept across every redraw, including those `issue:changed` triggers.
+{# Thread of the issue page, a line down which every moment hangs under the date of its day, then what the viewer may do, on the same line: the actions of the workflow, one line each, and the comment box beside the face of who writes. The comment being written is the `body` prop, kept across every redraw, including those `issue:changed` triggers.
    The controls are plain HTML: a data-model attribute on a nested component would bind that component instead. #}
 {% set activityDetail = this.detail %}
 {% set activityTimeline = this.timeline %}
@@ -13,43 +13,53 @@
 <div data-draft {{ attributes }}>
 
     <section class="mt-8">
-        <div class="mb-3 flex flex-wrap items-center gap-2">
+        <div class="mb-1 flex flex-wrap items-center gap-2">
             <h2 class="font-semibold text-strong">{{ 'issue.show.activity'|trans }}</h2>
             {# Who reads chooses what to read, for every issue: the choice is kept on the account. #}
-            <div class="ml-auto flex items-center gap-2">
-                <span class="text-sm text-muted">{{ 'issue.activity.show'|trans }}</span>
+            <div class="ml-auto flex items-center gap-1.5" role="group" aria-label="{{ 'issue.activity.show'|trans }}">
                 {% for activityKind in this.activityKinds %}
-                    <twig:Ui:Filter:Toggle :checked="activityKind not in activityHidden" :count="activityCounts[activityKind.value]" data-action="change->live#action" data-live-action-param="toggleActivity" data-live-kind-param="{{ activityKind.value }}">{{ ('issue.activity.kind.' ~ activityKind.value)|trans }}</twig:Ui:Filter:Toggle>
+                    <twig:Ui:Filter:Toggle variant="chip" :icon="activityKind.value == 'code' ? 'git-branch' : 'history'" :checked="activityKind not in activityHidden" :count="activityCounts[activityKind.value]" data-action="change->live#action" data-live-action-param="toggleActivity" data-live-kind-param="{{ activityKind.value }}">{{ ('issue.activity.kind.' ~ activityKind.value)|trans }}</twig:Ui:Filter:Toggle>
                 {% endfor %}
             </div>
             {% if this.filterError %}<p class="basis-full text-right text-sm text-red" role="alert">{{ this.filterError }}</p>{% endif %}
         </div>
-        <ol class="relative border-l border-line ml-3 space-y-4">
+        {# One line down the thread, each moment hung on it: a day opens with its date, so that a moment only says its hour. #}
+        {% set activityDay = null %}
+        <ol class="relative before:absolute before:bottom-0 before:left-[15.5px] before:top-4 before:w-px before:bg-line">
             {% for entry in activityTimeline %}
                 {% set entryComment = entry.comment %}
+                {% if entry.at|date('Y-m-d') != activityDay %}
+                    {% set activityDay = entry.at|date('Y-m-d') %}
+                    <li class="relative pb-1.5 pl-[46px] pt-5 text-[11px] font-semibold uppercase tracking-wider text-faint first:pt-2">
+                        <span class="absolute bottom-[11px] left-[13px] h-1.5 w-1.5 rounded-full bg-line-strong ring-[3px] ring-canvas" aria-hidden="true"></span>
+                        <time datetime="{{ activityDay }}">{{ entry.at|format_date('long') }}</time>
+                    </li>
+                {% endif %}
                 {% if entry.event %}
                     <twig:Issue:JournalEntry :entry="entry.event" />
                 {% endif %}
                 {% if entryComment %}
-                    <li class="relative pl-6">
+                    <li class="relative my-3 pl-[46px]">
                         {% if entryComment.author %}
-                            <span class="absolute -left-3 top-1"><twig:User:Avatar :user="entryComment.author" /></span>
+                            <span class="absolute left-0 top-1 flex rounded-full ring-[3px] ring-canvas"><twig:User:Avatar :user="entryComment.author" size="xl" /></span>
                         {% else %}
                             {# Written by an automation rule: a bolt where the avatar would be. #}
-                            <span class="absolute -left-3 top-1 flex h-6 w-6 items-center justify-center rounded-md bg-sunken text-muted ring-2 ring-line-subtle" title="{{ 'automation.signature'|trans }}"><twig:ux:icon name="lucide:zap" class="h-3.5 w-3.5" /></span>
+                            <span class="absolute left-0 top-1 flex h-8 w-8 items-center justify-center rounded-lg bg-sunken text-muted ring-[3px] ring-canvas" title="{{ 'automation.signature'|trans }}"><twig:ux:icon name="lucide:zap" class="h-4 w-4" /></span>
                         {% endif %}
                         {% set commentEditable = entryComment.id in activityEditable %}
                         {# Each comment has its own address, as on GitHub: its date is the link, the comment the address names is outlined, below the sticky header. #}
                         {% set commentAnchor = 'comment-' ~ entryComment.id %}
-                        <div id="{{ commentAnchor }}" class="group scroll-mt-16 rounded-lg border p-3 target:ring-2 target:ring-focus {{ entryComment.private ? 'border-amber-line border-l-4 border-l-amber-solid bg-amber-soft/70 private-hatching' : 'border-line bg-surface' }}">
+                        {# Who, of which company when they are not of the house, then what the comment is (private, rewritten); its actions wait beside its hour, which is its link, at the end of the line like the hour of every moment. #}
+                        <div id="{{ commentAnchor }}" class="group scroll-mt-28 rounded-[10px] border px-3.5 pb-3 pt-2.5 shadow-sm transition-colors target:ring-2 target:ring-focus {{ entryComment.private ? 'border-amber-line border-l-[3px] border-l-amber-solid bg-amber-soft/70 private-hatching' : 'border-line bg-surface hover:border-line-strong' }}">
                             <div class="flex items-center gap-2 text-xs">
-                                <span class="font-medium text-strong">{{ entryComment.authorName }}</span>
+                                <span class="text-[13px] font-semibold text-strong">{{ entryComment.authorName }}</span>
+                                {% if entryComment.author and not entryComment.author.internal and entryComment.author.company %}<span class="truncate text-faint">{{ entryComment.author.company }}</span>{% endif %}
                                 {% if not entryComment.author %}<span class="text-faint">{{ 'automation.signature'|trans }}</span>{% endif %}
-                                <a href="#{{ commentAnchor }}" class="text-faint hover:text-body hover:underline" data-turbo="false" data-test="comment-permalink">{{ entryComment.createdAt|format_datetime('short', 'short') }}</a>
-                                {% if entryComment.editedAt %}<span class="text-faint italic">· {{ 'issue.comment.edited'|trans({ '%date%': entryComment.editedAt|format_datetime('short', 'short') }) }}</span>{% endif %}
-                                {% if entryComment.private %}<twig:Ui:Badge tone="amber" size="sm" icon="lock" class="ml-auto">{{ 'issue.comment.private_badge'|trans }}</twig:Ui:Badge>{% endif %}
+                                {% if entryComment.private %}<twig:Ui:Badge tone="amber" size="sm" icon="lock" class="shrink-0" title="{{ 'issue.comment.private_help'|trans }}">{{ 'issue.comment.private'|trans }}</twig:Ui:Badge>{% endif %}
+                                {% if entryComment.editedAt %}<span class="truncate italic text-faint">{{ 'issue.comment.edited'|trans({ '%date%': entryComment.editedAt|format_datetime('short', 'short') }) }}</span>{% endif %}
+                                <span class="flex-1"></span>
                                 {% if editingCommentId != entryComment.id and deletingCommentId != entryComment.id %}
-                                    <span class="hover-actions -my-1 -mr-1 flex items-center {{ entryComment.private ? '' : 'ml-auto' }}" data-controller="clipboard" data-clipboard-text-value="#{{ commentAnchor }}">
+                                    <span class="hover-actions -my-1.5 flex shrink-0 items-center" data-controller="clipboard" data-clipboard-text-value="#{{ commentAnchor }}">
                                         <twig:Ui:CopyButton icon="link" size="sm" :label="'issue.comment.copy_link'|trans" :copiedLabel="'issue.comment.link_copied'|trans" />
                                         {% if commentEditable %}
                                             <twig:Ui:IconButton icon="pencil" size="sm" :label="'issue.comment.edit'|trans" data-action="live#action" data-live-action-param="editComment" data-live-id-param="{{ entryComment.id }}" />
@@ -57,6 +67,7 @@
                                         {% endif %}
                                     </span>
                                 {% endif %}
+                                <a href="#{{ commentAnchor }}" class="shrink-0 text-[11px] text-faint hover:text-body hover:underline" title="{{ entryComment.createdAt|format_datetime('long', 'short') }}" data-turbo="false" data-test="comment-permalink"><time datetime="{{ entryComment.createdAt|date('c') }}">{{ entryComment.createdAt|format_time('short') }}</time></a>
                             </div>
                             {% if editingCommentId == entryComment.id %}
                                 {# ⌘/Ctrl Enter saves (autosubmit), Esc cancels. #}
@@ -85,7 +96,7 @@
                                             <input type="file" name="files[]" multiple class="sr-only" data-controller="file-picker"
                                                    data-action="change->file-picker#chosen file-picker:chosen->live#action" data-live-action-param="files|attach">
                                         </label>
-                                        <span class="ml-auto text-xs text-faint">{{ 'issue.comment.edit_hint'|trans }}</span>
+                                        <span class="ml-auto text-xs text-faint"><twig:Ui:ModKey /> {{ 'issue.comment.edit_hint'|trans }}</span>
                                     </div>
                                 </form>
                             {% else %}
@@ -119,19 +130,21 @@
                 {% endif %}
             {% else %}
                 {% if activityHidden is not empty %}
-                    <li class="pl-6 text-sm text-muted">{{ 'issue.activity.filtered_empty'|trans }}</li>
+                    <li class="py-2 pl-[46px] text-sm text-muted">{{ 'issue.activity.filtered_empty'|trans }}</li>
                 {% endif %}
             {% endfor %}
         </ol>
         {# The decision and the comment are two boxes. The decision keeps its slot even when empty, so that the comment editor, whose inside the morph ignores, stays the same sibling and is not recreated. #}
-        <div class="mt-6">
+        {# The line of the thread goes on through both, down to whoever writes next. #}
+        <div class="relative pl-[46px] before:absolute before:inset-y-0 before:left-[15.5px] before:w-px before:bg-line">
             {% if activityTransitions is not empty or activityAwaiting %}
-                <div class="mb-3 rounded-lg border border-line-strong bg-surface shadow-sm">
+                <span class="absolute left-0 top-6 grid h-5 w-8 place-items-center" aria-hidden="true"><span class="grid h-5 w-5 place-items-center rounded-full border border-line bg-canvas text-faint ring-2 ring-canvas"><twig:ux:icon name="lucide:corner-down-right" class="h-3 w-3" /></span></span>
+                <div class="mt-3 rounded-[10px] border border-line-strong bg-surface shadow-sm">
                     {% if activityAwaiting %}
                         {# The action chosen asks for a comment: it is written here, and sent with it. ⌘/Ctrl Enter confirms. #}
-                        <div class="space-y-2.5 p-3">
-                            <p class="text-sm font-medium text-strong">{{ activityAwaiting.label }}</p>
-                            <p id="activity-reason" class="text-sm text-body">{{ activityAwaiting.commentPrompt ?? 'issue.transition.comment_required'|trans }}</p>
+                        <div class="space-y-2.5 p-3.5">
+                            <p class="text-[13.5px] font-semibold text-strong">{{ activityAwaiting.label }}</p>
+                            <p id="activity-reason" class="text-sm text-muted">{{ activityAwaiting.commentPrompt ?? 'issue.transition.comment_required'|trans }}</p>
                             <twig:Ui:Form:Editor model="norender|reason" :rows="3" autofocus class="mt-0" aria-labelledby="activity-reason"
                                                  :issuesUrl="activityEditorUrls.issues" :usersUrl="activityEditorUrls.users" :uploadUrl="activityEditorUrls.upload"
                                                  data-action="editor:submit->live#action" data-live-action-param="confirm">{{ reason }}</twig:Ui:Form:Editor>
@@ -139,19 +152,20 @@
                             <div class="flex flex-wrap items-center gap-2">
                                 <twig:Ui:Button :variant="activityAwaiting.style.value == 'default' ? 'secondary' : activityAwaiting.style.value" data-action="live#action" data-live-action-param="confirm" data-loading="addAttribute(disabled)">{{ activityAwaiting.label }}</twig:Ui:Button>
                                 <twig:Ui:Button variant="ghost" data-action="live#action" data-live-action-param="cancelDecision">{{ 'issue.edit.cancel'|trans }}</twig:Ui:Button>
+                                <span class="ml-auto text-xs text-faint"><twig:Ui:ModKey /> {{ 'issue.transition.confirm_hint'|trans }}</span>
                             </div>
                         </div>
                     {% else %}
-                        {# One line per action of the workflow the viewer may take: its button, in the style the configuration gives it, and what it does. #}
-                        <p class="px-3 pt-3 text-sm font-medium text-strong">{{ 'issue.respond.question'|trans }}</p>
-                        {% if decisionError %}<twig:Ui:Callout tone="danger" size="sm" role="alert" class="mx-3 mt-2">{{ decisionError }}</twig:Ui:Callout>{% endif %}
-                        <ul class="divide-y divide-line-subtle px-3">
+                        {# One line per action of the workflow the viewer may take: its button, in the style the configuration gives it, each as wide as the others, what it does, and the step the issue will stand at. #}
+                        <p class="px-3.5 pb-2 pt-3 text-[13.5px] font-semibold text-strong">{{ 'issue.respond.question'|trans }}</p>
+                        {% if decisionError %}<twig:Ui:Callout tone="danger" size="sm" role="alert" class="mx-3.5 mb-2">{{ decisionError }}</twig:Ui:Callout>{% endif %}
+                        <ul>
                             {% for transition in activityTransitions %}
-                                <li class="flex flex-wrap items-center gap-x-4 gap-y-1.5 py-2.5 sm:flex-nowrap">
-                                    <div class="shrink-0 sm:w-48">
-                                        <twig:Ui:Button :variant="transition.style.value == 'default' ? 'secondary' : transition.style.value" data-action="live#action" data-live-action-param="apply" data-live-transition-param="{{ transition.id }}" data-loading="addAttribute(disabled)">{{ transition.label }}</twig:Ui:Button>
-                                    </div>
-                                    {% if transition.description %}<p class="min-w-0 text-sm text-muted">{{ transition.description }}</p>{% endif %}
+                                {% set transitionTarget = this.targetOf(transition) %}
+                                <li class="grid items-center gap-x-4 gap-y-1.5 border-t border-line-subtle px-3.5 py-2.5 transition-colors last:rounded-b-[10px] hover:bg-subtle sm:grid-cols-[11rem_minmax(0,1fr)_auto]">
+                                    <twig:Ui:Button :variant="transition.style.value == 'default' ? 'secondary' : transition.style.value" class="justify-self-start sm:w-full" data-action="live#action" data-live-action-param="apply" data-live-transition-param="{{ transition.id }}" data-loading="addAttribute(disabled)">{{ transition.label }}</twig:Ui:Button>
+                                    <p class="min-w-0 text-[13px] leading-snug text-muted">{{ transition.description }}</p>
+                                    {% if transitionTarget %}<span class="inline-flex items-center gap-1.5 whitespace-nowrap text-faint" title="{{ 'issue.transition.leads_to'|trans }}"><twig:ux:icon name="lucide:arrow-right" class="h-3 w-3" /><twig:Ui:Status:Step :status="transitionTarget.status.value" :label="transitionTarget.label" pill /></span>{% endif %}
                                 </li>
                             {% endfor %}
                         </ul>
@@ -159,12 +173,13 @@
                 </div>
             {% endif %}
         </div>
-        <div>
+        <div class="relative pl-[46px] pt-3 before:absolute before:left-[15.5px] before:top-0 before:h-5 before:w-px before:bg-line">
             {% if activityCanComment %}
-                <div class="rounded-lg border border-line-strong bg-surface shadow-sm focus-within:border-focus {{ private ? 'border-amber-solid bg-amber-soft private-hatching' }}">
+                <span class="absolute left-0 top-4 flex rounded-full ring-[3px] ring-canvas"><twig:User:Avatar :user="app.user" size="xl" /></span>
+                <div class="group/composer rounded-[10px] border bg-surface shadow-sm transition-[border-color,box-shadow] focus-within:ring-[3px] {{ private ? 'border-amber-line border-l-[3px] border-l-amber-solid bg-amber-soft/70 private-hatching focus-within:ring-amber-solid/20' : 'border-line-strong focus-within:border-focus focus-within:ring-focus/25' }}">
                     {# ⌘/Ctrl Enter sends; a posted comment empties the editor through editor:reset. #}
                     <twig:Ui:Form:Editor model="norender|body" :rows="3"
-                                         class="mt-0 rounded-none rounded-t-lg border-0 bg-transparent focus-within:ring-0"
+                                         class="mt-0 rounded-none rounded-t-[10px] border-0 bg-transparent focus-within:ring-0"
                                          :placeholder="'issue.comment.placeholder'|trans"
                                          :issuesUrl="activityEditorUrls.issues" :usersUrl="activityEditorUrls.users" :uploadUrl="activityEditorUrls.upload"
                                          data-action="editor:submit->live#action editor:reset@window->editor#reset" data-live-action-param="submit">{{ body }}</twig:Ui:Form:Editor>
@@ -183,21 +198,23 @@
                     {% if error %}
                         <twig:Ui:Callout tone="danger" size="sm" role="alert" class="rounded-none border-x-0 border-b-0 border-red-line bg-red-soft text-red">{{ error }}</twig:Ui:Callout>
                     {% endif %}
-                    <div class="flex flex-wrap items-center gap-2 border-t border-line px-3 py-2">
-                        <label title="{{ 'attachment.attach'|trans }}" class="inline-flex cursor-pointer items-center gap-1 rounded p-1 text-xs text-muted hover:bg-sunken hover:text-body" data-loading="action(attach)|addClass(opacity-50)">
+                    <div class="flex flex-wrap items-center gap-1.5 px-2 pb-2 pt-1">
+                        <label title="{{ 'attachment.attach'|trans }}" class="inline-flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-xs text-muted hover:bg-sunken hover:text-body has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-focus" data-loading="action(attach)|addClass(opacity-50)">
                             {{ ux_icon('lucide:paperclip', { class: 'h-4 w-4' }) }}
                             <span class="sr-only">{{ 'attachment.attach'|trans }}</span>
                             <input type="file" name="files[]" multiple class="sr-only" data-controller="file-picker"
                                    data-action="change->file-picker#chosen file-picker:chosen->live#action" data-live-action-param="files|attach">
                         </label>
                         {% if this.canMakePrivate %}
-                            <label class="inline-flex items-center gap-1.5 text-xs text-muted cursor-pointer select-none">
-                                <input type="checkbox" data-model="private" {{ private ? 'checked' }} class="h-3.5 w-3.5 rounded border-line-strong text-amber">
+                            {# A switch that is pressed or not; the box around says the rest, before the comment is sent. #}
+                            <label title="{{ 'issue.comment.private_help'|trans }}" class="inline-flex h-7 cursor-pointer select-none items-center gap-1.5 rounded-md px-2 text-xs font-medium has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-focus {{ private ? 'bg-amber-soft text-amber ring-1 ring-inset ring-amber-line' : 'text-muted hover:bg-sunken hover:text-body' }}">
+                                <input type="checkbox" data-model="private" {{ private ? 'checked' }} class="sr-only">
                                 <twig:ux:icon name="lucide:lock" class="h-3 w-3" />
                                 {{ 'issue.comment.private'|trans }}
                             </label>
                         {% endif %}
-                        <twig:Ui:Button class="ml-auto" variant="secondary" data-action="live#action" data-live-action-param="submit" data-loading="addAttribute(disabled)">{{ (private ? 'issue.comment.submit_private' : 'issue.comment.submit')|trans }}</twig:Ui:Button>
+                        <span class="ml-auto mr-1 text-[11px] text-faint opacity-0 transition-opacity group-focus-within/composer:opacity-100"><twig:Ui:ModKey /> {{ 'issue.comment.send_hint'|trans }}</span>
+                        <twig:Ui:Button variant="primary" :icon="private ? 'lock' : null" data-action="live#action" data-live-action-param="submit" data-loading="addAttribute(disabled)">{{ (private ? 'issue.comment.submit_private' : 'issue.comment.submit')|trans }}</twig:Ui:Button>
                     </div>
                 </div>
             {% endif %}

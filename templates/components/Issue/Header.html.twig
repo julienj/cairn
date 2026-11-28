@@ -1,43 +1,47 @@
-{# The top of the issue page: key and the button that copies it, tracker, author, privacy, title and the path the issue took, and for whoever may delete the issue a bin that asks in a dialog first. Redrawn on `issue:changed`. #}
+{# The top of the issue page: key and the button that copies it, tracker (a link to its list), author and when, to the minute, privacy, title and the path the issue took, its current step under the dot of its colour, and for whoever may delete the issue a bin that asks in a dialog first. Redrawn on `issue:changed`. #}
 {% set headerPath = this.path %}
 <div {{ attributes }}>
     <div>
-        <div class="flex flex-wrap items-center gap-2 text-xs text-muted">
+        <div class="flex min-h-7 flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted">
             <span class="inline-flex items-center gap-0.5" data-controller="clipboard">
                 <twig:Ui:IssueKey :key="issue.key" size="lg" data-clipboard-target="source" />
                 <twig:Ui:CopyButton size="sm" :label="'issue.show.copy_key'|trans" :copiedLabel="'issue.show.key_copied'|trans" />
             </span>
             <span class="text-ghost">·</span>
-            <span>{{ issue.tracker.name }}</span>
+            <a href="{{ path('app_project_issues_tracker', { workspaceKey: issue.project.workspace.key, projectKey: issue.project.key, tracker: issue.tracker.id }) }}" class="inline-flex items-center gap-1.5 rounded hover:text-strong"><twig:ux:icon name="lucide:tag" class="h-3 w-3 text-faint" />{{ issue.tracker.name }}</a>
             <span class="text-ghost">·</span>
-            <span>{{ 'issue.show.created_by'|trans({ '%name%': issue.author.fullName, '%date%': issue.createdAt|format_date('short') }) }}</span>
+            <span>{{ 'issue.show.created_by'|trans({ '%name%': issue.author.fullName, '%date%': issue.createdAt|format_datetime('medium', 'short') }) }}</span>
             {% if issue.importedRef %}<span class="text-ghost">·</span><span>{{ 'issue.show.formerly'|trans({ '%ref%': issue.importedRef }) }}</span>{% endif %}
             {% if issue.private %}<twig:Ui:Badge tone="amber" size="sm" icon="lock">{{ 'issue.private'|trans }}</twig:Ui:Badge>{% endif %}
-            {% if this.canDelete %}<twig:Ui:IconButton icon="trash-2" tone="danger" size="sm" :label="'issue.delete.title'|trans" class="ml-auto" data-action="live#action" data-live-action-param="confirmDelete" />{% endif %}
+            {% if this.canDelete %}<twig:Ui:IconButton icon="trash-2" tone="danger" :label="'issue.delete.title'|trans" class="-my-1 ml-auto" data-action="live#action" data-live-action-param="confirmDelete" />{% endif %}
         </div>
         {% if editingTitle %}
             <form class="mt-1" data-action="live#action:prevent" data-live-action-param="saveTitle">
                 <input type="text" data-model="norender|title" value="{{ title }}" maxlength="200" required aria-label="{{ 'issue.field.title'|trans }}"
                        data-controller="autofocus" data-action="keydown.esc->live#action" data-live-action-param="cancelTitle"
-                       class="-mx-2 w-[calc(100%+1rem)] rounded-md border-0 bg-surface px-2 py-0.5 text-xl font-semibold leading-snug text-strong ring-2 ring-brand-line focus:outline-none focus:ring-focus">
+                       class="-mx-2 w-[calc(100%+1rem)] rounded-md border-0 bg-surface px-2 py-0.5 text-[22px] font-semibold leading-tight tracking-tight text-strong ring-2 ring-brand-line focus:outline-none focus:ring-focus">
                 <p class="mt-1 text-xs text-faint">{{ 'issue.edit.title_hint'|trans }}</p>
             </form>
             {% if error %}<twig:Ui:Callout tone="danger" size="sm" role="alert" class="mt-2">{{ error }}</twig:Ui:Callout>{% endif %}
         {% elseif this.canEdit %}
             <div class="group mt-1 flex items-start gap-2">
-                <h1 class="min-w-0 py-0.5 text-xl font-semibold leading-snug text-strong">{{ issue.title }}</h1>
+                <h1 class="min-w-0 py-0.5 text-[22px] font-semibold leading-tight tracking-tight text-balance text-strong">{{ issue.title }}</h1>
                 <twig:Ui:IconButton icon="pencil" :label="'issue.edit.edit_title'|trans" class="hover-actions mt-0.5" data-action="live#action" data-live-action-param="editTitle" />
             </div>
         {% else %}
-            <h1 class="mt-1 py-0.5 text-xl font-semibold leading-snug text-strong">{{ issue.title }}</h1>
+            <h1 class="mt-1 py-0.5 text-[22px] font-semibold leading-tight tracking-tight text-balance text-strong">{{ issue.title }}</h1>
         {% endif %}
 
         {# The path as the journal tells it. #}
         <div class="mt-2 text-xs text-muted">
             <ol aria-label="{{ 'issue.show.path'|trans }}" class="flex flex-wrap items-center gap-x-1 gap-y-0.5">
                 {% for step in headerPath %}
-                    {% if not loop.first %}<li aria-hidden="true" class="text-ghost">→</li>{% endif %}
-                    <li class="{{ loop.last ? 'font-medium text-strong' }}">{{ step }}</li>
+                    {% if not loop.first %}<li aria-hidden="true" class="text-ghost"><twig:ux:icon name="lucide:chevron-right" class="h-3 w-3" /></li>{% endif %}
+                    {% if loop.last %}
+                        <li class="inline-flex items-center gap-1.5 font-medium text-strong" aria-current="step"><twig:Ui:Status:Dot :status="issue_status(issue)" />{{ step }}</li>
+                    {% else %}
+                        <li>{{ step }}</li>
+                    {% endif %}
                 {% endfor %}
             </ol>
         </div>

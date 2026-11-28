@@ -181,13 +181,11 @@
                                     <div class="min-w-0 flex-1">
                                         <button type="button" class="{{ selectionValueClasses }}" aria-expanded="false" aria-haspopup="menu" aria-label="{{ 'issue.show.change_property'|trans({ '%property%': 'issue.show.assignee'|trans }) }}" data-action="dropdown#toggle">
                                             {% if selectionAssigneeTeam %}
-                                                <twig:Team:Avatar :team="selectionAssigneeTeam" size="md" />
-                                                <span class="truncate text-body">{{ selectionAssigneeTeam.name }}</span>
+                                                <twig:Team:Line :team="selectionAssigneeTeam" :hint="false" />
                                             {% elseif assigneeId is null %}
                                                 {{ selectionUnchanged }}
                                             {% else %}
-                                                <twig:User:Avatar :user="selectionAssignee" size="md" />
-                                                <span class="truncate text-body">{{ selectionAssignee ? selectionAssignee.fullName : 'issue.show.nobody'|trans }}</span>
+                                                <twig:User:Line :user="selectionAssignee" />
                                             {% endif %}
                                             {{ selectionChevron }}
                                         </button>
@@ -205,23 +203,19 @@
                                     <div class="max-h-72 overflow-y-auto">
                                         <twig:Ui:Dropdown:Item data-list-filter-target="item" data-text="{{ 'issue.bulk.unchanged'|trans }}" data-action="live#action dropdown#close" data-live-action-param="change" data-live-property-param="assignee">{{ selectionUnchanged }}</twig:Ui:Dropdown:Item>
                                         <twig:Ui:Dropdown:Item :active="assigneeId is same as(0)" data-list-filter-target="item" data-text="{{ 'issue.show.nobody'|trans }}" data-action="live#action dropdown#close" data-live-action-param="change" data-live-property-param="assignee" data-live-value-param="0">
-                                            <twig:Ui:Avatar size="md" />
-                                            <span class="truncate text-muted">{{ 'issue.show.nobody'|trans }}</span>
+                                            <twig:User:Line />
                                             {% if assigneeId is same as(0) %}{{ selectionCheck }}{% endif %}
                                         </twig:Ui:Dropdown:Item>
                                         {% for member in selectionActions.assignees %}
                                             <twig:Ui:Dropdown:Item :active="member.id == assigneeId" data-list-filter-target="item" data-text="{{ member.fullName }}" data-action="live#action dropdown#close" data-live-action-param="change" data-live-property-param="assignee" data-live-value-param="{{ member.id }}">
-                                                <twig:User:Avatar :user="member" size="md" />
-                                                <span class="truncate">{{ member.fullName }}</span>
+                                                <twig:User:Line :user="member" />
                                                 {% if member.id == assigneeId %}{{ selectionCheck }}{% endif %}
                                             </twig:Ui:Dropdown:Item>
                                         {% endfor %}
                                         {# The teams that hold a role on every project of the selection, after the people: one or the other. #}
                                         {% for selectionTeam in selectionActions.assigneeTeams %}
                                             <twig:Ui:Dropdown:Item :active="selectionTeam.id == assigneeTeamId" data-list-filter-target="item" data-text="{{ selectionTeam.name }}" data-action="live#action dropdown#close" data-live-action-param="change" data-live-property-param="assigneeTeam" data-live-value-param="{{ selectionTeam.id }}">
-                                                <twig:Team:Avatar :team="selectionTeam" size="md" />
-                                                <span class="truncate">{{ selectionTeam.name }}</span>
-                                                <span class="text-xs text-faint">{{ 'issue.show.team'|trans }}</span>
+                                                <twig:Team:Line :team="selectionTeam" />
                                                 {% if selectionTeam.id == assigneeTeamId %}{{ selectionCheck }}{% endif %}
                                             </twig:Ui:Dropdown:Item>
                                         {% endfor %}

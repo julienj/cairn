@@ -12,6 +12,7 @@ use App\Entity\Tag;
 use App\Entity\Team;
 use App\Entity\User;
 use App\Form\Type\MarkdownType;
+use App\Form\Type\PickerType;
 use App\Form\Type\ToggleType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
@@ -46,7 +47,8 @@ final class IssueType extends AbstractType
             ->add('description', MarkdownType::class, [
                 'label' => 'issue.field.description',
                 'required' => false,
-                'attr' => ['placeholder' => 'issue.field.description_placeholder', 'rows' => 8],
+                // a few lines to start with: the editor grows with the text
+                'attr' => ['placeholder' => 'issue.field.description_placeholder', 'rows' => 5],
                 'project' => $options['project'],
             ]);
 
@@ -79,7 +81,8 @@ final class IssueType extends AbstractType
             ]);
         }
         if (null !== $options['members']) {
-            $builder->add('assignee', ChoiceType::class, [
+            // a list narrowed by a search, as on the page of an issue, rather than a select to scroll
+            $builder->add('assignee', PickerType::class, [
                 // The people, then the teams under their own heading: one or the other.
                 'choices' => [...$options['members'], ...$options['teams']],
                 'choice_label' => static fn (User|Team $assignee): string => $assignee instanceof Team ? $assignee->getName() : $assignee->getFullName(),
@@ -93,6 +96,7 @@ final class IssueType extends AbstractType
                 'placeholder' => 'issue.field.assignee_none',
                 'required' => false,
                 'label' => 'issue.field.assignee',
+                'avatars' => true,
             ]);
         }
         if ($options['private']) {

@@ -1,0 +1,10 @@
+{# The line of a PickerType that draws its choices with their faces (`avatars`): `who` is the person or the team behind the choice, null for the choice of nothing, named `nothing`. Marked `data-picker-line`: the `picker` controller copies it on the button once chosen. With `chosen` it is the line of the button itself, as the server draws it. #}
+<span data-picker-line{% if chosen|default(false) %} data-picker-target="chosen"{% endif %} class="flex min-w-0 flex-1 items-center gap-2.5">
+    {%- if who is null -%}
+        <twig:User:Line :nobody="nothing" />
+    {%- elseif who.fullName is defined -%}
+        <twig:User:Line :user="who" />
+    {%- else -%}
+        <twig:Team:Line :team="who" />
+    {%- endif -%}
+</span>

@@ -1,0 +1,5 @@
+{# The one tooltip of the page, in place of the browser's: the `tooltip` controller reads the `title` of what the pointer or the focus reaches, anywhere in the document, and shows it in a copy of this bubble; `data-kbd="⌘ B"` on the element adds the keys of a shortcut. Drawn once, by the base template. #}
+{% set tooltipClasses = html_cva(base: "pointer-events-none fixed z-[100] flex max-w-72 translate-y-0.5 scale-[0.97] items-center gap-1.5 rounded-md bg-inverse px-[7px] py-1 text-[11.5px] font-medium leading-snug text-on-inverse opacity-0 shadow-lg transition duration-100 data-open:translate-y-0 data-open:scale-100 data-open:opacity-100 [&_kbd]:rounded [&_kbd]:bg-on-inverse/15 [&_kbd]:px-1 [&_kbd]:py-0.5 [&_kbd]:font-sans [&_kbd]:text-[10.5px] [&_kbd]:leading-none") %}
+<div data-controller="tooltip" {{ attributes }}>
+    <template data-tooltip-target="template"><div role="tooltip" hidden class="{{ tooltipClasses.apply({}, attributes.render('class'))|tailwind_merge }}"></div></template>
+</div>

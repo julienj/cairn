@@ -1,28 +1,35 @@
-{# One row of IssueList:Table: its checkbox, sent to the selection page with the form of the bar, then its cells. `group` is the key of its group in a grouped list, which folds it; `tags` are those the issue carries, after its title. #}
+{# One row of IssueList:Table, a line whatever its title and its tags: its checkbox, sent to the selection page with the form of the bar, then its cells. The whole row opens the issue: the link of its title is stretched over it, and what else answers a click (the checkbox, the project) stands above. `group` is the key of its group in a grouped list, which folds it; `tags` are those the issue carries, two beside its title and the rest counted. The checkbox shows when the row is pointed at, as soon as one is checked, and always where nothing hovers. #}
 {% set rowClosed = issue_status(issue) == 'closed' %}
 {% set issueRoute = { workspaceKey: issue.project.workspace.key, projectKey: issue.project.key } %}
 {% set issueHref = path('app_issue_show', issueRoute|merge({ number: issue.number })) %}
-<twig:Ui:Table:Row :closed="rowClosed" class="has-[:checked]:bg-brand-soft/60" data-fold-target="row" data-fold-group="{{ group }}">
+<twig:Ui:Table:Row :closed="rowClosed" class="has-[:checked]:bg-brand-soft/60 sm:relative sm:cursor-pointer" data-fold-target="row" data-fold-group="{{ group }}">
     <td class="sm:px-3 sm:py-2.5 order-1">
-        <label class="-m-2 inline-flex select-none p-2 align-middle">
-            <input type="checkbox" form="issue-selection" name="ids[]" value="{{ issue.id }}" aria-label="{{ issue.key }}" data-selection-target="box" data-action="click->selection#toggle" class="h-3.5 w-3.5 rounded border-line-strong text-brand">
+        <label class="relative z-[1] -m-2 inline-flex select-none p-2 align-middle">
+            <input type="checkbox" form="issue-selection" name="ids[]" value="{{ issue.id }}" aria-label="{{ issue.key }}" data-selection-target="box" data-action="click->selection#toggle" class="{{ rowBoxClasses }}">
         </label>
     </td>
-    <td class="sm:px-3 sm:py-2.5 order-1 whitespace-nowrap"><twig:Ui:IssueKey :key="issue.key" href="{{ issueHref }}" /></td>
+    <td class="sm:px-3 sm:py-2.5 order-1 whitespace-nowrap"><twig:Ui:IssueKey :key="issue.key" class="sm:group-hover:text-body" /></td>
     {% if showProject %}
         <td class="sm:px-3 sm:py-2.5 order-5 whitespace-nowrap text-xs">
-            <a href="{{ path('app_project_issues', issueRoute) }}" class="text-body hover:text-brand">{{ issue.project.name }}</a>
+            <a href="{{ path('app_project_issues', issueRoute) }}" class="relative z-[1] text-body hover:text-brand">{{ issue.project.name }}</a>
             <span class="hidden lg:inline text-faint">· {{ issue.project.workspace.name }}</span>
         </td>
     {% endif %}
-    <td class="sm:px-3 sm:py-2.5 order-4 basis-full sm:basis-auto {{ rowClosed ? 'text-muted' : 'text-strong' }}">
-        <a href="{{ issueHref }}" class="hover:text-brand">{{ issue.title }}</a>
-        {% if issue.private %}<twig:Ui:Badge tone="amber" size="sm" icon="lock">{{ 'issue.private'|trans }}</twig:Ui:Badge>{% endif %}
-        {% for tag in tags %}<twig:Ui:Tag :colour="tag.colour.value" size="sm" class="ml-0.5">{{ tag.name }}</twig:Ui:Tag>{% endfor %}
+    <td class="sm:px-3 sm:py-2.5 order-4 basis-full sm:basis-auto sm:w-full sm:max-w-0 {{ rowClosed ? 'text-muted' : 'text-strong' }}">
+        <div class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 sm:flex-nowrap">
+            <a href="{{ issueHref }}" title="{{ issue.title }}" class="min-w-0 sm:truncate sm:group-hover:text-brand sm:after:absolute sm:after:inset-0 focus:outline-none sm:focus-visible:after:ring-2 sm:focus-visible:after:ring-inset sm:focus-visible:after:ring-focus">{{ issue.title }}</a>
+            {% if issue.private %}<span class="relative z-[1] grid h-[18px] w-[18px] shrink-0 place-items-center rounded-[5px] bg-amber-soft text-amber ring-1 ring-inset ring-amber-line" title="{{ 'issue.private'|trans }} · {{ 'issue.comment.private_help'|trans }}"><twig:ux:icon name="lucide:lock" class="h-2.5 w-2.5" /></span>{% endif %}
+            {% if tags is not empty %}
+                <span class="flex shrink-0 items-center gap-1">
+                    {% for tag in tags|slice(0, 2) %}<twig:Ui:Tag :colour="tag.colour.value" size="sm">{{ tag.name }}</twig:Ui:Tag>{% endfor %}
+                    {% if tags|length > 2 %}<twig:Ui:Tag:More :count="tags|length - 2" class="relative z-[1]" title="{{ tags|slice(2)|map(tag => tag.name)|join(', ') }}" />{% endif %}
+                </span>
+            {% endif %}
+        </div>
     </td>
     <td class="sm:px-3 sm:py-2.5 order-5 whitespace-nowrap text-xs text-muted">{{ issue.tracker.name }}</td>
     <td class="sm:px-3 sm:py-2.5 order-6 whitespace-nowrap"><twig:Ui:Status:Step :status="issue_status(issue)" :label="issue_place(issue)" /></td>
-    <td class="sm:px-3 sm:py-2.5 order-2 whitespace-nowrap"><twig:Ui:Criticality:Badge :criticality="issue.criticality.value" /></td>
-    <td class="sm:px-3 sm:py-1.5 order-7 whitespace-nowrap leading-none"><twig:Issue:Assignee :issue="issue" size="md" /></td>
-    <td class="sm:px-3 sm:py-2.5 order-3 ml-auto sm:ml-0 text-right whitespace-nowrap text-xs text-faint">{{ issue.updatedAt|format_datetime('short', 'short') }}</td>
+    <td class="sm:px-3 sm:py-2.5 order-2 whitespace-nowrap"><twig:Ui:Criticality:Badge :criticality="issue.criticality.value" quiet /></td>
+    <td class="sm:px-3 sm:py-1.5 order-7 whitespace-nowrap leading-none"><span class="relative z-[1] inline-flex"><twig:Issue:Assignee :issue="issue" size="md" /></span></td>
+    <td class="sm:px-3 sm:py-2.5 order-3 ml-auto sm:ml-0 text-right whitespace-nowrap text-xs text-faint"><time datetime="{{ issue.updatedAt|date('c') }}">{{ issue.updatedAt|format_date('medium') }} <span class="text-muted">{{ issue.updatedAt|format_time('short') }}</span></time></td>
 </twig:Ui:Table:Row>

@@ -1,11 +1,19 @@
-{# A filter that is on or off, as a pill with its checkbox and, optionally, how many it holds; the attributes (name, value, data-action…) go to the checkbox, `model` becomes its `data-model` in a live component. The content is the label. #}
-{% props checked = false, count = null, model = null %}
+{# A filter that is on or off, as a pill with its checkbox and, optionally, how many it holds; the attributes (name, value, data-action…) go to the checkbox, `model` becomes its `data-model` in a live component. The content is the label.
+   `variant="chip"` is the same switch without the box: a rounded chip, tinted when on, struck through when off, with an `icon` before its label. #}
+{% props checked = false, count = null, model = null, variant = 'box', icon = null %}
 {% set filterToggleClasses = html_cva(
-    base: 'inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-sm cursor-pointer has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-focus',
-    variants: { checked: { true: 'border-brand-line bg-brand-soft text-brand', false: 'border-line bg-surface text-muted hover:bg-subtle' } },
+    base: 'inline-flex items-center gap-1.5 border cursor-pointer has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-focus',
+    variants: {
+        variant: { box: 'rounded-md px-2 py-1 text-sm', chip: 'h-[26px] rounded-full px-2.5 text-xs font-medium' },
+        checked: { true: 'border-brand-line bg-brand-soft text-brand', false: 'border-line bg-surface text-muted hover:bg-subtle' },
+    },
+    compoundVariants: [
+        { variant: ['chip'], checked: [false], class: 'bg-transparent text-faint line-through decoration-ghost hover:border-line-strong hover:bg-transparent hover:text-body' },
+    ],
 ) %}
-<label class="{{ filterToggleClasses.apply({ checked: checked })|tailwind_merge }}">
-    <input type="checkbox" {{ attributes }}{% if model %} data-model="{{ model }}"{% endif %} {{ checked ? 'checked' }} class="h-3.5 w-3.5 rounded border-line-strong text-brand focus:outline-none">
+<label class="{{ filterToggleClasses.apply({ checked: checked, variant: variant })|tailwind_merge }}">
+    <input type="checkbox" {{ attributes }}{% if model %} data-model="{{ model }}"{% endif %} {{ checked ? 'checked' }} class="{{ variant == 'chip' ? 'sr-only' : 'h-3.5 w-3.5 rounded border-line-strong text-brand focus:outline-none' }}">
+    {% if icon %}{{ ux_icon('lucide:' ~ icon, { class: 'h-3.5 w-3.5 opacity-80' }) }}{% endif %}
     <span>{% block content %}{% endblock %}</span>
     {% if count is not null %}<span class="text-xs tabular-nums opacity-70">{{ count }}</span>{% endif %}
 </label>

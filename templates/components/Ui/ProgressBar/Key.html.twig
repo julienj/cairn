@@ -1,0 +1,18 @@
+{# The mark a part of a Ui:ProgressBar has in the legend under it, so that a figure is read with what draws it: `value` is the fill, `pending` its hatched part, `rest` the empty end of the bar. `tone` is the one of the bar. #}
+{% props part = 'value', tone = 'brand' %}
+{% set progressBarKeyClasses = html_cva(
+    base: 'inline-block shrink-0',
+    variants: {
+        part: { value: 'h-2 w-2 rounded-full', pending: 'h-2 w-3 rounded-sm opacity-70', rest: 'h-2 w-2 rounded-full bg-sunken ring-1 ring-inset ring-line-strong' },
+        tone: { brand: '', emerald: '', red: '' },
+    },
+    compoundVariants: [
+        { part: ['value'], tone: ['brand'], class: 'bg-brand-solid' },
+        { part: ['value'], tone: ['emerald'], class: 'bg-emerald-solid' },
+        { part: ['value'], tone: ['red'], class: 'bg-red-solid' },
+        { part: ['pending'], tone: ['brand'], class: 'bg-[repeating-linear-gradient(135deg,var(--color-brand-solid)_0_3px,transparent_3px_6px)]' },
+        { part: ['pending'], tone: ['emerald'], class: 'bg-[repeating-linear-gradient(135deg,var(--color-emerald-solid)_0_3px,transparent_3px_6px)]' },
+        { part: ['pending'], tone: ['red'], class: 'bg-[repeating-linear-gradient(135deg,var(--color-red-solid)_0_3px,transparent_3px_6px)]' },
+    ],
+) %}
+<span class="{{ progressBarKeyClasses.apply({ part: part, tone: tone }, attributes.render('class'))|tailwind_merge }}" aria-hidden="true" {{ attributes }}></span>

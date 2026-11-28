@@ -1,12 +1,38 @@
-{# What the open budgets of the project amount to together: their volume, what was consumed, what is left and what waits for an approval. `this` is read before the nested components. #}
+{# What the open budgets of the project amount to together, which no single budget says: four figures side by side in one band (their volume, what was consumed, what waits for an approval and what is left, with what would be left were everything approved), each beside the mark it has in the bar under them, the one a budget draws (`Ui:ProgressBar`: filled by what was consumed, hatched for what waits). `this` is read before the nested components. #}
 {% set totalsCount = this.count %}
 {% set totalsVolume = this.volume %}
 {% set totalsConsumed = this.consumed %}
 {% set totalsRemaining = this.remaining %}
 {% set totalsPending = this.pending %}
-<div {{ attributes.defaults({ class: 'grid grid-cols-2 gap-3 lg:grid-cols-4' }) }} data-loading="addClass(opacity-60)">
-    <twig:Ui:StatTile :label="'budget.total.volume'|trans" :value="totalsVolume|quantity(project)" :caption="'budget.total.volume_caption'|trans({ '%count%': totalsCount })" />
-    <twig:Ui:StatTile :label="'budget.consumed'|trans" :value="totalsConsumed|quantity(project)" :caption="'budget.total.consumed_caption'|trans" />
-    <twig:Ui:StatTile :label="'budget.total.remaining'|trans" :value="totalsRemaining|quantity(project)" :caption="'budget.total.remaining_caption'|trans" />
-    <twig:Ui:StatTile :label="'budget.pending'|trans" :value="totalsPending|quantity(project)" :caption="'budget.total.pending_caption'|trans" />
-</div>
+{% set totalsOver = totalsRemaining < 0 %}
+{% set totalsTone = totalsOver ? 'red' : 'emerald' %}
+{% set totalsLabelClasses = 'flex items-center gap-1.5 text-xs text-muted' %}
+{% set totalsValueClasses = 'mt-1 text-2xl font-semibold tabular-nums tracking-tight' %}
+<section {{ attributes.defaults({ class: 'rounded-[10px] border border-line bg-surface shadow-sm' }) }} data-loading="addClass(opacity-60)">
+    <dl class="grid grid-cols-2 gap-y-3 px-4 pt-3.5 lg:grid-cols-4 lg:divide-x lg:divide-line-subtle lg:px-0 [&>div]:lg:px-4">
+        <div>
+            <dt class="{{ totalsLabelClasses }}">{{ 'budget.total.volume'|trans }}</dt>
+            <dd class="{{ totalsValueClasses }} text-strong">{{ totalsVolume|quantity(project) }}</dd>
+            <dd class="mt-0.5 text-xs text-faint">{{ 'budget.total.volume_caption'|trans({ '%count%': totalsCount }) }}</dd>
+        </div>
+        <div>
+            <dt class="{{ totalsLabelClasses }}"><twig:Ui:ProgressBar:Key part="value" :tone="totalsTone" />{{ 'budget.consumed'|trans }}</dt>
+            <dd class="{{ totalsValueClasses }} text-strong">{{ totalsConsumed|quantity(project) }}</dd>
+            <dd class="mt-0.5 text-xs text-faint">{{ 'budget.total.consumed_caption'|trans }}</dd>
+        </div>
+        <div>
+            <dt class="{{ totalsLabelClasses }}"><twig:Ui:ProgressBar:Key part="pending" :tone="totalsTone" />{{ 'budget.pending'|trans }}</dt>
+            <dd class="{{ totalsValueClasses }} text-strong">{{ totalsPending|quantity(project) }}</dd>
+            <dd class="mt-0.5 text-xs text-faint">{{ 'budget.total.pending_caption'|trans }}</dd>
+        </div>
+        <div>
+            <dt class="{{ totalsLabelClasses }}"><twig:Ui:ProgressBar:Key part="rest" />{{ 'budget.total.remaining'|trans }}</dt>
+            <dd class="{{ totalsValueClasses }} {{ totalsOver ? 'text-red' : 'text-strong' }}">{{ totalsRemaining|quantity(project) }}</dd>
+            <dd class="mt-0.5 text-xs {{ totalsRemaining - totalsPending < 0 ? 'text-red' : 'text-faint' }}">{{ totalsPending != 0 ? 'budget.total.remaining_after_caption'|trans({ '%quantity%': (totalsRemaining - totalsPending)|quantity(project) }) : 'budget.total.remaining_caption'|trans }}</dd>
+        </div>
+    </dl>
+    <div class="px-4 pb-3.5 pt-3">
+        <twig:Ui:ProgressBar :value="max(totalsConsumed, 0)" :pending="max(totalsPending, 0)" :max="max(totalsVolume, totalsConsumed, 1)" :tone="totalsTone" size="sm"
+                             :label="'budget.bar'|trans({ '%consumed%': totalsConsumed|quantity(project), '%volume%': totalsVolume|quantity(project) })" />
+    </div>
+</section>

@@ -198,6 +198,12 @@ src/
 - **A new subject is a route, a page and a navigation item**, never a tab
   nor a card added to another page (`project/settings/base.html.twig`,
   `layout/account.html.twig`).
+- **A long page of a project that names one thing says so to its layout**
+  (`layout/project.html.twig`): `page_heading` makes the breadcrumb stay
+  under the header and take the text of the page's `h1` once that one has
+  left the screen (`sticky-title`), its title and nothing else;
+  `nav_tracker` gives the category the page is about, which the navigation
+  marks as it marks the list of that category.
 
 ### Writes and reads
 
@@ -347,10 +353,23 @@ src/
   person is. "Unassigned" means neither, everywhere it is asked: the filter,
   the group, the condition of a rule. The journal keeps the name, of the
   person or of the team. A team that holds issues is not deleted.
-- **`journal_label`** (`Twig/JournalLabelExtension`) is the only place that
-  reads what each journal type recorded, for the thread and the mails.
+- **`Twig/JournalLabelExtension`** is the only place that reads what each
+  journal type recorded: a sentence for the mails (`journal_label`), and
+  the same sentence cut where its values stand (`parts()`) for the thread,
+  which draws each as what it is. The journal keeps labels, not keys: a
+  step is a neutral pastille, never a colour guessed from a label; a file
+  is text, since it may be gone; the key of another issue is a link only
+  for a reader who may see that issue (`Issue:JournalEntry`).
+- **The thread tells a day once, above its moments, which say their
+  hour**, and a moment is read without hovering: a date is written, never
+  "three weeks ago". What a forge wrote is a line like the others,
+  unfolded for the rest.
 - **Releases are optional, without a setting**: a project without any
-  release shows none of it.
+  release shows none of it. An open release answers two questions apart:
+  how far it went, a bar that only counts what is finished, and where the
+  rest stands, by the names of the steps in the order the instance
+  declares them (a release holds issues of several workflows, which share
+  no path), never by a colour of their status (`ReleaseSummary`).
 - **Tags are optional the same way, and belong to one project**: a closed
   list its managers keep (`tag.manage`), in a colour of a closed
   palette (`TagColour`, a token each). An issue carries several
@@ -387,6 +406,15 @@ src/
   estimate back into the issue, its workflow or its history.
 - `BudgetLineRepository::totalsByBudget()` is the one place that says what
   lines count for: only an approved line is consumed.
+- **A budget is read the same way everywhere**
+  (`project/_budget_meter.html.twig`): what was consumed out of the
+  volume, a bar filled by it, then, hatched in the same colour, by what
+  waits for an approval, and what would be left were everything approved,
+  which is what whoever approves wants to know. One colour, red once the
+  volume is passed: what waits is no other colour, it is the same not yet
+  acquired. The budgets page adds what the open ones amount to together
+  (`Budget:Totals`), and shows the latest lines of each; all of them, and
+  their totals by status, are on the page of the budget.
 - **Quantities are integers of minutes**; the unit is only what is shown.
   `Budget/Quantities` is the one place that converts and formats; a form
   converts with `fromInput()` so a field left as shown rewrites nothing.
@@ -648,6 +676,38 @@ src/
   live in `src/Form/Type/`. Form controls style their disabled state.
 - **Icons**: `<twig:ux:icon name="lucide:x" />`, imported locally with
   `ux:icons:import`.
+- **Styles are classes in the templates.** `assets/styles/app.css` holds
+  the theme, the variants (`sidebar-collapsed`, `mac`) and, in `@layer
+  base`, what a bare element does without being told (a link or a button
+  eases in, a `<details>` folds with a movement, nothing moves for who
+  asked the system for less): never a class of our own, which neither
+  Storia, `tailwind_merge` nor `PaletteClassesTest` would see. What a
+  controller adds to the page is a copy of a `<template>` that a `Ui:`
+  component holds, drawn once by `base.html.twig` (`Ui:Toaster`,
+  `Ui:Tooltip`, `Ui:Lightbox`); a movement of a component is written in
+  its classes (`starting:`, `transition-discrete`).
+- **There is one tooltip, and templates write `title` for it**
+  (`tooltip` controller, `Ui:Tooltip`): the controller takes the title of
+  what the pointer or the keyboard reaches, so nothing is declared twice
+  and what a live component redraws is read again. A title that repeats
+  the text beside it shows only when that text is cut. `data-kbd="⌘ B"`
+  adds the keys of a shortcut; a hint names the key with `<twig:Ui:ModKey
+  />` (⌘ on a Mac, Ctrl elsewhere, `platform` controller), never with a
+  `⌘` in a translation.
+- **A person is drawn by one of three components, never by hand.**
+  `User:Avatar` is the face alone; `User:Line` is who one chooses in a
+  list (a menu, a picker, the options of a filter), with or without the
+  face, with a hint that tells two namesakes apart when asked; and
+  `User:Identity` is who someone is where accounts are managed, with the
+  address under the name. `Team:Line` is a team beside the people. A
+  form field that chooses among people is a `PickerType` with `avatars`,
+  which draws the same lines, on the button as in the list. None draws
+  an element of its own: the line or the link they are put in lays them
+  out.
+- **A face is never too small to be one.** Under 20px a name stands
+  instead of an avatar, and avatars sit side by side, never one over
+  another (`Ui:AvatarStack`). A picture keeps the colour of its kind as a
+  ring, a gap apart from 24px.
 - **Components of one page keep each other up to date through a domain
   event** (`issue:changed`): the one that acted emits it, the others
   redraw in a `#[LiveListener]`; no redirect from a live action when other
@@ -667,7 +727,9 @@ src/
   written, then claimed by the command that saves the text
   (`IssueHandlerSupport::claimAttachments()`). A file follows what it goes
   with, privacy included. A file input in a live component goes through the
-  `file-picker` controller.
+  `file-picker` controller, and a file dropped on what holds that input
+  goes through it too (`dropzone`). A picture opens over the page
+  (`lightbox`), its link staying one for a new tab.
 - **A text being written is a draft, and a link followed by mistake asks
   first** (`Ui:DraftGuard`, once on a page where something is written):
   what is typed in an element marked `data-draft`, or a file waiting

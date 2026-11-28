@@ -104,6 +104,29 @@ final class ColumnTest extends KernelTestCase
         self::assertStringNotContainsString('MD-SPT-1', $render);
     }
 
+    public function testACardOpensItsIssueFromAnywhereAndCountsItsTagsPastTheSecond(): void
+    {
+        foreach (['Back office', 'Front office', 'Mobile'] as $name) {
+            $this->scene->tag($name, keys: ['MD-SPT-2']);
+        }
+
+        $crawler = $this->column('new', 'thomas.girard@cairn.test')->render()->crawler();
+        $card = $crawler->filter('#board-card-'.$this->scene->issue('MD-SPT-2')->getId());
+
+        self::assertCount(1, $card->filter('a'), 'one link, the title, stretched over the card');
+        self::assertStringContainsString('after:absolute', (string) $card->filter('a')->attr('class'));
+        self::assertSame('/MD/SPT/issues/2', $card->filter('a')->attr('href'));
+        self::assertStringContainsString('Back office', $card->text());
+        self::assertStringContainsString('Front office', $card->text());
+        self::assertStringNotContainsString('Mobile', $card->text());
+        self::assertSame('+1', $card->filter('span[title="Mobile"]')->text(), 'the rest is counted, and named on hover');
+    }
+
+    public function testAnEmptyColumnSaysSo(): void
+    {
+        self::assertStringContainsString('No issue', (string) $this->column('blocked', 'thomas.girard@cairn.test')->render());
+    }
+
     public function testAColumnGrowsByBatches(): void
     {
         foreach (range(1, Column::BATCH + 5) as $index) {

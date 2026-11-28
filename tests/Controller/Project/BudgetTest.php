@@ -157,7 +157,7 @@ final class BudgetTest extends WebTestCase
         $this->signInAs('thomas.girard@cairn.test');
 
         $this->client->request('GET', '/MD/SPT/budgets');
-        $this->client->clickLink('Edit');
+        $this->client->click($this->client->getCrawler()->filter('main a[aria-label="Edit"]')->link());
         self::assertRouteSame('app_project_budget_edit');
         self::assertInputValueSame('budget[volume]', '10');
         $this->client->submitForm('Save', ['budget[name]' => 'Order 2026-01 bis', 'budget[volume]' => '12', 'budget[closed]' => '1']);
@@ -195,7 +195,7 @@ final class BudgetTest extends WebTestCase
         $this->client->submitForm('Save', ['budget[closed]' => '1']);
 
         $this->client->request('GET', $page);
-        $this->client->clickLink('Edit');
+        $this->client->click($this->client->getCrawler()->filter('main a[aria-label="Edit"]')->link());
         self::assertSelectorTextContains('[role="dialog"]', 'A closed budget is deleted with all of its lines');
         $this->client->submitForm('Delete the budget');
         self::assertResponseRedirects('/MD/SPT/budgets', null, 'its page is gone: back to the budgets');
@@ -234,7 +234,7 @@ final class BudgetTest extends WebTestCase
         self::assertResponseRedirects($page);
 
         $this->client->followRedirect();
-        $this->client->clickLink('Edit');
+        $this->client->click($this->client->getCrawler()->filter('main a[aria-label="Edit"]')->link());
         self::assertRouteSame('app_project_budget_edit');
         $this->client->submitForm('Save', ['budget[volume]' => '12']);
         self::assertResponseRedirects($page);

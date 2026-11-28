@@ -1,0 +1,4 @@
+component: Ui:Tag:More
+variants:
+    one: { args: { count: 1, title: Mobile } }
+    several: { args: { count: 12, title: 'Mobile, API, Checkout' } }

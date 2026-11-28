@@ -1,6 +1,9 @@
 {# The properties of the issue page's side panel: a band with the tracker and, for everyone, the link to the diagram of its workflow, the step on the width of the panel, then one row per property; the release only once the project has releases. A property the viewer may change is a menu (`Ui:Dropdown`) opened from its value, each choice a `Ui:Dropdown:Item` that dispatches the change and closes the menu (a redraw keeps the classes the browser changed, so the menu would stay open); the menu spans the row so that it opens within the column, hence plain divs rather than a <dl>, which allows no wrapper between it and its terms. `this` is read before the nested components, whose blocks see their own `this`.
    The step menu holds several panels (`panels` controller): the places of the workflow drawn as its path, then, behind "Change category…", the other trackers and the places of each. #}
-{% set propertiesRowClasses = 'group flex min-h-7 items-center gap-3' %}
+{# A property is its whole line: the label and the value answer the pointer as one, and the line is the button that opens the menu. The tags may take several lines: their chevron is held at the corner, so that it takes no room from them. #}
+{% set propertiesRowClasses = 'group -mx-2 flex min-h-8 items-center gap-3 rounded-md px-2' %}
+{% set propertiesTriggerClasses = propertiesRowClasses ~ ' w-[calc(100%+1rem)] text-left hover:bg-subtle aria-expanded:bg-subtle focus:outline-none focus-visible:ring-2 focus-visible:ring-focus' %}
+{% set propertiesChevronClasses = 'hover-actions ml-auto h-3.5 w-3.5 shrink-0 text-faint group-aria-expanded:opacity-100' %}
 {% set propertiesLabelClasses = 'w-22 shrink-0 text-xs text-muted' %}
 {% set propertiesValueClasses = '-mx-1.5 inline-flex min-h-7 max-w-full items-center gap-1.5 rounded-md px-1.5 py-0.5 text-left hover:bg-sunken aria-expanded:bg-sunken' %}
 {% set propertiesBackClasses = '-mt-1 mb-1 border-b border-line-subtle font-medium text-strong' %}
@@ -37,16 +40,16 @@
                 <twig:Ui:Callout tone="danger" size="sm" role="alert" class="mb-2">{{ error }}</twig:Ui:Callout>
             {% endif %}
 
-            {# The step takes the width of the panel, so that a long label stays on one line. #}
-            <div class="pb-2">
-                <div class="mb-1.5 text-xs text-muted">{{ 'issue.show.place'|trans }}</div>
-                <div class="flex">
+            {# The step is a line like the others, its pill as wide as the values: a long label is cut, and read whole in its tooltip. #}
+            <div class="flex min-h-9 items-center gap-3 pb-1">
+                <div class="{{ propertiesLabelClasses }}">{{ 'issue.show.place'|trans }}</div>
+                <div class="flex min-w-0 flex-1">
                     {% if propertiesCanChangePlace %}
                         <div class="min-w-0 flex-1" data-controller="panels">
-                            <twig:Ui:Dropdown width="full" class="block">
+                            <twig:Ui:Dropdown width="full" align="right" class="block">
                                 <twig:block name="trigger">
                                     <button type="button" class="block w-full rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-focus aria-expanded:ring-2 aria-expanded:ring-focus" aria-expanded="false" aria-haspopup="menu" aria-label="{{ 'issue.show.change_property'|trans({ '%property%': 'issue.show.place'|trans }) }}" data-action="dropdown#toggle panels#reset">
-                                        <twig:Ui:Status:Step :status="issue_status(issue)" :label="issue_place(issue)" pill size="lg">
+                                        <twig:Ui:Status:Step :status="issue_status(issue)" :label="issue_place(issue)" pill size="lg" class="h-7">
                                             <twig:ux:icon name="lucide:chevrons-up-down" class="h-3.5 w-3.5 shrink-0 opacity-70" />
                                         </twig:Ui:Status:Step>
                                     </button>
@@ -115,24 +118,22 @@
                             </twig:Ui:Dropdown>
                         </div>
                     {% else %}
-                        <twig:Ui:Status:Step :status="issue_status(issue)" :label="issue_place(issue)" pill size="lg" class="min-w-0 flex-1" />
+                        <twig:Ui:Status:Step :status="issue_status(issue)" :label="issue_place(issue)" pill size="lg" class="h-7 min-w-0 flex-1" />
                     {% endif %}
                 </div>
             </div>
 
             {% set propertiesCriticality %}<twig:Ui:Criticality:Badge :criticality="issue.criticality.value" />{% endset %}
             {% if propertiesCanSetCriticality %}
-                <twig:Ui:Dropdown width="sm" class="block">
+                <twig:Ui:Dropdown width="sm" align="right" class="block">
                     <twig:block name="trigger">
-                        <div class="{{ propertiesRowClasses }}">
-                            <div class="{{ propertiesLabelClasses }}">{{ 'issue.show.criticality'|trans }}</div>
-                            <div class="min-w-0 flex-1">
-                                <button type="button" class="{{ propertiesValueClasses }}" aria-expanded="false" aria-haspopup="menu" aria-label="{{ 'issue.show.change_property'|trans({ '%property%': 'issue.show.criticality'|trans }) }}" data-action="dropdown#toggle">
-                                    {{ propertiesCriticality }}
-                                    <twig:ux:icon name="lucide:chevrons-up-down" class="hover-actions h-3.5 w-3.5 shrink-0 text-faint" />
-                                </button>
-                            </div>
-                        </div>
+                        <button type="button" class="{{ propertiesTriggerClasses }}" aria-expanded="false" aria-haspopup="menu" aria-label="{{ 'issue.show.change_property'|trans({ '%property%': 'issue.show.criticality'|trans }) }}" data-action="dropdown#toggle">
+                            <span class="{{ propertiesLabelClasses }}">{{ 'issue.show.criticality'|trans }}</span>
+                            <span class="flex min-w-0 flex-1 gap-1.5 items-center">
+                            {{ propertiesCriticality }}
+                            </span>
+                            <twig:ux:icon name="lucide:chevrons-up-down" class="{{ propertiesChevronClasses }}" />
+                        </button>
                     </twig:block>
                     <twig:block name="content">
                         {% for level in ['blocking', 'high', 'normal', 'low'] %}
@@ -159,55 +160,63 @@
                     {% endfor %}
                 {% endset %}
                 {% if propertiesCanSetTags %}
-                    <twig:Ui:Dropdown width="sm" class="block">
+                    <twig:Ui:Dropdown width="sm" align="right" class="block">
                         <twig:block name="trigger">
-                            <div class="{{ propertiesRowClasses }} items-start">
-                                <div class="{{ propertiesLabelClasses }} pt-1.5">{{ 'issue.show.tags'|trans }}</div>
-                                <div class="min-w-0 flex-1">
-                                    <button type="button" class="{{ propertiesValueClasses }} flex-wrap" aria-expanded="false" aria-haspopup="menu" aria-label="{{ 'issue.show.change_property'|trans({ '%property%': 'issue.show.tags'|trans }) }}" data-action="dropdown#toggle">
-                                        {{ propertiesTagList }}
-                                        <twig:ux:icon name="lucide:chevrons-up-down" class="hover-actions h-3.5 w-3.5 shrink-0 text-faint" />
-                                    </button>
-                                </div>
-                            </div>
+                            <button type="button" class="{{ propertiesTriggerClasses }} relative items-start py-1.5 pr-7" aria-expanded="false" aria-haspopup="menu" aria-label="{{ 'issue.show.change_property'|trans({ '%property%': 'issue.show.tags'|trans }) }}" data-action="dropdown#toggle">
+                                <span class="{{ propertiesLabelClasses }} pt-0.5">{{ 'issue.show.tags'|trans }}</span>
+                                <span class="flex min-w-0 flex-1 flex-wrap gap-1 items-center">
+                                {{ propertiesTagList }}
+                                </span>
+                                <twig:ux:icon name="lucide:chevrons-up-down" class="hover-actions absolute right-2 top-2.5 h-3.5 w-3.5 text-faint group-aria-expanded:opacity-100" />
+                            </button>
                         </twig:block>
                         <twig:block name="content">
-                            {# Several are ticked one after the other: the menu stays open. #}
-                            <div class="max-h-72 overflow-y-auto">
-                                {% for tag in propertiesTagChoices %}
-                                    {% set propertiesTagActive = tag.id in propertiesTagIds %}
-                                    <twig:Ui:Dropdown:Item :active="propertiesTagActive" role="menuitemcheckbox" aria-checked="{{ propertiesTagActive ? 'true' : 'false' }}" data-action="live#action" data-live-action-param="toggleTag" data-live-tag-param="{{ tag.id }}">
-                                        <twig:Ui:Tag :colour="tag.colour.value">{{ tag.name }}</twig:Ui:Tag>
-                                        {% if propertiesTagActive %}<twig:ux:icon name="lucide:check" class="ml-auto h-4 w-4 shrink-0 text-brand" />{% endif %}
-                                    </twig:Ui:Dropdown:Item>
-                                {% endfor %}
+                            {# Several are ticked one after the other: the menu stays open, each line a box to tick beside the tag as it is written. Many tags: a field narrows the list. Whoever keeps the tags of the project goes to them from here. #}
+                            <div data-controller="list-filter">
+                                {% if propertiesTagChoices|length > 8 %}
+                                    <div class="-mt-1 flex items-center gap-2 border-b border-line-subtle px-3 py-2 text-faint">
+                                        <twig:ux:icon name="lucide:search" class="h-3.5 w-3.5 shrink-0" />
+                                        <input type="search" data-dropdown-target="search" data-action="input->list-filter#filter" placeholder="{{ 'issue.show.search_tag'|trans }}" aria-label="{{ 'issue.show.search_tag'|trans }}" autocomplete="off" class="w-full border-0 bg-transparent p-0 text-sm text-body placeholder:text-faint focus:outline-none focus:ring-0">
+                                    </div>
+                                {% endif %}
+                                <div class="max-h-72 overflow-y-auto">
+                                    {% for tag in propertiesTagChoices %}
+                                        {% set propertiesTagActive = tag.id in propertiesTagIds %}
+                                        <twig:Ui:Dropdown:Item role="menuitemcheckbox" aria-checked="{{ propertiesTagActive ? 'true' : 'false' }}" class="group/tag py-1.5" data-list-filter-target="item" data-text="{{ tag.name }}" data-action="live#action" data-live-action-param="toggleTag" data-live-tag-param="{{ tag.id }}">
+                                            <span class="grid h-[15px] w-[15px] shrink-0 place-items-center rounded border-[1.5px] transition-colors {{ propertiesTagActive ? 'border-brand-solid bg-brand-solid text-white' : 'border-line-strong bg-surface group-hover/tag:border-focus' }}" aria-hidden="true">{% if propertiesTagActive %}<twig:ux:icon name="lucide:check" class="h-2.5 w-2.5 [&_*]:stroke-4" />{% endif %}</span>
+                                            <twig:Ui:Tag :colour="tag.colour.value" class="bg-transparent px-0 text-[13px] ring-0 {{ propertiesTagActive ? 'text-strong' : 'font-normal' }}">{{ tag.name }}</twig:Ui:Tag>
+                                        </twig:Ui:Dropdown:Item>
+                                    {% endfor %}
+                                </div>
+                                <p data-list-filter-target="empty" hidden class="px-3 py-2 text-center text-xs text-faint">{{ 'issue.show.no_tag_match'|trans }}</p>
                             </div>
+                            {% if is_granted('tag.manage', issue.project) %}
+                                <a href="{{ path('app_project_settings_tags', { workspaceKey: issue.project.workspace.key, projectKey: issue.project.key }) }}" class="-mb-1 mt-1 flex items-center gap-2 rounded-b-lg border-t border-line-subtle px-3 py-2 text-xs text-muted hover:bg-subtle hover:text-brand"><twig:ux:icon name="lucide:settings-2" class="h-3.5 w-3.5" />{{ 'issue.show.manage_tags'|trans }}</a>
+                            {% endif %}
                         </twig:block>
                     </twig:Ui:Dropdown>
                 {% else %}
                     <div class="{{ propertiesRowClasses }} items-start">
-                        <div class="{{ propertiesLabelClasses }} pt-1.5">{{ 'issue.show.tags'|trans }}</div>
-                        <div class="flex min-w-0 flex-1 flex-wrap items-center gap-1.5 py-1">{{ propertiesTagList }}</div>
+                        <div class="{{ propertiesLabelClasses }} pt-2">{{ 'issue.show.tags'|trans }}</div>
+                        <div class="flex min-w-0 flex-1 flex-wrap items-center gap-1 py-1.5">{{ propertiesTagList }}</div>
                     </div>
                 {% endif %}
             {% endif %}
 
             {% set propertiesAssignee %}
                 <twig:Issue:Assignee :issue="issue" size="md" />
-                <span class="truncate {{ issue.assigneeName ? 'text-body' : 'text-faint' }}">{{ issue.assigneeName ?? 'issue.show.nobody'|trans }}</span>
+                <span class="ml-0.5 truncate {{ issue.assigneeName ? 'text-body' : 'text-faint' }}">{{ issue.assigneeName ?? 'issue.show.nobody'|trans }}</span>
             {% endset %}
             {% if propertiesCanAssign %}
-                <twig:Ui:Dropdown width="sm" class="block">
+                <twig:Ui:Dropdown width="sm" align="right" class="block">
                     <twig:block name="trigger">
-                        <div class="{{ propertiesRowClasses }}">
-                            <div class="{{ propertiesLabelClasses }}">{{ 'issue.show.assignee'|trans }}</div>
-                            <div class="min-w-0 flex-1">
-                                <button type="button" class="{{ propertiesValueClasses }}" aria-expanded="false" aria-haspopup="menu" aria-label="{{ 'issue.show.change_property'|trans({ '%property%': 'issue.show.assignee'|trans }) }}" data-action="dropdown#toggle">
-                                    {{ propertiesAssignee }}
-                                    <twig:ux:icon name="lucide:chevrons-up-down" class="hover-actions h-3.5 w-3.5 shrink-0 text-faint" />
-                                </button>
-                            </div>
-                        </div>
+                        <button type="button" class="{{ propertiesTriggerClasses }}" aria-expanded="false" aria-haspopup="menu" aria-label="{{ 'issue.show.change_property'|trans({ '%property%': 'issue.show.assignee'|trans }) }}" data-action="dropdown#toggle">
+                            <span class="{{ propertiesLabelClasses }}">{{ 'issue.show.assignee'|trans }}</span>
+                            <span class="flex min-w-0 flex-1 gap-1.5 items-center">
+                            {{ propertiesAssignee }}
+                            </span>
+                            <twig:ux:icon name="lucide:chevrons-up-down" class="{{ propertiesChevronClasses }}" />
+                        </button>
                     </twig:block>
                     <twig:block name="content">
                         {# Many members: a field narrows the list as one types. #}
@@ -220,15 +229,13 @@
                             {% endif %}
                             <div class="max-h-72 overflow-y-auto">
                                 <twig:Ui:Dropdown:Item :active="issue.assigneeName is null" data-list-filter-target="item" data-text="{{ 'issue.show.nobody'|trans }}" data-action="live#action dropdown#close" data-live-action-param="change" data-live-property-param="assignee" data-live-value-param="">
-                                    <twig:Ui:Avatar size="md" />
-                                    <span class="truncate text-muted">{{ 'issue.show.nobody'|trans }}</span>
+                                    <twig:User:Line />
                                     {% if issue.assigneeName is null %}<twig:ux:icon name="lucide:check" class="ml-auto h-4 w-4 shrink-0 text-brand" />{% endif %}
                                 </twig:Ui:Dropdown:Item>
                                 {% for member in propertiesMembers %}
                                     {% set propertiesMemberActive = issue.assignee and member.id == issue.assignee.id %}
                                     <twig:Ui:Dropdown:Item :active="propertiesMemberActive" data-list-filter-target="item" data-text="{{ member.fullName }}" data-action="live#action dropdown#close" data-live-action-param="change" data-live-property-param="assignee" data-live-value-param="{{ member.id }}">
-                                        <twig:User:Avatar :user="member" size="md" />
-                                        <span class="truncate">{{ member.fullName }}</span>
+                                        <twig:User:Line :user="member" />
                                         {% if propertiesMemberActive %}<twig:ux:icon name="lucide:check" class="ml-auto h-4 w-4 shrink-0 text-brand" />{% endif %}
                                     </twig:Ui:Dropdown:Item>
                                 {% endfor %}
@@ -236,9 +243,7 @@
                                 {% for propertiesTeam in propertiesTeams %}
                                     {% set propertiesTeamActive = issue.assigneeTeam and propertiesTeam.id == issue.assigneeTeam.id %}
                                     <twig:Ui:Dropdown:Item :active="propertiesTeamActive" data-list-filter-target="item" data-text="{{ propertiesTeam.name }}" data-action="live#action dropdown#close" data-live-action-param="change" data-live-property-param="assigneeTeam" data-live-value-param="{{ propertiesTeam.id }}">
-                                        <twig:Team:Avatar :team="propertiesTeam" size="md" />
-                                        <span class="truncate">{{ propertiesTeam.name }}</span>
-                                        <span class="text-xs text-faint">{{ 'issue.show.team'|trans }}</span>
+                                        <twig:Team:Line :team="propertiesTeam" />
                                         {% if propertiesTeamActive %}<twig:ux:icon name="lucide:check" class="ml-auto h-4 w-4 shrink-0 text-brand" />{% endif %}
                                     </twig:Ui:Dropdown:Item>
                                 {% endfor %}
@@ -263,17 +268,15 @@
                     {% endif %}
                 {% endset %}
                 {% if propertiesCanSetRelease %}
-                    <twig:Ui:Dropdown width="sm" class="block">
+                    <twig:Ui:Dropdown width="sm" align="right" class="block">
                         <twig:block name="trigger">
-                            <div class="{{ propertiesRowClasses }}">
-                                <div class="{{ propertiesLabelClasses }}">{{ 'issue.show.release'|trans }}</div>
-                                <div class="min-w-0 flex-1">
-                                    <button type="button" class="{{ propertiesValueClasses }}" aria-expanded="false" aria-haspopup="menu" aria-label="{{ 'issue.show.change_property'|trans({ '%property%': 'issue.show.release'|trans }) }}" data-action="dropdown#toggle">
-                                        {{ propertiesRelease }}
-                                        <twig:ux:icon name="lucide:chevrons-up-down" class="hover-actions h-3.5 w-3.5 shrink-0 text-faint" />
-                                    </button>
-                                </div>
-                            </div>
+                            <button type="button" class="{{ propertiesTriggerClasses }}" aria-expanded="false" aria-haspopup="menu" aria-label="{{ 'issue.show.change_property'|trans({ '%property%': 'issue.show.release'|trans }) }}" data-action="dropdown#toggle">
+                                <span class="{{ propertiesLabelClasses }}">{{ 'issue.show.release'|trans }}</span>
+                                <span class="flex min-w-0 flex-1 gap-1.5 items-center">
+                                {{ propertiesRelease }}
+                                </span>
+                                <twig:ux:icon name="lucide:chevrons-up-down" class="{{ propertiesChevronClasses }}" />
+                            </button>
                         </twig:block>
                         <twig:block name="content">
                             <div class="max-h-72 overflow-y-auto">
@@ -303,25 +306,23 @@
             {# Visibility is for internal users to set: external users only ever see what is visible to them. #}
             {% if app.user.internal %}
                 {% set propertiesVisibility %}
-                    <span class="leading-tight {{ issue.private ? 'font-medium text-amber' : 'text-body' }}">{{ (issue.private ? 'issue.show.hidden_externals' : 'issue.show.visible_externals')|trans }}</span>
+                    <span class="inline-flex items-center gap-1.5 leading-tight {{ issue.private ? 'font-medium text-amber' : 'text-body' }}">{{ ux_icon(issue.private ? 'lucide:lock' : 'lucide:users', { class: 'h-3.5 w-3.5 shrink-0 ' ~ (issue.private ? '' : 'text-faint') }) }}{{ (issue.private ? 'issue.show.hidden_externals' : 'issue.show.visible_externals')|trans }}</span>
                 {% endset %}
                 {% if propertiesCanSetVisibility %}
-                    <twig:Ui:Dropdown width="sm" class="block">
+                    <twig:Ui:Dropdown width="sm" align="right" class="block">
                         <twig:block name="trigger">
-                            <div class="{{ propertiesRowClasses }}">
-                                <div class="{{ propertiesLabelClasses }}">{{ 'issue.show.visibility'|trans }}</div>
-                                <div class="min-w-0 flex-1">
-                                    <button type="button" class="{{ propertiesValueClasses }}" aria-expanded="false" aria-haspopup="menu" aria-label="{{ 'issue.show.change_property'|trans({ '%property%': 'issue.show.visibility'|trans }) }}" data-action="dropdown#toggle">
-                                        {{ propertiesVisibility }}
-                                        <twig:ux:icon name="lucide:chevrons-up-down" class="hover-actions h-3.5 w-3.5 shrink-0 text-faint" />
-                                    </button>
-                                </div>
-                            </div>
+                            <button type="button" class="{{ propertiesTriggerClasses }}" aria-expanded="false" aria-haspopup="menu" aria-label="{{ 'issue.show.change_property'|trans({ '%property%': 'issue.show.visibility'|trans }) }}" data-action="dropdown#toggle">
+                                <span class="{{ propertiesLabelClasses }}">{{ 'issue.show.visibility'|trans }}</span>
+                                <span class="flex min-w-0 flex-1 gap-1.5 items-center">
+                                {{ propertiesVisibility }}
+                                </span>
+                                <twig:ux:icon name="lucide:chevrons-up-down" class="{{ propertiesChevronClasses }}" />
+                            </button>
                         </twig:block>
                         <twig:block name="content">
                             {% for propertiesChoice in [{ value: 'public', private: false, label: 'issue.show.visible_externals' }, { value: 'private', private: true, label: 'issue.show.hidden_externals' }] %}
                                 <twig:Ui:Dropdown:Item :active="issue.private == propertiesChoice.private" data-action="live#action dropdown#close" data-live-action-param="change" data-live-property-param="visibility" data-live-value-param="{{ propertiesChoice.value }}">
-                                    <span class="{{ propertiesChoice.private ? 'text-amber' : '' }}">{{ propertiesChoice.label|trans }}</span>
+                                    <span class="inline-flex items-center gap-2 {{ propertiesChoice.private ? 'text-amber' : '' }}">{{ ux_icon(propertiesChoice.private ? 'lucide:lock' : 'lucide:users', { class: 'h-3.5 w-3.5 shrink-0 ' ~ (propertiesChoice.private ? '' : 'text-faint') }) }}{{ propertiesChoice.label|trans }}</span>
                                     {% if issue.private == propertiesChoice.private %}<twig:ux:icon name="lucide:check" class="ml-auto h-4 w-4 shrink-0 text-brand" />{% endif %}
                                 </twig:Ui:Dropdown:Item>
                             {% endfor %}

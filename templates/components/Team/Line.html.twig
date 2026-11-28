@@ -1,0 +1,5 @@
+{# A team as a line of a list one chooses in, beside the people (User:Line): its square avatar, its name and a `hint`: the word that says it is a team ('team', among people), whether it is internal ('nature', among teams), or nothing (false). It draws no element of its own: the line it is put in lays its parts out. #}
+{% props team, size = 'md', avatar = true, hint = 'team' %}
+{% if avatar %}<twig:Team:Avatar :team="team" :size="size" />{% endif %}
+<span class="min-w-0 flex-1 truncate">{{ team.name }}</span>
+{% if hint == 'nature' %}<span class="shrink-0 text-xs text-faint">{{ (team.internal ? 'admin.team.nature.internal' : 'admin.team.nature.external')|trans }}</span>{% elseif hint %}<span class="shrink-0 text-xs text-faint">{{ 'issue.show.team'|trans }}</span>{% endif %}

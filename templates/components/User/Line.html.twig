@@ -1,0 +1,5 @@
+{# A person as a line of a list one chooses in (a menu, a picker, the options of a filter), the same everywhere: the avatar, the name, and with `hint` what tells two namesakes apart (the company, or whether the account is internal). Without a `user`, the line of nobody, under the label `nobody`. `avatar: false` where there is no room for a face. It draws no element of its own: the line it is put in lays its parts out. #}
+{% props user = null, size = 'md', avatar = true, hint = false, nobody = null %}
+{% if avatar %}<twig:User:Avatar :user="user" :size="size" />{% endif %}
+<span class="min-w-0 flex-1 truncate {{ user ? '' : 'text-muted' }}">{{ user ? user.fullName : (nobody ?? 'issue.show.nobody'|trans) }}</span>
+{% if hint and user %}<span class="max-w-[45%] shrink-0 truncate text-xs text-faint">{{ user.company ?? (user.internal ? 'admin.user.type.internal' : 'admin.user.type.external')|trans }}</span>{% endif %}

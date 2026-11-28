@@ -53,7 +53,8 @@ export default class extends Controller {
             filter: '.board-locked, .board-pending',
             preventOnFilter: false,
             animation: 150,
-            ghostClass: 'opacity-40',
+            // the place the card would land at, drawn by the classes of its list item (Board:Column)
+            ghostClass: 'board-ghost',
             onStart: (event) => {
                 origins.set(event.item, { place: this.placeValue, next: event.item.nextElementSibling });
                 this.mark(event.item);

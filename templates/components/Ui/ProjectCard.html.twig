@@ -12,7 +12,7 @@
         <span>{{ 'project.summary.open'|trans({ '%count%': open }) }}</span>
         <span class="ml-auto inline-flex items-center gap-2">
             {% if waiting %}<span class="inline-flex items-center gap-1" title="{{ 'project.summary.waiting'|trans }}"><twig:Ui:Status:Dot status="waiting" />{{ waiting }}</span>{% endif %}
-            {% if blocking %}<span class="inline-flex items-center gap-1 text-red" title="{{ 'project.summary.blocking'|trans }}">▲ {{ blocking }}</span>{% endif %}
+            {% if blocking %}<span class="inline-flex items-center gap-1 text-red" title="{{ 'project.summary.blocking'|trans }}"><twig:ux:icon name="lucide:chevrons-up" class="h-3 w-3 [&_*]:stroke-3" />{{ blocking }}</span>{% endif %}
         </span>
     </div>
 </a>

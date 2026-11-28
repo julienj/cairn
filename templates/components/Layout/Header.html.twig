@@ -1,8 +1,9 @@
-{# Application level: the logo, the application tabs outside a project, the current project when inside one (it opens the list of the others), the administration link for administrators, the user menu.
+{# Application level: the logo, the application tabs outside a project, the current project when inside one (it opens the list of the others), the user menu: who is signed in, the pages of their account, the administration for administrators, the theme.
    On small screens the tabs move into the user menu; inside a project the logo and the user menu lead home. The burger opens the sidebar on mobile through the shell's `sidebar` controller.
    In the administration (`admin`): an amber rule and badge, a way back to the application, no project.
    `this` is read before the nested components, whose blocks see their own `this`. #}
 {% set headerUser = this.user %}
+{% set headerCanUseApi = this.canUseApi %}
 {% set headerRoute = app.current_route %}
 {% set headerTheme = theme_choice() %}
 {% set headerTabs = [
@@ -88,44 +89,47 @@
             <span class="hidden sm:inline">{{ 'issue.create.title'|trans }}</span>
         </twig:Ui:Button>
     {% endif %}
-    {% if headerUser.admin and not admin %}
-        <a href="{{ path('app_admin') }}" class="grid h-8 w-8 place-items-center rounded-md text-slate-400 hover:bg-slate-800 hover:text-white" title="{{ 'admin.title'|trans }}" aria-label="{{ 'admin.title'|trans }}">
-            <twig:ux:icon name="lucide:settings" class="h-4 w-4" />
-        </a>
-    {% endif %}
-    <twig:Ui:Dropdown align="right">
+    <twig:Ui:Dropdown align="right" width="md">
         <twig:block name="trigger">
             <button type="button" data-action="dropdown#toggle" aria-expanded="false" aria-haspopup="menu" class="flex items-center gap-1.5 rounded-full hover:ring-2 hover:ring-slate-600 focus:outline-none focus:ring-2 focus:ring-focus" title="{{ headerUser.fullName }}">
                 <twig:User:Avatar :user="headerUser" size="lg" />
                 <twig:ux:icon name="lucide:chevron-down" class="hidden sm:block h-3.5 w-3.5 text-slate-400" />
             </button>
         </twig:block>
-        <div class="flex items-center gap-2.5 px-3 py-2.5 border-b border-line-subtle">
-            <twig:User:Avatar :user="headerUser" size="xl" />
-            <div class="min-w-0 leading-tight">
-                <div class="text-sm font-medium text-strong truncate">{{ headerUser.fullName }}</div>
-                <div class="text-xs text-muted truncate">{{ headerUser.email }}</div>
-            </div>
+        {# Who is signed in, which leads to their profile. #}
+        <a href="{{ path('app_account') }}" class="group/identity -mt-1 flex items-center gap-2.5 rounded-t-lg border-b border-line-subtle px-3 py-2.5 hover:bg-subtle focus-visible:bg-subtle focus-visible:outline-none">
+            <twig:User:Identity :user="headerUser" size="xl" :type="false" />
+        </a>
+        {# Where to go: the tabs of the header, which a project and the administration do not show, and a small screen neither. #}
+        <div class="border-b border-line-subtle py-1 {{ project or admin ? '' : 'md:hidden' }}">
+            {% for tab in headerTabs %}
+                <twig:Ui:Dropdown:Item :href="tab.href" :icon="tab.icon" :active="tab.active">{{ tab.label }}</twig:Ui:Dropdown:Item>
+            {% endfor %}
         </div>
+        {# The pages of the account one goes to most, without a stop at the profile. #}
+        <div class="border-b border-line-subtle py-1">
+            <div class="px-3 pb-0.5 pt-1.5 text-xs text-faint">{{ 'account.title'|trans }}</div>
+            <twig:Ui:Dropdown:Item href="{{ path('app_account') }}" icon="user" :active="headerRoute == 'app_account'">{{ 'account.nav.profile'|trans }}</twig:Ui:Dropdown:Item>
+            <twig:Ui:Dropdown:Item href="{{ path('app_account_notifications') }}" icon="bell" :active="headerRoute == 'app_account_notifications'">{{ 'account.nav.notifications'|trans }}</twig:Ui:Dropdown:Item>
+            <twig:Ui:Dropdown:Item href="{{ path('app_account_security') }}" icon="lock" :active="headerRoute == 'app_account_security' or headerRoute starts with 'app_account_two_factor'">{{ 'account.nav.security'|trans }}</twig:Ui:Dropdown:Item>
+            {% if headerCanUseApi %}
+                <twig:Ui:Dropdown:Item href="{{ path('app_api_tokens') }}" icon="key-round" :active="headerRoute starts with 'app_api_token' or headerRoute == 'app_account_mcp'">{{ 'account.nav.integrations'|trans }}</twig:Ui:Dropdown:Item>
+            {% endif %}
+        </div>
+        {% if headerUser.admin and not admin %}
+            <div class="border-b border-line-subtle py-1">
+                <twig:Ui:Dropdown:Item href="{{ path('app_admin') }}" icon="settings">{{ 'admin.title'|trans }}</twig:Ui:Dropdown:Item>
+            </div>
+        {% endif %}
         <div class="px-3 py-2.5 border-b border-line-subtle" data-controller="theme" data-action="change->theme#choose">
-            <div class="mb-1.5 text-xs text-muted">{{ 'theme.label'|trans }}</div>
+            <div class="mb-1.5 text-xs text-faint">{{ 'theme.label'|trans }}</div>
             <twig:Ui:Filter:Segments :label="'theme.label'|trans" class="grid w-full grid-cols-3">
                 {% for headerChoice, headerIcon in { light: 'sun', dark: 'moon', system: 'monitor' } %}
                     <twig:Ui:Filter:Segment name="theme" :value="headerChoice" :icon="headerIcon" :checked="headerTheme == headerChoice" class="justify-center">{{ ('theme.' ~ headerChoice)|trans }}</twig:Ui:Filter:Segment>
                 {% endfor %}
             </twig:Ui:Filter:Segments>
         </div>
-        {% if project or admin %}
-            <twig:Ui:Dropdown:Item href="{{ path('app_home') }}" icon="home">{{ 'nav.home'|trans }}</twig:Ui:Dropdown:Item>
-            <div class="my-1 border-t border-line-subtle"></div>
-        {% else %}
-            {% for tab in headerTabs %}
-                <twig:Ui:Dropdown:Item :href="tab.href" :icon="tab.icon" :active="tab.active" class="md:hidden">{{ tab.label }}</twig:Ui:Dropdown:Item>
-            {% endfor %}
-            <div class="my-1 border-t border-line-subtle md:hidden"></div>
-        {% endif %}
-        <twig:Ui:Dropdown:Item href="{{ path('app_account') }}" icon="user" :active="headerRoute starts with 'app_account' or headerRoute starts with 'app_api_token'">{{ 'nav.account'|trans }}</twig:Ui:Dropdown:Item>
-        <twig:Ui:Dropdown:Item href="{{ path('app_logout') }}" icon="log-out">{{ 'auth.logout'|trans }}</twig:Ui:Dropdown:Item>
+        <twig:Ui:Dropdown:Item href="{{ path('app_logout') }}" icon="log-out" class="mt-1">{{ 'auth.logout'|trans }}</twig:Ui:Dropdown:Item>
     </twig:Ui:Dropdown>
     </div>
 </header>

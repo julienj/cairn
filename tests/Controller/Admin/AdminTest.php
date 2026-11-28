@@ -52,6 +52,14 @@ final class AdminTest extends WebTestCase
 
         $this->client->request('GET', '/MD/SPT/issues');
         self::assertSelectorNotExists('header a[href="/admin"]', 'no way in for a project manager');
+        foreach (['/', '/projects', '/account', '/account/notifications', '/account/security', '/account/tokens', '/logout'] as $href) {
+            self::assertSelectorExists(\sprintf('header [data-dropdown-target="menu"] a[href="%s"]', $href), 'the menu of the signed-in user leads there');
+        }
+
+        $this->client->loginUser($this->scene->user('claire.martin@maison-dupont.test'));
+        $this->client->request('GET', '/MD/SPT/issues');
+        self::assertSelectorExists('header a[href="/account/security"]');
+        self::assertSelectorNotExists('header a[href="/account/tokens"]', 'the API is for internal users');
     }
 
     public function testTheProjectsAreListedByWorkspaceAndFiltered(): void

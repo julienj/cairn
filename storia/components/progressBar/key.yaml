@@ -1,0 +1,5 @@
+component: Ui:ProgressBar:Key
+variants:
+    value: { args: { part: value, tone: emerald } }
+    pending: { args: { part: pending, tone: emerald } }
+    rest: { args: { part: rest } }

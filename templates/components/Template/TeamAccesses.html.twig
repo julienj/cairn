@@ -44,11 +44,10 @@
         {% set teamAccessesCandidates = this.candidates %}
         {% set teamAccessesRoles = this.rolesFor(teamAccessesNewTeam) %}
         <twig:Ui:Picker :label="teamAccessesNewTeam ? teamAccessesNewTeam.name : null" :placeholder="'admin.team.access.choose_team'|trans" :searchPlaceholder="'admin.team.access.search_team'|trans" :empty="'admin.access.no_match'|trans" class="min-w-0 flex-1 basis-64">
+            <twig:block name="chosen">{% if teamAccessesNewTeam %}<twig:Team:Line :team="teamAccessesNewTeam" :hint="false" />{% endif %}</twig:block>
             {% for candidate in teamAccessesCandidates %}
                 <twig:Ui:Dropdown:Item :active="candidate.id == newTeamId" data-list-filter-target="item" data-text="{{ candidate.name }}" data-action="live#action dropdown#close" data-live-action-param="chooseTeam" data-live-team-param="{{ candidate.id }}">
-                    <twig:Team:Avatar :team="candidate" size="md" />
-                    <span class="min-w-0 flex-1 truncate">{{ candidate.name }}</span>
-                    <span class="text-xs text-faint truncate">{{ (candidate.internal ? 'admin.team.nature.internal' : 'admin.team.nature.external')|trans }}</span>
+                    <twig:Team:Line :team="candidate" hint="nature" />
                 </twig:Ui:Dropdown:Item>
             {% endfor %}
         </twig:Ui:Picker>

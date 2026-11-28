@@ -1,41 +1,80 @@
-{# One line of the issue's history: who, what (the sentence comes from the component), when. A rewritten text or a deleted comment is readable behind a disclosure. What a forge wrote is a card (Ui:CodeCard) read from the entry's data, behind a git marker instead of the dot.
+{# One line of the issue's history, on the line of the thread: an icon for the kind of change, who, what (the sentence comes from the component, its values drawn one by one: a step or a new value as a pastille, an old one faded, the key of another issue a link for who may see it), and the hour at the end of the line, the day being told above. A rewritten text or a deleted comment is readable behind a disclosure. What a forge wrote is a line too, read from the entry's data behind a git marker, unfolded for the rest: the branch, the repository and the author of a merge request, the commits of a push.
    `this` is read before the nested components, whose blocks see their own `this`. #}
-{% set journalLabel = this.label %}
+{% set journalParts = this.parts %}
+{% set journalIcon = this.icon %}
+{% set journalLinked = this.linkedIssue %}
 {% set journalVersions = this.versions %}
 {% set journalDeletedBody = this.deletedBody %}
-<li {{ attributes.defaults({ class: 'relative pl-6' }) }}>
+{% set journalPastille = 'mx-px inline-block h-5 max-w-64 truncate rounded-[5px] bg-surface px-1.5 align-top text-[11.5px] font-medium leading-5 text-body ring-1 ring-inset ring-line' %}
+{% set journalTime %}<time datetime="{{ entry.at|date('c') }}" title="{{ entry.at|format_datetime('long', 'short') }}" class="ml-auto shrink-0 whitespace-nowrap text-[11px] leading-5 text-faint">{{ entry.at|format_time('short') }}</time>{% endset %}
+<li {{ attributes.defaults({ class: 'group/entry relative pl-[46px]' }) }}>
     {% if entry.type.isCode %}
         {% set journalData = entry.data %}
         {% set journalPush = entry.type.value == 'commits_pushed' %}
-        <span class="absolute -left-3 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-slate-700 text-white ring-2 ring-line-subtle" title="{{ ('forge.' ~ entry.text('forge'))|trans }}"><twig:ux:icon name="lucide:git-branch" class="h-3.5 w-3.5" /></span>
-        <twig:Ui:CodeCard :kind="journalPush ? 'commit' : 'merge_request'"
-                          :heading="journalPush ? 'issue.code.heading.commits'|trans({ '%count%': journalData.commits|length, '%branch%': entry.text('branch') }) : 'issue.code.heading.merge_request'|trans({ '%number%': entry.text('number') })"
-                          :href="entry.text('url')|default(null)" :repository="entry.text('repository')" :at="entry.at|format_datetime('short', 'short')"
-                          :title="journalPush ? null : entry.text('title')" :state="journalPush ? null : (entry.type.value == 'merge_request_reopened' ? 'reopened' : entry.text('state'))"
-                          :branch="journalPush ? null : entry.text('branch')|default(null)" :author="journalPush ? null : entry.text('author')|default(null)" :internal="entry.private">
-            {% if journalPush %}
-                <ul class="mt-2 space-y-1 text-xs">
-                    {% for commit in journalData.commits %}
-                        <li class="flex items-center gap-2">
-                            {% if commit.url %}<a href="{{ commit.url }}" target="_blank" rel="noopener" class="font-mono text-brand hover:underline">{{ commit.sha }}</a>{% else %}<span class="font-mono text-muted">{{ commit.sha }}</span>{% endif %}
-                            <span class="min-w-0 flex-1 truncate text-body" title="{{ commit.title }}">{{ commit.title }}</span>
-                            {% if commit.author %}<span class="shrink-0 text-faint">{{ commit.author }}</span>{% endif %}
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
-        </twig:Ui:CodeCard>
+        {% set journalState = journalPush ? null : (entry.type.value == 'merge_request_reopened' ? 'reopened' : entry.text('state')) %}
+        {% set journalStateTones = { opened: 'blue', reopened: 'blue', merged: 'violet', closed: 'gray' } %}
+        <span class="absolute left-0 top-1 grid h-5 w-8 place-items-center"><span class="grid h-5 w-5 place-items-center rounded-full bg-slate-700 text-white ring-2 ring-canvas" title="{{ ('forge.' ~ entry.text('forge'))|trans }}"><twig:ux:icon name="lucide:git-branch" class="h-3 w-3" /></span></span>
+        <details class="group/git">
+            <summary class="-mx-2 flex min-h-7 cursor-pointer list-none items-center gap-2 rounded-md px-2 py-0.5 text-[12.5px] text-muted hover:bg-subtle group-open/git:bg-subtle [&::-webkit-details-marker]:hidden">
+                <twig:ux:icon name="lucide:chevron-right" class="-mx-1 h-3.5 w-3.5 shrink-0 text-faint transition-transform group-open/git:rotate-90" />
+                {% if journalPush %}
+                    <twig:Ui:Badge tone="gray" size="sm" icon="git-commit-horizontal" class="shrink-0">{{ 'issue.code.commits_count'|trans({ '%count%': journalData.commits|length }) }}</twig:Ui:Badge>
+                    <span class="shrink-0 font-mono text-[11.5px] font-medium text-body">{{ entry.text('branch') }}</span>
+                    <span class="min-w-0 flex-1 truncate font-mono text-[11px] text-faint">{{ entry.text('repository') }}</span>
+                {% else %}
+                    {% if journalState %}<twig:Ui:Badge :tone="journalStateTones[journalState]|default('gray')" size="sm" :icon="journalState == 'merged' ? 'git-merge' : 'git-pull-request'" class="shrink-0">{{ ('issue.code.state.' ~ journalState)|trans }}</twig:Ui:Badge>{% endif %}
+                    <span class="shrink-0 font-medium text-body">{{ 'issue.code.heading.merge_request'|trans({ '%number%': entry.text('number') }) }}</span>
+                    <span class="min-w-0 flex-1 truncate">{{ entry.text('title') }}</span>
+                {% endif %}
+                {% if entry.private %}<twig:Ui:Badge tone="amber" size="sm" icon="lock" class="shrink-0" title="{{ 'issue.comment.private_help'|trans }}">{{ 'issue.comment.private'|trans }}</twig:Ui:Badge>{% endif %}
+                {{ journalTime }}
+            </summary>
+            <div class="mb-2.5 mt-1.5 rounded-lg border border-line bg-surface px-3 py-2.5 text-xs text-muted">
+                {% if journalPush %}
+                    <ul class="-mx-1.5 -mt-1">
+                        {% for commit in journalData.commits %}
+                            <li class="flex items-center gap-2.5 rounded-md px-1.5 py-1 hover:bg-subtle">
+                                {% if commit.url %}<a href="{{ commit.url }}" target="_blank" rel="noopener" class="shrink-0 rounded bg-sunken px-1.5 py-0.5 font-mono text-[11px] text-brand hover:bg-brand-soft">{{ commit.sha }}</a>{% else %}<span class="shrink-0 rounded bg-sunken px-1.5 py-0.5 font-mono text-[11px] text-muted">{{ commit.sha }}</span>{% endif %}
+                                <span class="min-w-0 flex-1 truncate text-[12.5px] text-body" title="{{ commit.title }}">{{ commit.title }}</span>
+                                {% if commit.author %}<span class="shrink-0 text-faint">{{ commit.author }}</span>{% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <dl class="flex flex-wrap items-center gap-x-6 gap-y-1.5">
+                        {% if entry.text('branch') %}<div class="flex items-center gap-2"><dt class="text-faint">{{ 'issue.code.branch'|trans }}</dt><dd class="inline-flex items-center gap-1.5 rounded bg-sunken px-1.5 py-0.5 font-mono text-[11px] text-body"><twig:ux:icon name="lucide:git-branch" class="h-3 w-3" />{{ entry.text('branch') }}</dd></div>{% endif %}
+                        {% if entry.text('repository') %}<div class="flex items-center gap-2"><dt class="text-faint">{{ 'issue.code.repository'|trans }}</dt><dd class="font-mono text-[11px] text-body">{{ entry.text('repository') }}</dd></div>{% endif %}
+                        {% if entry.text('author') %}<div class="flex items-center gap-2"><dt class="text-faint">{{ 'issue.code.author'|trans }}</dt><dd class="text-body">{{ entry.text('author') }}</dd></div>{% endif %}
+                    </dl>
+                {% endif %}
+                {% if entry.text('url') %}<a href="{{ entry.text('url') }}" target="_blank" rel="noopener" class="mt-2.5 inline-flex items-center gap-1.5 font-medium text-brand hover:underline">{{ 'issue.code.open'|trans({ '%forge%': ('forge.' ~ entry.text('forge'))|trans }) }}<twig:ux:icon name="lucide:external-link" class="h-3 w-3" /></a>{% endif %}
+            </div>
+        </details>
     {% else %}
-        <span class="absolute -left-[5px] top-1.5 h-2 w-2 rounded-full bg-line-strong ring-2 ring-line-subtle"></span>
-        <div class="text-xs text-muted">
-            {% if entry.rule %}
-                <span class="font-medium text-body"><twig:ux:icon name="lucide:zap" class="inline h-3 w-3 align-[-1px] text-faint" /> {{ entry.rule }}</span>
-                <span class="text-faint">({{ 'automation.signature'|trans }})</span>
-            {% else %}
-                <span class="font-medium text-body">{{ entry.author ? entry.author.fullName : 'issue.show.system'|trans }}</span>
-            {% endif %}
-            {{ journalLabel }}
-            <span class="text-faint">· {{ entry.at|format_datetime('short', 'short') }}</span>
+        <span class="absolute left-0 top-1 grid h-5 w-8 place-items-center" aria-hidden="true"><span class="grid h-5 w-5 place-items-center rounded-full border border-line bg-canvas text-faint ring-2 ring-canvas transition-colors group-hover/entry:border-line-strong group-hover/entry:text-body">{{ ux_icon('lucide:' ~ (entry.rule ? 'zap' : journalIcon), { class: 'h-3 w-3' }) }}</span></span>
+        <div class="flex min-h-7 items-start gap-3 py-1 text-[12.5px] leading-5 text-muted">
+            <p class="min-w-0">
+                {% if entry.rule %}
+                    <span class="font-medium text-body">{{ entry.rule }}</span>
+                    <span class="text-faint">({{ 'automation.signature'|trans }})</span>
+                {% else %}
+                    <span class="font-medium text-body">{{ entry.author ? entry.author.fullName : 'issue.show.system'|trans }}</span>
+                {% endif %}
+                {% for journalPart in journalParts -%}
+                    {%- if journalPart.kind in ['place', 'value', 'file'] -%}
+                        <span class="{{ journalPastille }}">{{ journalPart.text }}</span>
+                    {%- elseif journalPart.kind == 'old' -%}
+                        <span class="text-faint">{{ journalPart.text }}</span>
+                    {%- elseif journalPart.kind == 'issue' and journalLinked -%}
+                        <a href="{{ path('app_issue_show', { workspaceKey: journalLinked.project.workspace.key, projectKey: journalLinked.project.key, number: journalLinked.number }) }}" class="{{ journalPastille }} font-mono hover:bg-brand-soft hover:text-brand hover:ring-brand-line">{{ journalPart.text }}</a>
+                    {%- elseif journalPart.kind == 'issue' -%}
+                        <span class="{{ journalPastille }} font-mono">{{ journalPart.text }}</span>
+                    {%- else -%}
+                        {{- journalPart.text -}}
+                    {%- endif -%}
+                {%- endfor %}
+            </p>
+            {{ journalTime }}
         </div>
         {% if entry.type.value == 'imported' and entry.data.notes is defined and entry.data.notes is not empty %}
             <ul class="mt-1 list-disc pl-5 text-xs text-muted">

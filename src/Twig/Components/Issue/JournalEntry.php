@@ -5,13 +5,17 @@ declare(strict_types=1);
 namespace App\Twig\Components\Issue;
 
 use App\Entity\Enum\JournalEntryType;
+use App\Entity\Issue;
 use App\Entity\JournalEntry as Entry;
+use App\Repository\IssueRepository;
+use App\Security\AccessControl;
+use App\Security\Viewer;
 use App\Twig\JournalLabelExtension;
 use Symfony\UX\TwigComponent\Attribute\AsTwigComponent;
 
 /**
  * One line of the history of an issue: who did what, when. The sentence
- * comes from the `journal_label` filter (Twig/JournalLabelExtension), the
+ * comes from Twig/JournalLabelExtension, cut where its values stand, the
  * texts a rewriting or a deletion kept are readable behind a disclosure.
  * What a forge wrote (commits pushed, a merge request) is a card instead
  * (Ui:CodeCard), read by the template from the entry's data.
@@ -23,12 +27,59 @@ final class JournalEntry
 
     public function __construct(
         private readonly JournalLabelExtension $labels,
+        private readonly IssueRepository $issues,
+        private readonly AccessControl $access,
+        private readonly Viewer $viewer,
     ) {
     }
 
-    public function getLabel(): string
+    /**
+     * The sentence cut where its values stand, each drawn as what it is.
+     *
+     * @return list<array{kind: string, text: string}>
+     */
+    public function getParts(): array
     {
-        return $this->labels->label($this->entry);
+        return $this->labels->parts($this->entry);
+    }
+
+    /** The icon that tells, on the line of the thread, what kind of change this was. */
+    public function getIcon(): string
+    {
+        return match ($this->entry->getType()) {
+            JournalEntryType::Created => 'plus',
+            JournalEntryType::Transitioned, JournalEntryType::Moved => 'arrow-right',
+            JournalEntryType::TrackerChanged => 'tag',
+            JournalEntryType::FieldChanged => 'sliders-horizontal',
+            JournalEntryType::Changed => match ($this->entry->text('field')) {
+                'assignee' => 'user',
+                'release' => 'milestone',
+                'criticality' => 'flame',
+                'visibility' => 'lock',
+                'tag_added', 'tag_removed' => 'tag',
+                default => 'pencil',
+            },
+            JournalEntryType::AttachmentAdded, JournalEntryType::AttachmentRemoved => 'paperclip',
+            JournalEntryType::CommentEdited => 'pencil',
+            JournalEntryType::CommentDeleted => 'trash-2',
+            JournalEntryType::Linked, JournalEntryType::Unlinked => 'link',
+            JournalEntryType::Imported => 'archive-restore',
+            default => 'history',
+        };
+    }
+
+    /**
+     * The issue a link names, when the reader may see it: the journal keeps
+     * its key, which says nothing of who may follow it.
+     */
+    public function getLinkedIssue(): ?Issue
+    {
+        if (!\in_array($this->entry->getType(), [JournalEntryType::Linked, JournalEntryType::Unlinked], true)) {
+            return null;
+        }
+        $issue = $this->issues->findOneByKey($this->entry->text('key'));
+
+        return null !== $issue && $this->access->canSee($this->viewer->get(), $issue) ? $issue : null;
     }
 
     /**

@@ -38,6 +38,7 @@ issue:
         views: Views of the category
         more: 'Show more (%count%)'
         fold: Fold
+        empty: No issue
         unfold: 'Unfold %place%'
         not_allowed: This issue cannot go to that step.
         choose: Which action?
@@ -96,6 +97,12 @@ issue:
         change_property: 'Change %property%'
         workflow: View the workflow
         search_member: Search a member…
+        edit_fields: Edit the fields
+        copy_url: Copy the address
+        url_copied: Copied
+        search_tag: Search a tag…
+        no_tag_match: No tag matches.
+        manage_tags: Manage tags
         team: Team
         no_member: No member matches.
         system: Cairn
@@ -141,9 +148,11 @@ issue:
     code:
         title: Code
         commits_count: '{1} 1 commit|]1,Inf[ %count% commits'
-        by: 'by %author%'
+        branch: Branch
+        repository: Repository
+        author: Author
+        open: 'Open in %forge%'
         heading:
-            commits: '{1} 1 commit on %branch%|]1,Inf[ %count% commits on %branch%'
             merge_request: 'Merge request !%number%'
         state:
             opened: Open
@@ -160,11 +169,13 @@ issue:
         delete_confirm: Delete this comment? Its text stays in the history.
         delete_yes: Delete
         deleted: Comment deleted.
-        edit_hint: Cmd+Enter saves · Esc cancels
+        edit_hint: Enter to save · Esc to cancel
         updated: Comment updated.
         submit: Comment
         submit_private: Comment privately
         private: Private
+        private_help: Hidden from external users
+        send_hint: Enter to send
         private_badge: Private · hidden from external users
         empty: The comment is empty.
         added: Comment added.
@@ -172,9 +183,8 @@ issue:
         edit_title: Edit the title
         edit_description: Edit the description
         title_hint: Enter to save · Esc to cancel
-        description_hint: ⌘ Enter to save · Esc to cancel
+        description_hint: Enter to save · Esc to cancel
         title_invalid: The title is required and is at most 200 characters long.
-        edit: Edit
         save: Save
         cancel: Cancel
     action:
@@ -182,6 +192,8 @@ issue:
         refused: The action could not be applied.
     transition:
         comment_required: This action needs a comment.
+        confirm_hint: Enter to confirm
+        leads_to: The issue will move to this step
         applied: '%key%: "%transition%" applied.'
     respond:
         question: What would you like to do?
@@ -201,10 +213,9 @@ issue:
         choose_hint: Each category has its own workflow.
         internal: Internal
         describe: Describe the issue
-        qualification: Qualification
-        qualification_hint: 'Optional: everything can be done after creation.'
         submit: Create the issue
         submit_continue: Create and continue
+        submit_hint: Enter to create
         cancel: Cancel
         created: '%key% created.'
         refused: The issue could not be created.
@@ -304,7 +315,6 @@ filter:
     clear: Clear all
 
 nav:
-    account: My account
     home: Home
     my_issues: My issues
     projects: Projects
@@ -454,6 +464,9 @@ attachment:
     choose: Drop files here or browse
     limit: Screenshots, exports, logs · 10 MB max per file
     refused: This file could not be sent.
+    add_help: Or drop a file on the description
+    drop: Drop to attach to the issue
+    lightbox_hint: Esc to close
     unit:
         b: '%size% B'
         kb: '%size% KB'
@@ -1580,16 +1593,23 @@ connected_site:
 
 release:
     title: Releases
-    intro: A release gathers the issues of one delivery. Issues are scheduled from their own page, field Release, or several at once from the selection.
+    intro: "A release groups the issues of one delivery; an issue joins it from its page, or several from the selection."
     new: New release
     create: Create the release
     created: 'Release %name% created.'
     edit: Edit
     save: Save
     saved: Release saved.
-    planned_on: 'planned for %date%'
-    delivered_on: 'on %date%'
-    finished: '{0}none finished|{1}1 finished|]1,Inf[ %count% finished'
+    planned: Planned delivery date
+    late: Past its planned delivery date
+    done: 'Done:'
+    out_of: of
+    left: 'Left:'
+    see_step: See these issues
+    to_finish: '{0}Everything is done|[1,Inf[ %count% to finish before delivery'
+    urgent:
+        blocking: '%count% blocking'
+        high: '%count% high'
     see_issues: See the issues
     past: Delivered and abandoned
     empty: No release in preparation
@@ -1865,10 +1885,15 @@ budget:
     delete_help: A closed budget is deleted with all of its lines, for good.
     delete_confirm: Delete this budget and all of its lines for good?
     deleted: 'Budget %name% deleted.'
-    volume: Volume
     consumed: Consumed
     remaining: Left
     pending: To approve
+    out_of: of
+    remaining_after: Left if all is approved
+    used_up: Used up
+    overspent: 'Over by %quantity%'
+    see_lines: 'See the %count% lines'
+    all_lines: All
     bar: '%consumed% consumed out of %volume%'
     lines: '{0}no line|{1}1 line|]1,Inf[ %count% lines'
     total:
@@ -1877,6 +1902,7 @@ budget:
         consumed_caption: approved lines
         remaining: Left
         remaining_caption: on the open budgets
+        remaining_after_caption: '%quantity% if all is approved'
         pending_caption: waiting for an approval
     statement_intro: Every line of this budget. Only the approved ones are consumed.
     statement_intro_closed: 'This budget is closed: it keeps its lines and takes no new one.'

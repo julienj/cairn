@@ -23,7 +23,9 @@
             </twig:block>
         </twig:Ui:PageHeader>
     {% endif %}
-    <div role="search" class="flex flex-wrap items-center gap-2 py-3">
+    {# Two blocks: the filters, which wrap among themselves when there are many, and what arranges the list (open or all, the grouping), which keeps its corner whatever they take. #}
+    <div role="search" class="flex flex-wrap items-start gap-x-3 gap-y-2 py-3 md:flex-nowrap">
+        <div class="flex min-w-0 flex-1 flex-wrap items-center gap-2">
         {% if scope.offers('place') %}
             <twig:Ui:Filter:Menu :label="'filter.place'|trans" :count="filters.places|length" class="group-data-[view=board]/filters:hidden">
                 {% for filtersPlace in filtersChoices.places(filtersScope) %}
@@ -66,19 +68,16 @@
         {% if scope.offers('assignee') %}
             <twig:Ui:Filter:Menu :label="'filter.assignee'|trans" :count="filters.assignees|length + filters.teams|length">
                 <twig:Ui:Filter:Option name="assignees[]" value="0" :checked="0 in filters.assignees">
-                    <twig:Ui:Avatar size="sm" />
-                    {{ 'issue.unassigned'|trans }}
+                    <twig:User:Line size="sm" :nobody="'issue.unassigned'|trans" />
                 </twig:Ui:Filter:Option>
                 {% for filtersMember in filtersChoices.members(filtersScope) %}
                     <twig:Ui:Filter:Option name="assignees[]" :value="filtersMember.id" :checked="filtersMember.id in filters.assignees">
-                        <twig:User:Avatar :user="filtersMember" size="sm" />
-                        {{ filtersMember.fullName }}
+                        <twig:User:Line :user="filtersMember" size="sm" />
                     </twig:Ui:Filter:Option>
                 {% endfor %}
                 {% for filtersTeam in filtersChoices.teams(filtersScope) %}
                     <twig:Ui:Filter:Option name="teams[]" :value="filtersTeam.id" :checked="filtersTeam.id in filters.teams">
-                        <twig:Team:Avatar :team="filtersTeam" size="sm" />
-                        {{ filtersTeam.name }}
+                        <twig:Team:Line :team="filtersTeam" size="sm" :hint="false" />
                     </twig:Ui:Filter:Option>
                 {% endfor %}
             </twig:Ui:Filter:Menu>
@@ -105,10 +104,12 @@
             </twig:Ui:Filter:Menu>
         {% endif %}
         <twig:Ui:Filter:Search :value="filters.q" class="w-48 xl:w-60" />
-        <button type="button" class="text-xs text-brand hover:underline" data-filters-target="clear" data-action="filters#clear" {{ filters.hasFilters ? '' : 'hidden' }}>{{ 'filter.clear'|trans }}</button>
+        <button type="button" class="inline-flex h-7 items-center gap-1 rounded-md px-2 text-xs text-muted hover:bg-sunken hover:text-body [&[hidden]]:hidden" data-filters-target="clear" data-action="filters#clear" {{ filters.hasFilters ? '' : 'hidden' }}><twig:ux:icon name="lucide:x" class="h-3 w-3" />{{ 'filter.clear'|trans }}</button>
+        </div>
+        <div class="flex shrink-0 items-center gap-2">
         {% set filtersGrouping = filtersChoices.grouping(scope, filters) %}
         {# Open issues are the list of an address that says nothing: that radio sends nothing. #}
-        <twig:Ui:Filter:Segments :label="'issue.list.scope.label'|trans" class="ml-auto group-data-[view=board]/filters:hidden">
+        <twig:Ui:Filter:Segments :label="'issue.list.scope.label'|trans" class="group-data-[view=board]/filters:hidden">
             <twig:Ui:Filter:Segment name="closed" value="" :checked="not filters.closed">{{ 'issue.list.scope.open'|trans }}</twig:Ui:Filter:Segment>
             <twig:Ui:Filter:Segment name="closed" value="1" :checked="filters.closed">{{ 'issue.list.scope.all'|trans }}</twig:Ui:Filter:Segment>
         </twig:Ui:Filter:Segments>
@@ -118,5 +119,6 @@
                 <twig:Ui:Filter:Option single name="group" :value="filtersGroupingChoice.value" :checked="filtersGrouping == filtersGroupingChoice">{{ ('issue.list.group.' ~ filtersGroupingChoice.value)|trans }}</twig:Ui:Filter:Option>
             {% endfor %}
         </twig:Ui:Filter:Menu>
+        </div>
     </div>
 </form>
