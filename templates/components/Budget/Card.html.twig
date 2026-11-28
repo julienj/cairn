@@ -1,4 +1,4 @@
-{# One budget with all of its lines, the latest first: its name (a link to its own page), what it amounts to (the bar is the volume, filled by what the approved lines consumed, then by what waits for an approval, in amber, full once the budget is used up or overspent, and never past its end; what is left comes right after what was consumed, what waits for an approval last, since it is not taken from the budget yet), then each line: what it is for (an issue, a label or both; an issue the reader does not see is not named), its status and its quantity (the draft of a line to estimate greyed, since it counts for nothing, and kept from who may not read it). Whoever manages the budgets marks the status from the menu of the line (`mark`), and opens the dialogs of the page to write a line or change the rest (links aimed at the `modal` frame); a status that asks for a quantity the line does not have opens the dialog of the line instead, that status chosen. On the page of its budget (`standalone`) the card says so in the address of its dialogs, which then lead back there.
+{# One budget with all of its lines, the latest first: its name (a link to its own page), what it amounts to (what was consumed out of the volume, in figures, then the bar, which is the volume, filled by what the approved lines consumed, then by what waits for an approval, in amber, each colour named under it beside its figure, full once the budget is used up or overspent, and never past its end; what is left comes right after what was consumed, what waits for an approval last, since it is not taken from the budget yet), then each line: what it is for (an issue, a label or both; an issue the reader does not see is not named), its status and its quantity (the draft of a line to estimate greyed and a refused one struck, since they count for nothing, and kept from who may not read it). Whoever manages the budgets marks the status from the menu of the line (`mark`), and opens the dialogs of the page to write a line or change the rest (links aimed at the `modal` frame); a status that asks for a quantity the line does not have opens the dialog of the line instead, that status chosen. On the page of its budget (`standalone`) the card says so in the address of its dialogs, which then lead back there.
    The table is not a `Ui:Table`: its frame hides what overflows, and the menu of a last line would be cut. `this` is read before the nested components, whose blocks see their own `this`. #}
 {% set cardStatement = this.statement %}
 {% set cardSummary = cardStatement.summary %}
@@ -7,31 +7,35 @@
 {% set cardProject = budget.project %}
 {% set cardRoute = { workspaceKey: cardProject.workspace.key, projectKey: cardProject.key, budget: budget.id } %}
 {% set cardDialogRoute = cardRoute|merge(standalone ? { from: 'budget' } : {}) %}
-<section {{ attributes.defaults({ class: 'rounded-lg border border-line bg-surface' }) }} data-loading="addClass(opacity-60)">
-    <div class="px-4 py-3">
-        <div class="mb-3 flex flex-wrap items-center gap-3">
+<section {{ attributes.defaults({ class: 'rounded-[10px] border border-line bg-surface shadow-sm' }) }} data-loading="addClass(opacity-60)">
+    <div class="px-4 py-3.5">
+        <div class="mb-3.5 flex flex-wrap items-center gap-x-3 gap-y-2">
             <h2 class="text-base font-semibold text-strong"><a href="{{ path('app_project_budget', cardRoute) }}" class="hover:text-brand hover:underline">{{ budget.name }}</a></h2>
             {% if not budget.open %}<twig:Ui:Badge tone="gray" size="sm">{{ 'budget.form.closed'|trans }}</twig:Ui:Badge>{% endif %}
             <span class="text-xs text-muted">{{ 'budget.lines'|trans({ '%count%': cardSummary.lines }) }}</span>
             {% if cardManage %}
-                <div class="ml-auto flex items-center gap-2">
+                <div class="ml-auto flex items-center gap-1.5">
                     {% if budget.open %}
                         <twig:Ui:Button size="sm" icon="plus" href="{{ path('app_project_budget_line_new', cardDialogRoute) }}" data-turbo-frame="modal">{{ 'budget.line.new'|trans }}</twig:Ui:Button>
                     {% endif %}
-                    <twig:Ui:Button size="sm" icon="pencil" href="{{ path('app_project_budget_edit', cardDialogRoute) }}" data-turbo-frame="modal">{{ 'budget.edit'|trans }}</twig:Ui:Button>
+                    <twig:Ui:IconButton icon="pencil" :label="'budget.edit'|trans" href="{{ path('app_project_budget_edit', cardDialogRoute) }}" data-turbo-frame="modal" />
                 </div>
             {% endif %}
         </div>
         {% if error %}<twig:Ui:Callout tone="danger" size="sm" role="alert" class="mb-3">{{ error }}</twig:Ui:Callout>{% endif %}
-        <twig:Ui:ProgressBar :value="max(cardSummary.consumed, 0)" :pending="max(cardSummary.pending, 0)" :max="max(budget.volume, cardSummary.consumed, 1)"
+        {# What was consumed, out of the volume, then the bar, then what its two colours are, each beside its figure, and what is left. #}
+        <div class="flex items-baseline gap-2 text-[12.5px] text-muted">
+            <span>{{ 'budget.consumed'|trans }} <span class="text-[13px] font-semibold tabular-nums text-strong">{{ cardSummary.consumed|quantity(cardProject) }}</span> {{ 'budget.out_of'|trans }} <span class="text-[13px] font-semibold tabular-nums text-strong">{{ budget.volume|quantity(cardProject) }}</span></span>
+            {% if budget.volume > 0 %}<span class="ml-auto font-semibold tabular-nums text-body">{{ (max(cardSummary.consumed, 0) / budget.volume * 100)|round }} %</span>{% endif %}
+        </div>
+        <twig:Ui:ProgressBar :value="max(cardSummary.consumed, 0)" :pending="max(cardSummary.pending, 0)" :max="max(budget.volume, cardSummary.consumed, 1)" size="sm" class="mt-2"
                              :label="'budget.bar'|trans({ '%consumed%': cardSummary.consumed|quantity(cardProject), '%volume%': budget.volume|quantity(cardProject) })" />
-        <dl class="mt-2 flex flex-wrap items-center gap-x-6 gap-y-1 text-xs text-muted">
-            <div class="flex gap-1.5"><dt>{{ 'budget.volume'|trans }}</dt> <dd class="font-medium tabular-nums text-strong">{{ budget.volume|quantity(cardProject) }}</dd></div>
-            <div class="flex gap-1.5"><dt>{{ 'budget.consumed'|trans }}</dt> <dd class="font-medium tabular-nums text-strong">{{ cardSummary.consumed|quantity(cardProject) }}</dd></div>
-            <div class="flex gap-1.5"><dt>{{ 'budget.remaining'|trans }}</dt> <dd class="font-medium tabular-nums {{ cardSummary.remaining < 0 ? 'text-red' : 'text-strong' }}">{{ cardSummary.remaining|quantity(cardProject) }}</dd></div>
+        <dl class="mt-2.5 flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-muted">
+            <div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-brand-solid" aria-hidden="true"></span><dt>{{ 'budget.consumed'|trans }}</dt> <dd class="font-medium tabular-nums text-strong">{{ cardSummary.consumed|quantity(cardProject) }}</dd></div>
             {% if cardSummary.pending != 0 %}
-                <div class="flex gap-1.5"><dt>{{ 'budget.pending'|trans }}</dt> <dd class="font-medium tabular-nums text-amber">{{ cardSummary.pending|quantity(cardProject) }}</dd></div>
+                <div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-amber-solid" aria-hidden="true"></span><dt>{{ 'budget.pending'|trans }}</dt> <dd class="font-medium tabular-nums text-amber">{{ cardSummary.pending|quantity(cardProject) }}</dd></div>
             {% endif %}
+            <div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-sunken ring-1 ring-inset ring-line-strong" aria-hidden="true"></span><dt>{{ 'budget.remaining'|trans }}</dt> <dd class="font-medium tabular-nums {{ cardSummary.remaining < 0 ? 'text-red' : 'text-strong' }}">{{ cardSummary.remaining|quantity(cardProject) }}</dd></div>
         </dl>
     </div>
     {% if cardStatement.lines is empty %}
@@ -50,7 +54,7 @@
             <tbody class="divide-y divide-line-subtle">
                 {% for line in cardStatement.lines %}
                     <twig:Ui:Table:Row>
-                        <td class="sm:py-2 sm:pl-4 sm:pr-3 whitespace-nowrap text-xs text-muted">{{ line.createdAt|format_date('short') }}</td>
+                        <td class="sm:py-2 sm:pl-4 sm:pr-3 whitespace-nowrap text-xs tabular-nums text-muted">{{ line.createdAt|format_date('medium') }}</td>
                         <td class="sm:px-3 sm:py-2 w-full min-w-0 basis-full">
                             {% if line.issue and cardStatement.hides(line) %}
                                 <span class="text-muted">{{ 'budget.line.private_issue'|trans }}</span>
@@ -93,10 +97,10 @@
                             {% endif %}
                         </td>
                         {% set cardQuantity = cardStatement.quantityOf(line) %}
-                        <td class="sm:px-3 sm:py-2 whitespace-nowrap text-right font-medium tabular-nums {{ line.status.value == 'to_estimate' ? 'text-muted' : 'text-strong' }}">{{ cardQuantity is null ? '—' : cardQuantity|quantity(cardProject) }}</td>
+                        <td class="sm:px-3 sm:py-2 whitespace-nowrap text-right font-medium tabular-nums {{ line.status.value == 'to_estimate' ? 'text-muted' : (line.status.value == 'refused' ? 'text-faint line-through' : 'text-strong') }}">{{ cardQuantity is null ? '—' : cardQuantity|quantity(cardProject) }}</td>
                         {% if cardManage %}
                             <td class="sm:py-1.5 sm:pl-1 sm:pr-3 text-right">
-                                <twig:Ui:IconButton icon="pencil" :label="'budget.edit'|trans" href="{{ path('app_project_budget_line_edit', cardDialogRoute|merge({ line: line.id })) }}" data-turbo-frame="modal" />
+                                <twig:Ui:IconButton icon="pencil" :label="'budget.edit'|trans" class="hover-actions" href="{{ path('app_project_budget_line_edit', cardDialogRoute|merge({ line: line.id })) }}" data-turbo-frame="modal" />
                             </td>
                         {% endif %}
                     </twig:Ui:Table:Row>

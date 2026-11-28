@@ -45,7 +45,9 @@ final class CardTest extends KernelTestCase
     {
         $card = $this->card('thomas.girard@cairn.test');
         $render = $card->render();
-        self::assertStringContainsString('Volume 10 d Consumed 2 d Left 8 d To approve 2 d', $render->crawler()->filter('dl')->text());
+        self::assertStringContainsString('Consumed 2 d of 10 d', $render->crawler()->text(), 'what was consumed, out of the volume');
+        self::assertStringContainsString('20 %', $render->crawler()->text());
+        self::assertStringContainsString('Consumed 2 d To approve 2 d Left 8 d', $render->crawler()->filter('dl')->text(), 'the two colours of the bar, each beside its figure, then what is left');
         self::assertStringContainsString('MD-SPT-6', (string) $render, 'the manager sees the internal task');
         self::assertCount(10, $render->crawler()->filter('[data-live-action-param="mark"]'), 'each line offers the statuses it does not have, less the two that ask the audit for a quantity');
 
@@ -53,7 +55,8 @@ final class CardTest extends KernelTestCase
         $render = $card->render();
 
         self::assertSame(BudgetLineStatus::Approved, $this->statusOf($this->pending));
-        self::assertStringContainsString('Volume 10 d Consumed 4 d Left 6 d', $render->crawler()->filter('dl')->text(), 'the figures of the card follow');
+        self::assertStringContainsString('Consumed 4 d of 10 d', $render->crawler()->text(), 'the figures of the card follow');
+        self::assertStringContainsString('Consumed 4 d Left 6 d', $render->crawler()->filter('dl')->text());
         self::assertStringNotContainsString('To approve', $render->crawler()->filter('dl')->text(), 'nothing waits any more');
         self::assertNotNull($card->getEmittedEvent($render, 'budget:changed'), 'the totals of the page are told');
     }

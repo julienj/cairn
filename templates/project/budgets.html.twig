@@ -16,7 +16,7 @@
         <twig:block name="description">{{ ('budget.intro.' ~ project.budgetUnit.value)|trans }}</twig:block>
     </twig:Ui:PageHeader>
 
-    <div class="px-4 sm:px-6 py-5 max-w-5xl space-y-4">
+    <div class="px-4 sm:px-6 py-5 max-w-5xl space-y-3.5">
         {% if budgetsOpen is empty %}
             <twig:Ui:EmptyState :title="'budget.empty'|trans" icon="hourglass" bordered>{{ (budgetsManage ? 'budget.empty_hint_manager' : 'budget.empty_hint')|trans }}</twig:Ui:EmptyState>
         {% else %}
@@ -28,13 +28,14 @@
 
         {% if budgetsClosed is not empty %}
             <twig:Ui:Panel :title="'budget.closed'|trans" :count="budgetsClosed|length">
-                <ul class="divide-y divide-line-subtle text-sm">
+                <ul class="divide-y divide-line-subtle text-[13px]">
                     {% for summary in budgetsClosed %}
                         {% set budget = summary.budget %}
-                        <li class="flex flex-wrap items-center gap-3 px-4 py-2.5">
-                            <a href="{{ path('app_project_budget', budgetsRoute|merge({ budget: budget.id })) }}" class="font-medium text-body hover:text-brand hover:underline">{{ budget.name }}</a>
-                            <span class="min-w-0 flex-1 text-xs text-muted">{{ 'budget.closed_summary'|trans({ '%consumed%': summary.consumed|quantity(project), '%volume%': budget.volume|quantity(project) }) }}</span>
-                            {% if budget.closedAt %}<span class="text-xs text-muted">{{ 'budget.closed_on'|trans({ '%date%': budget.closedAt|format_date('short') }) }}</span>{% endif %}
+                        {# The line leads to the page of the budget, by the link of its name, stretched over it. #}
+                        <li class="relative flex min-h-11 flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2 transition-colors last:rounded-b-lg hover:bg-subtle">
+                            <a href="{{ path('app_project_budget', budgetsRoute|merge({ budget: budget.id })) }}" class="font-medium text-body after:absolute after:inset-0">{{ budget.name }}</a>
+                            <span class="min-w-0 flex-1 text-xs tabular-nums text-muted">{{ 'budget.closed_summary'|trans({ '%consumed%': summary.consumed|quantity(project), '%volume%': budget.volume|quantity(project) }) }}</span>
+                            {% if budget.closedAt %}<span class="text-xs tabular-nums text-muted">{{ 'budget.closed_on'|trans({ '%date%': budget.closedAt|format_date('medium') }) }}</span>{% endif %}
                         </li>
                     {% endfor %}
                 </ul>

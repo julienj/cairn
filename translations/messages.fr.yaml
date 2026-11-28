@@ -1887,10 +1887,10 @@ budget:
     delete_help: Un budget clos se supprime avec toutes ses lignes, définitivement.
     delete_confirm: Supprimer définitivement ce budget et toutes ses lignes ?
     deleted: 'Budget %name% supprimé.'
-    volume: Volume
     consumed: Consommé
     remaining: Reste
     pending: À valider
+    out_of: sur
     bar: '%consumed% consommés sur %volume%'
     lines: '{0}aucune ligne|{1}1 ligne|]1,Inf[ %count% lignes'
     total:
