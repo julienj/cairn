@@ -1,4 +1,4 @@
-{# One budget with all of its lines, the latest first: its name (a link to its own page), what it amounts to (what was consumed out of the volume, in figures, then the bar, which is the volume, filled by what the approved lines consumed, then by what waits for an approval, in amber, each colour named under it beside its figure, full once the budget is used up or overspent, and never past its end; what is left comes right after what was consumed, what waits for an approval last, since it is not taken from the budget yet), then each line: what it is for (an issue, a label or both; an issue the reader does not see is not named), its status and its quantity (the draft of a line to estimate greyed and a refused one struck, since they count for nothing, and kept from who may not read it). Whoever manages the budgets marks the status from the menu of the line (`mark`), and opens the dialogs of the page to write a line or change the rest (links aimed at the `modal` frame); a status that asks for a quantity the line does not have opens the dialog of the line instead, that status chosen. On the page of its budget (`standalone`) the card says so in the address of its dialogs, which then lead back there.
+{# One budget with its lines, the latest first (all of them on the page of the budget, where they are also read by status; the latest five among the other budgets, which lead there for the rest): its name (a link to its own page), what it amounts to (`project/_budget_meter.html.twig`: what was consumed out of the volume, the bar, full once the budget is used up or overspent, and never past its end; what is left comes right after what was consumed, what waits for an approval last, since it is not taken from the budget yet), then each line: what it is for (an issue, a label or both; an issue the reader does not see is not named), its status and its quantity (the draft of a line to estimate greyed and a refused one struck, since they count for nothing, and kept from who may not read it). Whoever manages the budgets marks the status from the menu of the line (`mark`), and opens the dialogs of the page to write a line or change the rest (links aimed at the `modal` frame); a status that asks for a quantity the line does not have opens the dialog of the line instead, that status chosen. On the page of its budget (`standalone`) the card says so in the address of its dialogs, which then lead back there.
    The table is not a `Ui:Table`: its frame hides what overflows, and the menu of a last line would be cut. `this` is read before the nested components, whose blocks see their own `this`. #}
 {% set cardStatement = this.statement %}
 {% set cardSummary = cardStatement.summary %}
@@ -7,11 +7,21 @@
 {% set cardProject = budget.project %}
 {% set cardRoute = { workspaceKey: cardProject.workspace.key, projectKey: cardProject.key, budget: budget.id } %}
 {% set cardDialogRoute = cardRoute|merge(standalone ? { from: 'budget' } : {}) %}
-<section {{ attributes.defaults({ class: 'rounded-[10px] border border-line bg-surface shadow-sm' }) }} data-loading="addClass(opacity-60)">
+{# Among the other budgets a card shows its latest lines, and leads to the page of its budget for the rest. #}
+{% set cardShown = standalone ? cardStatement.lines : cardStatement.lines|slice(0, 5) %}
+{% set cardByStatus = standalone ? this.byStatus : [] %}
+{# On its own page, the lines are read by status: a radio per status that has lines, which hides the others without asking the server. #}
+{% set cardFilterClasses = standalone ? "has-[[value=to_estimate]:checked]:[&_tr[data-status]:not([data-status=to_estimate])]:hidden has-[[value=pending]:checked]:[&_tr[data-status]:not([data-status=pending])]:hidden has-[[value=approved]:checked]:[&_tr[data-status]:not([data-status=approved])]:hidden has-[[value=refused]:checked]:[&_tr[data-status]:not([data-status=refused])]:hidden" : '' %}
+<section {{ attributes.defaults({ class: 'rounded-[10px] border border-line bg-surface shadow-sm ' ~ cardFilterClasses }) }} data-loading="addClass(opacity-60)">
     <div class="px-4 py-3.5">
         <div class="mb-3.5 flex flex-wrap items-center gap-x-3 gap-y-2">
             <h2 class="text-base font-semibold text-strong"><a href="{{ path('app_project_budget', cardRoute) }}" class="hover:text-brand hover:underline">{{ budget.name }}</a></h2>
             {% if not budget.open %}<twig:Ui:Badge tone="gray" size="sm">{{ 'budget.form.closed'|trans }}</twig:Ui:Badge>{% endif %}
+            {% if cardSummary.remaining < 0 %}
+                <twig:Ui:Badge tone="red" size="sm">{{ 'budget.overspent'|trans({ '%quantity%': (-cardSummary.remaining)|quantity(cardProject) }) }}</twig:Ui:Badge>
+            {% elseif cardSummary.remaining == 0 and budget.volume > 0 %}
+                <twig:Ui:Badge tone="gray" size="sm">{{ 'budget.used_up'|trans }}</twig:Ui:Badge>
+            {% endif %}
             <span class="text-xs text-muted">{{ 'budget.lines'|trans({ '%count%': cardSummary.lines }) }}</span>
             {% if cardManage %}
                 <div class="ml-auto flex items-center gap-1.5">
@@ -23,24 +33,25 @@
             {% endif %}
         </div>
         {% if error %}<twig:Ui:Callout tone="danger" size="sm" role="alert" class="mb-3">{{ error }}</twig:Ui:Callout>{% endif %}
-        {# What was consumed, out of the volume, then the bar, then what its two colours are, each beside its figure, and what is left. #}
-        <div class="flex items-baseline gap-2 text-[12.5px] text-muted">
-            <span>{{ 'budget.consumed'|trans }} <span class="text-[13px] font-semibold tabular-nums text-strong">{{ cardSummary.consumed|quantity(cardProject) }}</span> {{ 'budget.out_of'|trans }} <span class="text-[13px] font-semibold tabular-nums text-strong">{{ budget.volume|quantity(cardProject) }}</span></span>
-            {% if budget.volume > 0 %}<span class="ml-auto font-semibold tabular-nums text-body">{{ (max(cardSummary.consumed, 0) / budget.volume * 100)|round }} %</span>{% endif %}
-        </div>
-        <twig:Ui:ProgressBar :value="max(cardSummary.consumed, 0)" :pending="max(cardSummary.pending, 0)" :max="max(budget.volume, cardSummary.consumed, 1)" size="sm" class="mt-2"
-                             :label="'budget.bar'|trans({ '%consumed%': cardSummary.consumed|quantity(cardProject), '%volume%': budget.volume|quantity(cardProject) })" />
-        <dl class="mt-2.5 flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-muted">
-            <div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-brand-solid" aria-hidden="true"></span><dt>{{ 'budget.consumed'|trans }}</dt> <dd class="font-medium tabular-nums text-strong">{{ cardSummary.consumed|quantity(cardProject) }}</dd></div>
-            {% if cardSummary.pending != 0 %}
-                <div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-amber-solid" aria-hidden="true"></span><dt>{{ 'budget.pending'|trans }}</dt> <dd class="font-medium tabular-nums text-amber">{{ cardSummary.pending|quantity(cardProject) }}</dd></div>
-            {% endif %}
-            <div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-sunken ring-1 ring-inset ring-line-strong" aria-hidden="true"></span><dt>{{ 'budget.remaining'|trans }}</dt> <dd class="font-medium tabular-nums {{ cardSummary.remaining < 0 ? 'text-red' : 'text-strong' }}">{{ cardSummary.remaining|quantity(cardProject) }}</dd></div>
-        </dl>
+        {{ include('project/_budget_meter.html.twig', { consumed: cardSummary.consumed, pending: cardSummary.pending, volume: budget.volume, project: cardProject }) }}
     </div>
     {% if cardStatement.lines is empty %}
         <p class="border-t border-line-subtle px-4 py-3 text-sm text-faint">{{ 'budget.line.empty'|trans }}</p>
     {% else %}
+        {% if cardByStatus|length > 1 %}
+            <fieldset class="flex flex-wrap items-center gap-1.5 border-t border-line-subtle px-4 py-2.5">
+                <legend class="sr-only">{{ 'budget.line.status'|trans }}</legend>
+                <label class="inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-md px-2 text-xs text-muted ring-1 ring-inset ring-line hover:bg-subtle has-[:checked]:bg-brand-soft has-[:checked]:text-brand has-[:checked]:ring-brand-line has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-focus">
+                    <input type="radio" name="budget-{{ budget.id }}-status" value="" checked class="sr-only">{{ 'budget.all_lines'|trans }} <span class="font-semibold tabular-nums">{{ cardStatement.lines|length }}</span>
+                </label>
+                {% for cardStatusKey, cardStatusTotal in cardByStatus %}
+                    <label class="inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-md px-2 text-xs text-muted ring-1 ring-inset ring-line hover:bg-subtle has-[:checked]:bg-brand-soft has-[:checked]:text-brand has-[:checked]:ring-brand-line has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-focus">
+                        <input type="radio" name="budget-{{ budget.id }}-status" value="{{ cardStatusKey }}" class="sr-only">{{ ('budget.status.' ~ cardStatusKey)|trans }}
+                        <span class="font-semibold tabular-nums">{{ cardStatusTotal.quantity is null ? 'budget.lines'|trans({ '%count%': cardStatusTotal.lines }) : cardStatusTotal.quantity|quantity(cardProject) }}</span>
+                    </label>
+                {% endfor %}
+            </fieldset>
+        {% endif %}
         <table class="w-full border-t border-line text-sm">
             <thead class="sr-only">
                 <tr>
@@ -52,8 +63,8 @@
                 </tr>
             </thead>
             <tbody class="divide-y divide-line-subtle">
-                {% for line in cardStatement.lines %}
-                    <twig:Ui:Table:Row>
+                {% for line in cardShown %}
+                    <twig:Ui:Table:Row data-status="{{ line.status.value }}">
                         <td class="sm:py-2 sm:pl-4 sm:pr-3 whitespace-nowrap text-xs tabular-nums text-muted">{{ line.createdAt|format_date('medium') }}</td>
                         <td class="sm:px-3 sm:py-2 w-full min-w-0 basis-full">
                             {% if line.issue and cardStatement.hides(line) %}
@@ -107,5 +118,8 @@
                 {% endfor %}
             </tbody>
         </table>
+        {% if cardShown|length < cardStatement.lines|length %}
+            <a href="{{ path('app_project_budget', cardRoute) }}" class="group/see flex items-center justify-end gap-1 rounded-b-[10px] border-t border-line-subtle px-4 py-2.5 text-xs font-medium text-brand hover:bg-subtle">{{ 'budget.see_lines'|trans({ '%count%': cardStatement.lines|length }) }}<twig:ux:icon name="lucide:arrow-right" class="h-3 w-3 transition-transform group-hover/see:translate-x-0.5" /></a>
+        {% endif %}
     {% endif %}
 </section>

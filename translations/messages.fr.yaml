@@ -1891,6 +1891,11 @@ budget:
     remaining: Reste
     pending: À valider
     out_of: sur
+    remaining_after: Reste si tout est validé
+    used_up: Épuisé
+    overspent: 'Dépassé de %quantity%'
+    see_lines: 'Voir les %count% lignes'
+    all_lines: Toutes
     bar: '%consumed% consommés sur %volume%'
     lines: '{0}aucune ligne|{1}1 ligne|]1,Inf[ %count% lignes'
     total:
@@ -1899,6 +1904,7 @@ budget:
         consumed_caption: lignes validées
         remaining: Restant
         remaining_caption: sur les budgets ouverts
+        remaining_after_caption: '%quantity% si tout est validé'
         pending_caption: en attente de validation
     statement_intro: Toutes les lignes de ce budget. Seules les lignes validées sont consommées.
     statement_intro_closed: "Ce budget est clos : il garde ses lignes et n'en prend plus."

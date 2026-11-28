@@ -1891,6 +1891,11 @@ budget:
     remaining: Left
     pending: To approve
     out_of: of
+    remaining_after: Left if all is approved
+    used_up: Used up
+    overspent: 'Over by %quantity%'
+    see_lines: 'See the %count% lines'
+    all_lines: All
     bar: '%consumed% consumed out of %volume%'
     lines: '{0}no line|{1}1 line|]1,Inf[ %count% lines'
     total:
@@ -1899,6 +1904,7 @@ budget:
         consumed_caption: approved lines
         remaining: Left
         remaining_caption: on the open budgets
+        remaining_after_caption: '%quantity% if all is approved'
         pending_caption: waiting for an approval
     statement_intro: Every line of this budget. Only the approved ones are consumed.
     statement_intro_closed: 'This budget is closed: it keeps its lines and takes no new one.'

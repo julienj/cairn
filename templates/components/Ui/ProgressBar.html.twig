@@ -1,5 +1,5 @@
-{# How far a piece of work went: `value` out of `max`, as a bar with its figures for screen readers. Without `max` (not known yet), a pulsing stripe. `tone`: brand while it goes, emerald when done.
-   `pending` is what waits on top of `value`, not counted in it yet: it shows after it in solid amber, the family of the badge of what waits, and the two together never go past the end of the bar. #}
+{# How far a piece of work went: `value` out of `max`, as a bar with its figures for screen readers. Without `max` (not known yet), a pulsing stripe. `tone`: brand while it goes, emerald when done or for what is acquired, red for what went past its end.
+   `pending` is what waits on top of `value`, not counted in it yet: it shows after it in the same colour, hatched, as what would be filled were it accepted, and the two together never go past the end of the bar. #}
 {% props value = 0, max = null, tone = 'brand', size = 'md', label = null, pending = 0 %}
 {% set progressBarClasses = html_cva(
     base: 'relative w-full overflow-hidden rounded-full bg-sunken',
@@ -8,16 +8,24 @@
 {% set progressBarFillClasses = html_cva(
     base: 'h-full rounded-full transition-[width] duration-500',
     variants: {
-        tone: { brand: 'bg-brand-solid', emerald: 'bg-emerald-solid' },
+        tone: { brand: 'bg-brand-solid', emerald: 'bg-emerald-solid', red: 'bg-red-solid' },
         known: { false: 'w-1/3 animate-pulse' },
         stacked: { true: 'relative' },
     },
+) %}
+{% set progressBarPendingClasses = html_cva(
+    base: 'absolute inset-y-0 left-0 rounded-full opacity-70 transition-[width] duration-500',
+    variants: { tone: {
+        brand: 'bg-[repeating-linear-gradient(135deg,var(--color-brand-solid)_0_3px,transparent_3px_6px)]',
+        emerald: 'bg-[repeating-linear-gradient(135deg,var(--color-emerald-solid)_0_3px,transparent_3px_6px)]',
+        red: 'bg-[repeating-linear-gradient(135deg,var(--color-red-solid)_0_3px,transparent_3px_6px)]',
+    } },
 ) %}
 {% set progressBarPercent = max ? min(100, (value / max * 100)|round) : null %}
 {# drawn under the fill, from the start of the bar, so that the round end of the fill sits on it #}
 {% set progressBarPendingPercent = max and pending > 0 ? min(100, progressBarPercent + (pending / max * 100)|round) : null %}
 <div role="progressbar" aria-valuemin="0" {% if max %}aria-valuemax="{{ max }}" aria-valuenow="{{ min(value, max) }}"{% endif %} {% if label %}aria-label="{{ label }}"{% endif %}
      class="{{ progressBarClasses.apply({ size: size }, attributes.render('class'))|tailwind_merge }}" {{ attributes }}>
-    {% if progressBarPendingPercent is not null %}<div class="absolute inset-y-0 left-0 rounded-full bg-amber-solid transition-[width] duration-500" style="width: {{ progressBarPendingPercent }}%"></div>{% endif -%}
+    {% if progressBarPendingPercent is not null %}<div class="{{ progressBarPendingClasses.apply({ tone: tone }) }}" style="width: {{ progressBarPendingPercent }}%"></div>{% endif -%}
     <div class="{{ progressBarFillClasses.apply({ tone: tone, known: progressBarPercent is not null, stacked: progressBarPendingPercent is not null }) }}" {% if progressBarPercent is not null %}style="width: {{ progressBarPercent }}%"{% endif %}></div>
 </div>

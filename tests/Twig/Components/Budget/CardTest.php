@@ -90,13 +90,52 @@ final class CardTest extends KernelTestCase
     public function testTheBarShowsWhatWaitsAfterWhatWasConsumedAndNeverGoesPastItsEnd(): void
     {
         $bar = fn (): array => $this->card('claire.martin@maison-dupont.test')->render()->crawler()->filter('[role="progressbar"] > div')->each(
-            static fn ($part): string => (str_contains((string) $part->attr('class'), 'amber') ? 'waits ' : 'consumed ').$part->attr('style'),
+            static fn ($part): string => (str_contains((string) $part->attr('class'), 'repeating-linear-gradient') ? 'waits ' : 'consumed ').$part->attr('style'),
         );
 
-        self::assertSame(['waits width: 40%', 'consumed width: 20%'], $bar(), 'two days consumed out of ten, then the two that wait, drawn under them from the start');
+        self::assertSame(['waits width: 40%', 'consumed width: 20%'], $bar(), 'two days consumed out of ten, then the two that wait, hatched, drawn under them from the start');
 
         $this->scene->line($this->budget, BudgetLineStatus::Pending, 20, label: 'Rewrite of the checkout');
         self::assertSame(['waits width: 100%', 'consumed width: 20%'], $bar(), 'more waits than is left');
+    }
+
+    public function testTheCardSaysWhatWouldBeLeftWereEverythingApprovedAndWhenTheBudgetIsUsedUpOrOverspent(): void
+    {
+        $text = fn (): string => $this->card('claire.martin@maison-dupont.test')->render()->crawler()->text();
+
+        self::assertStringContainsString('Left 8 d', $text());
+        self::assertStringContainsString('Left if all is approved 6 d', $text(), 'what whoever approves wants to know');
+        self::assertStringNotContainsString('Used up', $text());
+
+        $this->scene->line($this->budget, BudgetLineStatus::Approved, 8, label: 'Rewrite of the checkout');
+        self::assertStringContainsString('Used up', $text());
+
+        $this->scene->line($this->budget, BudgetLineStatus::Approved, 1, label: 'One more day');
+        self::assertStringContainsString('Over by 1 d', $text());
+        self::assertStringContainsString('bg-red-solid', (string) $this->card('claire.martin@maison-dupont.test')->render(), 'the bar turns red past the volume');
+    }
+
+    public function testAmongTheOthersACardShowsItsLatestLinesAndOnItsPageAllOfThemCountedByStatus(): void
+    {
+        foreach (['Fifth', 'Sixth', 'Seventh'] as $label) {
+            $this->scene->line($this->budget, BudgetLineStatus::Refused, 1, label: $label);
+        }
+        $card = fn (bool $standalone) => $this->createLiveComponent('Budget:Card', ['budget' => $this->budget, 'standalone' => $standalone])
+            ->actingAs($this->scene->user('thomas.girard@cairn.test'))->render()->crawler();
+
+        $among = $card(false);
+        self::assertCount(5, $among->filter('tbody tr'));
+        self::assertSame('See the 7 lines', trim($among->filter(\sprintf('a[href="/MD/SPT/budgets/%d"]', $this->budget->getId()))->last()->text()));
+        self::assertCount(0, $among->filter('fieldset'), 'the statuses are read on the page of the budget');
+
+        $alone = $card(true);
+        self::assertCount(7, $alone->filter('tbody tr'));
+        self::assertSame(
+            ['All 7', 'To estimate 1 line', 'To approve 2 d', 'Approved 2 d', 'Refused 3 d'],
+            $alone->filter('fieldset label')->each(static fn ($label): string => trim((string) preg_replace('/\\s+/', ' ', $label->text()))),
+            'each status that has lines, with what they amount to, or how many when none says a quantity',
+        );
+        self::assertSame(['refused', 'refused', 'refused', 'to_estimate', 'approved', 'pending', 'approved'], $alone->filter('tbody tr')->each(static fn ($row): string => (string) $row->attr('data-status')), 'a row says its status, which the choice shows or hides');
     }
 
     public function testARefusalIsSaidOnTheCard(): void

@@ -406,6 +406,15 @@ src/
   estimate back into the issue, its workflow or its history.
 - `BudgetLineRepository::totalsByBudget()` is the one place that says what
   lines count for: only an approved line is consumed.
+- **A budget is read the same way everywhere**
+  (`project/_budget_meter.html.twig`): what was consumed out of the
+  volume, a bar filled by it, then, hatched in the same colour, by what
+  waits for an approval, and what would be left were everything approved,
+  which is what whoever approves wants to know. One colour, red once the
+  volume is passed: what waits is no other colour, it is the same not yet
+  acquired. The budgets page adds what the open ones amount to together
+  (`Budget:Totals`), and shows the latest lines of each; all of them, and
+  their totals by status, are on the page of the budget.
 - **Quantities are integers of minutes**; the unit is only what is shown.
   `Budget/Quantities` is the one place that converts and formats; a form
   converts with `fromInput()` so a field left as shown rewrites nothing.

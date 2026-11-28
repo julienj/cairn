@@ -91,6 +91,30 @@ final class Card
         return BudgetLineStatus::cases();
     }
 
+    /**
+     * The lines counted by status, for the statuses that have some, in
+     * their order: how many, and what they amount to together, which is
+     * unknown where no line of the status says a quantity the viewer may
+     * read.
+     *
+     * @return array<string, array{lines: int, quantity: ?int}>
+     */
+    public function getByStatus(): array
+    {
+        $statement = $this->getStatement();
+        $totals = [];
+        foreach (BudgetLineStatus::cases() as $status) {
+            $lines = array_filter($statement->lines, static fn (BudgetLine $line): bool => $line->getStatus() === $status);
+            if ([] === $lines) {
+                continue;
+            }
+            $quantities = array_filter(array_map($statement->quantityOf(...), $lines), static fn (?int $quantity): bool => null !== $quantity);
+            $totals[$status->value] = ['lines' => \count($lines), 'quantity' => [] === $quantities ? null : array_sum($quantities)];
+        }
+
+        return $totals;
+    }
+
     /** Whether the viewer writes the lines; nobody does on an archived project. */
     public function canManage(): bool
     {

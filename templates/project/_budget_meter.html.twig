@@ -1,0 +1,19 @@
+{# What a budget, or several together, amount to, read the same way everywhere: what was consumed out of the `volume`, in figures, then the bar, filled by what the approved lines `consumed`, then, hatched in the same colour, by what waits for an approval (`pending`), then each of the two named beside its figure, what is left, and what would be left were everything approved, which is what whoever approves wants to know. The bar turns red once the volume is passed. `project` gives the unit. #}
+{% set meterRemaining = volume - consumed %}
+{% set meterTone = meterRemaining < 0 ? 'red' : 'emerald' %}
+<div class="flex items-baseline gap-2 text-[12.5px] text-muted">
+    <span>{{ 'budget.consumed'|trans }} <span class="text-[13px] font-semibold tabular-nums text-strong">{{ consumed|quantity(project) }}</span> {{ 'budget.out_of'|trans }} <span class="text-[13px] font-semibold tabular-nums text-strong">{{ volume|quantity(project) }}</span></span>
+    {% if volume > 0 %}<span class="ml-auto font-semibold tabular-nums text-body">{{ (max(consumed, 0) / volume * 100)|round }} %</span>{% endif %}
+</div>
+<twig:Ui:ProgressBar :value="max(consumed, 0)" :pending="max(pending, 0)" :max="max(volume, consumed, 1)" :tone="meterTone" size="sm" class="mt-2"
+                     :label="'budget.bar'|trans({ '%consumed%': consumed|quantity(project), '%volume%': volume|quantity(project) })" />
+<dl class="mt-2.5 flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-muted">
+    <div class="flex items-center gap-1.5"><twig:Ui:ProgressBar:Key part="value" :tone="meterTone" /><dt>{{ 'budget.consumed'|trans }}</dt> <dd class="font-medium tabular-nums text-strong">{{ consumed|quantity(project) }}</dd></div>
+    {% if pending != 0 %}
+        <div class="flex items-center gap-1.5"><twig:Ui:ProgressBar:Key part="pending" :tone="meterTone" /><dt>{{ 'budget.pending'|trans }}</dt> <dd class="font-medium tabular-nums text-strong">{{ pending|quantity(project) }}</dd></div>
+    {% endif %}
+    <div class="flex items-center gap-1.5"><twig:Ui:ProgressBar:Key part="rest" /><dt>{{ 'budget.remaining'|trans }}</dt> <dd class="font-medium tabular-nums {{ meterRemaining < 0 ? 'text-red' : 'text-strong' }}">{{ meterRemaining|quantity(project) }}</dd></div>
+    {% if pending != 0 %}
+        <div class="flex items-center gap-1.5 sm:ml-auto"><dt>{{ 'budget.remaining_after'|trans }}</dt> <dd class="font-semibold tabular-nums {{ meterRemaining - pending < 0 ? 'text-red' : 'text-strong' }}">{{ (meterRemaining - pending)|quantity(project) }}</dd></div>
+    {% endif %}
+</dl>
