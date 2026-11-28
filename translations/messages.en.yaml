@@ -315,7 +315,6 @@ filter:
     clear: Clear all
 
 nav:
-    account: My account
     home: Home
     my_issues: My issues
     projects: Projects
