@@ -160,24 +160,26 @@
 
 {# PickerType: a choice among many, searched in a list; the `picker` controller writes it into the hidden field. With a `search_url` the choices (the one chosen, at most) stand in the element the answers of that address replace. #}
 {% block picker_widget %}
-    {% set pickerChosen = null %}{% set pickerNothing = placeholder is not none and placeholder != '' ? (translation_domain is same as(false) ? placeholder : placeholder|trans({}, translation_domain)) : 'form.choose'|trans %}
+    {% set pickerChosen = null %}{% set pickerChosenData = null %}{% set pickerNothing = placeholder is not none and placeholder != '' ? (translation_domain is same as(false) ? placeholder : placeholder|trans({}, translation_domain)) : 'form.choose'|trans %}
     {% for choice in choices %}
         {% for option in choice.choices is defined ? choice.choices : [choice] %}
-            {% if option.value == value %}{% set pickerChosen = option.label %}{% endif %}
+            {% if option.value == value %}{% set pickerChosen = option.label %}{% set pickerChosenData = option.data %}{% endif %}
         {% endfor %}
     {% endfor %}
     <div data-controller="picker" class="mt-1">
         <input type="hidden" id="{{ id }}" name="{{ full_name }}" value="{{ value }}" data-picker-target="input">
         <twig:Ui:Picker :label="pickerChosen" :placeholder="pickerNothing" :searchPlaceholder="'form.search'|trans" :empty="'form.no_match'|trans" :invalid="not valid" :src="search_url">
-            {# a field that may stay empty offers to choose nothing again; on the line of the loop, so that a required field renders as before #}{% if not required %}<twig:Ui:Dropdown:Item :active="value is empty" data-list-filter-target="item" data-text="{{ pickerNothing }}" data-action="picker#choose dropdown#close" data-picker-value-param="" data-picker-label-param="{{ pickerNothing }}"><span class="truncate text-muted">{{ pickerNothing }}</span></twig:Ui:Dropdown:Item>{% endif %}{% if search_url %}<div data-list-filter-target="results">{% endif %}{% for choice in choices %}
+            {# with `avatars`, the choices are people and teams: each is drawn as who it is, on its line and on the button, nobody included: the button reads the same before a choice and after choosing nobody #}
+            <twig:block name="chosen">{% if avatars %}{{ include('form/_picker_line.html.twig', { who: pickerChosenData, nothing: pickerNothing, chosen: true }) }}{% endif %}</twig:block>
+            {# a field that may stay empty offers to choose nothing again; on the line of the loop, so that a required field renders as before #}{% if not required %}<twig:Ui:Dropdown:Item :active="value is empty" data-list-filter-target="item" data-text="{{ pickerNothing }}" data-action="picker#choose dropdown#close" data-picker-value-param="" data-picker-label-param="{{ pickerNothing }}">{% if avatars %}{{ include('form/_picker_line.html.twig', { who: null, nothing: pickerNothing }) }}{% else %}<span class="truncate text-muted">{{ pickerNothing }}</span>{% endif %}</twig:Ui:Dropdown:Item>{% endif %}{% if search_url %}<div data-list-filter-target="results">{% endif %}{% for choice in choices %}
                 {% if choice.choices is defined %}
                     <twig:Ui:Picker:Group :label="choice.label">
                         {% for option in choice.choices %}
-                            <twig:Ui:Dropdown:Item :active="option.value == value" data-list-filter-target="item" data-text="{{ option.label }} {{ choice.label }}" data-action="picker#choose dropdown#close" data-picker-value-param="{{ option.value }}" data-picker-label-param="{{ option.label }}"><span class="truncate">{{ option.label }}</span></twig:Ui:Dropdown:Item>
+                            <twig:Ui:Dropdown:Item :active="option.value == value" data-list-filter-target="item" data-text="{{ option.label }} {{ choice.label }}" data-action="picker#choose dropdown#close" data-picker-value-param="{{ option.value }}" data-picker-label-param="{{ option.label }}">{% if avatars %}{{ include('form/_picker_line.html.twig', { who: option.data, nothing: pickerNothing }) }}{% else %}<span class="truncate">{{ option.label }}</span>{% endif %}</twig:Ui:Dropdown:Item>
                         {% endfor %}
                     </twig:Ui:Picker:Group>
                 {% else %}
-                    <twig:Ui:Dropdown:Item :active="choice.value == value" data-list-filter-target="item" data-text="{{ choice.label }}" data-action="picker#choose dropdown#close" data-picker-value-param="{{ choice.value }}" data-picker-label-param="{{ choice.label }}"><span class="truncate">{{ choice.label }}</span></twig:Ui:Dropdown:Item>
+                    <twig:Ui:Dropdown:Item :active="choice.value == value" data-list-filter-target="item" data-text="{{ choice.label }}" data-action="picker#choose dropdown#close" data-picker-value-param="{{ choice.value }}" data-picker-label-param="{{ choice.label }}">{% if avatars %}{{ include('form/_picker_line.html.twig', { who: choice.data, nothing: pickerNothing }) }}{% else %}<span class="truncate">{{ choice.label }}</span>{% endif %}</twig:Ui:Dropdown:Item>
                 {% endif %}
             {% endfor %}{% if search_url %}</div>{% endif %}
         </twig:Ui:Picker>

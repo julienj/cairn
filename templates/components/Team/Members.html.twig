@@ -12,14 +12,9 @@
                 {% set membersUser = member.user %}
                 <li class="group px-4 py-2">
                     <div class="flex flex-wrap items-center gap-3">
-                        <twig:User:Avatar :user="membersUser" size="lg" />
-                        <div class="min-w-0 flex-1 leading-tight">
-                            <span class="flex items-center gap-2">
-                                <a href="{{ path('app_admin_user', { id: membersUser.id }) }}" class="text-sm text-strong hover:text-brand truncate">{{ membersUser.fullName }}</a>
-                                {% if not membersUser.active %}<twig:Ui:Badge tone="gray" size="sm">{{ 'admin.user.state.deactivated'|trans }}</twig:Ui:Badge>{% endif %}
-                            </span>
-                            <span class="block text-xs text-muted truncate">{{ membersUser.email }}{% if membersUser.company %} · {{ membersUser.company }}{% endif %} · {{ (membersUser.internal ? 'admin.user.type.internal' : 'admin.user.type.external')|trans }}</span>
-                        </div>
+                        <twig:User:Identity :user="membersUser" :href="path('app_admin_user', { id: membersUser.id })">
+                            <twig:block name="badges">{% if not membersUser.active %}<twig:Ui:Badge tone="gray" size="sm">{{ 'admin.user.state.deactivated'|trans }}</twig:Ui:Badge>{% endif %}</twig:block>
+                        </twig:User:Identity>
                         <span class="hover-actions flex shrink-0 items-center justify-end gap-1">
                             <twig:Ui:IconButton icon="x" tone="danger" :label="'admin.team.members.remove'|trans" data-action="live#action" data-live-action-param="confirmRemove" data-live-user-param="{{ membersUser.id }}" />
                         </span>
@@ -42,11 +37,10 @@
         {% set membersNewUser = this.newUser %}
         {% set membersCandidates = this.candidates %}
         <twig:Ui:Picker :label="membersNewUser ? membersNewUser.fullName : null" :placeholder="'admin.access.choose_user'|trans" :searchPlaceholder="'admin.access.search_user'|trans" :empty="'admin.access.no_match'|trans" class="min-w-0 flex-1 basis-64">
+            <twig:block name="chosen">{% if membersNewUser %}<twig:User:Line :user="membersNewUser" />{% endif %}</twig:block>
             {% for candidate in membersCandidates %}
                 <twig:Ui:Dropdown:Item :active="candidate.id == newUserId" data-list-filter-target="item" data-text="{{ candidate.fullName }} {{ candidate.email }} {{ candidate.company }}" data-action="live#action dropdown#close" data-live-action-param="chooseUser" data-live-user-param="{{ candidate.id }}">
-                    <twig:User:Avatar :user="candidate" size="md" />
-                    <span class="min-w-0 flex-1 truncate">{{ candidate.fullName }}</span>
-                    <span class="text-xs text-faint truncate">{{ candidate.company ?? (candidate.internal ? 'admin.user.type.internal' : 'admin.user.type.external')|trans }}</span>
+                    <twig:User:Line :user="candidate" hint />
                 </twig:Ui:Dropdown:Item>
             {% endfor %}
         </twig:Ui:Picker>

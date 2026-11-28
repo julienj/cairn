@@ -68,19 +68,16 @@
         {% if scope.offers('assignee') %}
             <twig:Ui:Filter:Menu :label="'filter.assignee'|trans" :count="filters.assignees|length + filters.teams|length">
                 <twig:Ui:Filter:Option name="assignees[]" value="0" :checked="0 in filters.assignees">
-                    <twig:Ui:Avatar size="sm" />
-                    {{ 'issue.unassigned'|trans }}
+                    <twig:User:Line size="sm" :nobody="'issue.unassigned'|trans" />
                 </twig:Ui:Filter:Option>
                 {% for filtersMember in filtersChoices.members(filtersScope) %}
                     <twig:Ui:Filter:Option name="assignees[]" :value="filtersMember.id" :checked="filtersMember.id in filters.assignees">
-                        <twig:User:Avatar :user="filtersMember" size="sm" />
-                        {{ filtersMember.fullName }}
+                        <twig:User:Line :user="filtersMember" size="sm" />
                     </twig:Ui:Filter:Option>
                 {% endfor %}
                 {% for filtersTeam in filtersChoices.teams(filtersScope) %}
                     <twig:Ui:Filter:Option name="teams[]" :value="filtersTeam.id" :checked="filtersTeam.id in filters.teams">
-                        <twig:Team:Avatar :team="filtersTeam" size="sm" />
-                        {{ filtersTeam.name }}
+                        <twig:Team:Line :team="filtersTeam" size="sm" :hint="false" />
                     </twig:Ui:Filter:Option>
                 {% endfor %}
             </twig:Ui:Filter:Menu>

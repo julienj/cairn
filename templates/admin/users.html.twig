@@ -41,16 +41,13 @@
                 {% for user in users.items %}
                     <twig:Ui:Table:Row :closed="not user.active">
                         <td class="sm:px-4 sm:py-2.5 order-1 basis-full sm:basis-auto">
-                            <a href="{{ path('app_admin_user', { id: user.id }) }}" class="flex items-center gap-2.5">
-                                <twig:User:Avatar :user="user" size="lg" />
-                                <span class="min-w-0 leading-tight">
-                                    <span class="block text-strong group-hover:text-brand truncate">
-                                        {{ user.fullName }}
+                            <a href="{{ path('app_admin_user', { id: user.id }) }}" class="group/identity flex items-center gap-2.5">
+                                <twig:User:Identity :user="user" :type="false">
+                                    <twig:block name="badges">
                                         {% if user.admin %}<twig:Ui:Badge tone="indigo" size="sm">{{ 'admin.user.admin_badge'|trans }}</twig:Ui:Badge>{% endif %}
                                         {% if user.hasTotp %}<twig:Ui:Badge tone="emerald" size="sm" icon="shield-check" data-test="two-factor-badge">{{ 'admin.user.two_factor.badge'|trans }}</twig:Ui:Badge>{% endif %}
-                                    </span>
-                                    <span class="block text-xs text-muted truncate">{{ user.email }}{% if user.company %} · {{ user.company }}{% endif %}</span>
-                                </span>
+                                    </twig:block>
+                                </twig:User:Identity>
                             </a>
                         </td>
                         <td class="sm:px-3 sm:py-2.5 order-2 text-xs {{ user.internal ? 'text-body' : 'text-muted' }}">{{ (user.internal ? 'admin.user.type.internal' : 'admin.user.type.external')|trans }}</td>

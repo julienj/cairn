@@ -213,10 +213,9 @@ issue:
         choose_hint: Chaque catégorie a son propre circuit de traitement.
         internal: Interne
         describe: Décrivez la demande
-        qualification: Qualification
-        qualification_hint: 'Facultatif : tout peut se faire après la création.'
         submit: Créer la demande
         submit_continue: Créer et continuer
+        submit_hint: Entrée pour créer
         cancel: Annuler
         created: '%key% créée.'
         refused: La demande n'a pas pu être créée.

@@ -16,10 +16,12 @@
 {% set pickerTriggerClass = pickerTriggerClasses.apply({ chosen: label is not null, invalid: invalid }) %}
 {# The caller's items, read before the nested dropdown whose own `content` block hosts them. #}
 {% set pickerItems %}{% block content %}{% endblock %}{% endset %}
+{# What is chosen, when it is more than a label (a person with their avatar): drawn on the button in place of the label. #}
+{% set pickerChosenLine %}{% block chosen %}{% endblock %}{% endset %}
 <twig:Ui:Dropdown :width="width" class="{{ pickerClasses.apply({}, attributes.render('class'))|tailwind_merge }}" {{ ...attributes.without('class') }}>
     <twig:block name="trigger">
         <button type="button" data-action="dropdown#toggle" aria-expanded="false" aria-haspopup="listbox" class="{{ pickerTriggerClass }}">
-            <span class="min-w-0 flex-1 truncate" data-picker-target="label">{{ pickerLabel ?? pickerPlaceholder }}</span>
+            <span class="flex min-w-0 flex-1 items-center gap-2.5 truncate" data-picker-target="label">{% if pickerChosenLine|trim is not empty %}{{ pickerChosenLine }}{% else %}<span class="truncate" data-picker-target="chosen">{{ pickerLabel ?? pickerPlaceholder }}</span>{% endif %}</span>
             <twig:ux:icon name="lucide:chevrons-up-down" class="h-3.5 w-3.5 shrink-0 text-faint" />
         </button>
     </twig:block>

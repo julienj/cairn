@@ -213,10 +213,9 @@ issue:
         choose_hint: Each category has its own workflow.
         internal: Internal
         describe: Describe the issue
-        qualification: Qualification
-        qualification_hint: 'Optional: everything can be done after creation.'
         submit: Create the issue
         submit_continue: Create and continue
+        submit_hint: Enter to create
         cancel: Cancel
         created: '%key% created.'
         refused: The issue could not be created.

@@ -1,0 +1,14 @@
+{# Who someone is, where accounts are listed and managed (the accesses of a project, the members of a team, the accounts of the instance): the avatar, the name, a link with `href`, the badges of the `badges` block beside it, and under it the address, the company and, unless `type` is false, whether the account is internal; `detail` adds to that line. It draws no element of its own: what holds it lays the avatar and the text out, and marks itself `group/identity` to light the name when pointed at. #}
+{% props user, size = 'lg', href = null, type = true, detail = null %}
+<twig:User:Avatar :user="user" :size="size" />
+<span class="min-w-0 flex-1 leading-tight">
+    <span class="flex items-center gap-2">
+        {% if href %}
+            <a href="{{ href }}" class="truncate text-sm text-strong hover:text-brand">{{ user.fullName }}</a>
+        {% else %}
+            <span class="truncate text-sm text-strong group-hover/identity:text-brand">{{ user.fullName }}</span>
+        {% endif %}
+        {% block badges %}{% endblock %}
+    </span>
+    <span class="block truncate text-xs text-muted">{{ user.email }}{% if user.company %} · {{ user.company }}{% endif %}{% if type %} · {{ (user.internal ? 'admin.user.type.internal' : 'admin.user.type.external')|trans }}{% endif %}{% if detail %} · {{ detail }}{% endif %}</span>
+</span>

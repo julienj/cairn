@@ -694,6 +694,16 @@ src/
   adds the keys of a shortcut; a hint names the key with `<twig:Ui:ModKey
   />` (⌘ on a Mac, Ctrl elsewhere, `platform` controller), never with a
   `⌘` in a translation.
+- **A person is drawn by one of three components, never by hand.**
+  `User:Avatar` is the face alone; `User:Line` is who one chooses in a
+  list (a menu, a picker, the options of a filter), with or without the
+  face, with a hint that tells two namesakes apart when asked; and
+  `User:Identity` is who someone is where accounts are managed, with the
+  address under the name. `Team:Line` is a team beside the people. A
+  form field that chooses among people is a `PickerType` with `avatars`,
+  which draws the same lines, on the button as in the list. None draws
+  an element of its own: the line or the link they are put in lays them
+  out.
 - **A face is never too small to be one.** Under 20px a name stands
   instead of an avatar, and avatars sit side by side, never one over
   another (`Ui:AvatarStack`). A picture keeps the colour of its kind as a

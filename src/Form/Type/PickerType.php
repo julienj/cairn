@@ -24,6 +24,10 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  * with a SearchedChoiceLoader as its `choice_loader`, which looks up the
  * value submitted instead of loading a list.
  *
+ * `avatars` is for a choice among people and teams: each line shows who
+ * it is, as every list of people does, and so does the button once one
+ * is chosen.
+ *
  * @extends AbstractType<mixed>
  */
 final class PickerType extends AbstractType
@@ -32,11 +36,15 @@ final class PickerType extends AbstractType
     {
         $resolver->setDefault('search_url', null);
         $resolver->setAllowedTypes('search_url', ['null', 'string']);
+        $resolver->setDefault('avatars', false);
+        $resolver->setAllowedTypes('avatars', 'bool');
+        $resolver->setInfo('avatars', 'whether the choices are people or teams, drawn with their faces (User:Line, Team:Line)');
     }
 
     public function buildView(FormView $view, FormInterface $form, array $options): void
     {
         $view->vars['search_url'] = $options['search_url'];
+        $view->vars['avatars'] = $options['avatars'];
     }
 
     public function getParent(): string
